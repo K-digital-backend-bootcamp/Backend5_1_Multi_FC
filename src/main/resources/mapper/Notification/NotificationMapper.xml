@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.multi.backend5_1_multi_fc.Notification.dao.NotificationDao">
+    <insert id="insert" parameterType="NotificationDto" useGeneratedKeys="true" keyProperty="notificationId">
+        INSERT INTO Notification (
+            user_id, content, type, is_read, created_at, redirect_url, related_id
+            ) values (
+                      #{userId}, #{content}, #{type}, #{isRead}, NOW(), #{redirectUrl}, #{relatedId}
+            )
+    </insert>
+
+    <select id="findByUserId" parameterType="long" resultType="NotificationDto">
+        select *
+        from Notification
+        where user_id = #{userId}
+        order by created_at desc
+    </select>
+
+    <select id="findUnreadByUserId" parameterType="long" resultType="NotificationDto">
+        select *
+        from Notification
+        where user_id = #{userId} and is_read = false
+        order by created_at desc
+    </select>
+
+    <select id="countUnreadByUserId" parameterType="long" resultType="int">
+        select count(*)
+        from Notification
+        where user_id = #{userId} and is_read = false
+    </select>
+
+    <update id="updateReadStatus" parameterType="long">
+        update Notification
+        set is_read = true
+        where notification_id = #{notificationId}
+    </update>
+
+    <update id="updateAllReadByUserId" parameterType="long">
+        update Notification
+        set is_read = true
+        where user_id = #{userId} and is_read = false
+    </update>
+
+    <delete id="delete" parameterType="long">
+        delete from Notification
+        where notification_id = #{notificationId}
+    </delete>
+</mapper>
