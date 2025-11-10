@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MULTI FC - 마이페이지</title>
+    <title>FUTSAL MATCH - 마이페이지</title>
 
     <link rel="stylesheet" th:href="@{/css/style.css}">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght[400;700]&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <style>
@@ -98,8 +98,62 @@
         .friend-add-search-group { display: flex; gap: 10px; margin-bottom: 20px; }
         .friend-add-search-group input { flex-grow: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
         .friend-add-search-group button { padding: 10px 15px; background-color: #6c5ce7; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        .friend-add-result-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 8px; background-color: #fdfdfd; box-shadow: 0 1px 2px rgba(0,0,0,0.03); font-size: 15px; }
-        .friend-add-actions { margin-top: 20px; text-align: right; }
+
+        /* ⭐⭐⭐ 친구 요청 목록 아이템 스타일 (클릭 가능 영역) ⭐⭐⭐ */
+        .friend-request-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background-color: #fdfdfd;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            font-size: 16px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: background-color 0.2s ease;
+            list-style: none;
+        }
+        .friend-request-item:hover {
+            background-color: #f0f0f0;
+        }
+        .friend-request-item.active {
+            background-color: #e6e6ff; /* 활성화 배경색 */
+            border-color: #6c5ce7;
+        }
+
+        /* 요청 액션 버튼 그룹 (토글) */
+        .request-actions {
+            display: none; /* 기본 숨김 */
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            gap: 8px;
+            z-index: 10;
+        }
+        .friend-request-item.active .request-actions {
+            display: flex; /* active 시 표시 */
+        }
+
+        /* 버튼 스타일 */
+        .request-actions button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            white-space: nowrap;
+        }
+        .request-actions .btn-accept { background-color: #2ecc71; } /* 수락: 녹색 */
+        .request-actions .btn-reject { background-color: #e74c3c; } /* 거절: 빨간색 */
+
+
         .friend-add-actions .btn-add-selected { padding: 10px 20px; background-color: #2ecc71; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
 
         /* ⭐⭐⭐ 마이페이지 고유 스타일 (유지) ⭐⭐⭐ */
@@ -108,9 +162,11 @@
             justify-content: space-around;
             margin-bottom: 30px;
             padding: 15px;
-            background: #e6e6ff;
+            background: rgba(230, 230, 255, 0.9); /* 배경 투명도 조정 */
             border-radius: 10px;
             overflow: hidden;
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
         }
         .score-item {
             text-align: center;
@@ -182,23 +238,28 @@
             padding: 8px;
             font-size: 14px;
             font-weight: 600;
-            background-color: white;
+            background-color: rgba(255, 255, 255, 0.85); /* 달력 셀 배경 투명도 조정 */
             transition: background-color 0.3s;
             cursor: pointer;
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
         }
         .calendar-day-cell.today {
             border: 2px solid #ff7675;
             border-radius: 8px;
-            background-color: #ffeaea;
+            background-color: rgba(255, 234, 234, 0.9); /* 오늘 날짜 배경 투명도 조정 */
             font-weight: bold;
         }
+        /* [복구 및 조정]: 마이페이지 컨테이너 너비를 복구하고, 이미지 제거에 맞춰 패딩 조정 */
         .login-section#full-width-section {
             flex: 1 1 100%;
             max-width: 100%;
-            padding-right: 50px !important;
+            padding-right: 30px !important;
         }
+
+        /* [복구]: main-wrapper의 Flexbox 레이아웃을 유지합니다. */
         .main-wrapper {
-            width: 850px;
+            width: 1000px;
             max-width: 95%;
         }
 
@@ -225,167 +286,299 @@
             line-height: 1;
         }
 
-        /* ⭐⭐⭐ [수정] 친구 요청 와이어프레임 스타일 (토글 및 디자인 최종 개선) ⭐⭐⭐ */
-        .wireframe-list-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            background-color: #fff;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            font-size: 16px;
-            color: #333;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            transition: background-color 0.2s;
-        }
-        .wireframe-list-item:hover {
-            background-color: #f9f9f9;
-        }
-        .wireframe-list-item.active {
-            background-color: #e6e6ff;
-        }
-
-        .wireframe-list-item .wireframe-user-name {
-            font-weight: 600;
-            flex-grow: 1;
-            padding-right: 80px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .wireframe-actions {
-            display: none;
-            position: absolute;
-            top: 50%;
-            right: 15px;
-            transform: translateY(-50%);
-            gap: 8px;
-            z-index: 10;
-        }
-
-        .wireframe-list-item.active .wireframe-actions {
-            display: flex;
-        }
-
-        /* 버튼 스타일 (아이콘만, 크기, 둥근 모서리) */
-        .wireframe-actions button {
-            width: 36px;
-            height: 36px;
-            border: none;
-            border-radius: 50%;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.2s, transform 0.1s;
-            color: white;
-            cursor: pointer;
-        }
-
-        .wireframe-actions button:hover {
-            transform: scale(1.05);
-        }
-
-        .wireframe-actions .btn-wire-accept {
-            background-color: #2ecc71;
-        }
-        .wireframe-actions .btn-wire-reject {
-            background-color: #e74c3c;
-        }
-
-        .wireframe-actions button i {
-            font-size: 18px;
-            margin: 0;
-        }
-        /* ⭐⭐⭐ [수정 끝] 친구 요청 와이어프레임 스타일 ⭐⭐⭐ */
-
-        /* ⭐⭐⭐ [추가] 팝업 및 툴팁 스타일 ⭐⭐⭐ */
-        /* 팝업 컨테이너 (login-container 내부에 absolute 배치) */
-        #day-schedule-popup {
-            position: absolute;
-            top: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 350px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-            padding: 20px;
-            z-index: 100;
-            display: none;
-            animation: fadeIn 0.3s;
-            text-align: left;
-        }
-        #popup-close-btn {
-            float: right;
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: #999;
-        }
-        .popup-schedule-list {
-            list-style: none;
-            padding: 0;
-            margin: 15px 0 0;
-        }
-        .popup-schedule-list li {
-            padding: 10px;
+        /* 캘린더 상세 창 (팝업 대신 고정 영역으로 사용) 스타일 */
+        .fixed-schedule-list li {
+            padding: 8px 10px;
             margin-bottom: 8px;
             border-radius: 6px;
             font-size: 14px;
             font-weight: 500;
-            position: relative;
             cursor: pointer;
+            transition: opacity 0.2s;
         }
-        .popup-schedule-list li .time {
-            font-weight: 700;
-            color: #2c3e50;
-            margin-right: 5px;
+        .fixed-schedule-list li:hover {
+            opacity: 0.9;
+        }
+        .fixed-schedule-list li.active {
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+            border: 1px solid #fff;
+        }
+        /* [수정] 일정 목록 배경색 투명도 조정 */
+        .fixed-schedule-list li.match-schedule { background-color: rgba(148, 97, 231, 0.85); color: white; } /* 85% 불투명도 */
+        .fixed-schedule-list li.personal-schedule { background-color: rgba(74, 144, 226, 0.85); color: white; } /* 85% 불투명도 */
+
+        /* 캘린더 탭 레이아웃 조정 CSS */
+        .calendar-layout-wrapper {
+            display: flex;
+            gap: 20px;
+            flex-wrap: nowrap;
         }
 
-        /* 툴팁 스타일 (호버 시 상세 정보) */
-        .schedule-tooltip {
+        /* 캘린더 컨테이너의 너비를 제한하여 상세 창이 들어갈 공간을 만듭니다 */
+        .calendar-container {
+            flex-grow: 1;
+            max-width: none;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+            background: rgba(255, 255, 255, 0.85); /* 캘린더 컨테이너 배경도 투명도 조정 */
+            border-radius: 10px;
+            padding: 20px;
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+        }
+
+        /* 캘린더 그리드 셀 크기 안정화 */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+
+        /* 캘린더 헤더 그리드에도 동일한 간격 적용 */
+        #calendar-days-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .calendar-header-cell {
+            text-align: center;
+            font-weight: bold;
+            padding: 10px 0;
+            color: #555;
+            background-color: rgba(248, 248, 248, 0.9); /* 캘린더 헤더 셀 배경색 조정 */
+            border-radius: 5px;
+        }
+
+        /* ⭐ [핵심 수정] 캘린더 상세 창 배경 투명도 및 블러 효과 적용 ⭐ */
+        #fixed-schedule-detail {
+            width: 300px;
+            flex-shrink: 0;
+            position: relative !important;
+            top: auto !important;
+            left: auto !important;
+            transform: none !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            background: transparent; /* 배경을 완전히 투명하게 설정 */
+            border: 1px solid rgba(221, 221, 221, 0.5); /* 테두리도 투명도 조정 */
+            border-radius: 10px;
+            padding: 15px;
+            backdrop-filter: blur(8px); /* 뒤 배경을 강하게 흐리게 */
+            -webkit-backdrop-filter: blur(8px); /* 사파리 지원 */
+        }
+
+        /* 닫기 버튼 스타일 */
+        #close-detail-btn {
             position: absolute;
-            top: -10px;
-            left: 100%;
-            width: 250px;
-            background: #2c3e50;
-            color: white;
+            top: 5px;
+            right: 5px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #999;
+            cursor: pointer;
+            line-height: 1;
+            z-index: 10;
+            padding: 5px;
+        }
+
+        /* ⭐ [추가] 입력 필드 및 버튼 배경 투명도 조정 ⭐ */
+        #fixed-detail-edit-area {
+            border: 1px solid rgba(221, 221, 221, 0.5); /* 테두리 투명도 조정 */
             padding: 10px;
             border-radius: 5px;
-            font-size: 12px;
-            z-index: 200;
-            margin-left: 15px;
-            text-align: left;
-            pointer-events: none;
-            display: none;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            background: rgba(255, 255, 255, 0.7); /* 편집 영역 배경 70% 불투명도 */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* 그림자 추가 */
         }
-        .popup-schedule-list li:hover .schedule-tooltip {
+        #selected-schedule-time,
+        #selected-schedule-name,
+        #selected-schedule-content {
+            background-color: rgba(255, 255, 255, 0.8); /* 입력 필드 배경 80% 불투명도 */
+            border: 1px solid rgba(221, 221, 221, 0.7);
+            color: #333;
+        }
+        #save-schedule-btn, #delete-schedule-btn {
+            background-color: rgba(204, 204, 204, 0.7); /* 비활성화 버튼 배경 70% 불투명도 */
+            color: white; /* 텍스트 색상 명확히 */
+            border: none;
+        }
+        /* JS에서 설정하는 활성화 배경색도 투명도 조정이 필요 */
+        #save-schedule-btn[data-mode="add"]:not([disabled]) { /* 등록 버튼 활성화 */
+            background-color: rgba(46, 204, 113, 0.85) !important; /* 등록 버튼 활성화 85% */
+        }
+        #save-schedule-btn[data-mode="edit"]:not([disabled]) { /* 수정 버튼 활성화 */
+            background-color: rgba(74, 144, 226, 0.85) !important; /* 저장 버튼 활성화 85% */
+        }
+        #delete-schedule-btn:not([disabled]) {
+            background-color: rgba(231, 76, 60, 0.85) !important; /* 삭제 버튼 활성화 85% */
+        }
+
+        /* ⭐ [추가] 탭 컨텐츠 배경 투명도 조정 ⭐ */
+        .tab-content {
+            background: white; /* 탭 컨텐츠 배경 흰색으로 복구 */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+
+        /* 캘린더 탭 컨텐츠만 투명 유지 */
+        #tab-calendar {
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.9); /* 로그인 컨테이너 배경도 투명도 조정 */
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px); /* 로그인 컨테이너 자체에 블러 적용 */
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        /* 메인 네비게이션 메뉴 스타일 (토글 메뉴) */
+        .main-menu {
+            display: none; /* 기본 숨김 */
+            position: absolute;
+            top: 60px; /* 헤더 높이에 맞게 조정 */
+            right: 0;
+            background-color: rgba(255, 255, 255, 0.95); /* 반투명 흰색 */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            z-index: 1000;
+            min-width: 180px;
+            padding: 10px 0;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        .main-menu.show {
+            display: block; /* 'show' 클래스 있을 때 표시 */
+        }
+
+        .main-menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .main-menu li a {
+            display: block;
+            padding: 12px 20px;
+            color: #333;
+            text-decoration: none;
+            font-size: 15px;
+            transition: background-color 0.2s ease, color 0.2s ease, border-left 0.2s ease, padding-left 0.2s ease;
+            font-weight: 600 !important; /* ⭐ 굵게 설정 ⭐ */
+        }
+
+        /* ⭐⭐⭐ [핵심 수정] 햄버거 메뉴 하이라이트 스타일 통일 ⭐⭐⭐ */
+        .main-menu li a:hover, .main-menu li a.active {
+            background-color: rgba(108, 92, 231, 0.1);
+            color: #6c5ce7;
+            border-left: 4px solid #6c5ce7;
+            padding-left: 16px;
+        }
+        .main-menu li a i {
+            margin-right: 10px;
+            color: #999;
+        }
+        .main-menu li a:hover i, .main-menu li a.active i {
+            color: #6c5ce7;
+        }
+
+        /* 프로필 메뉴 스타일 (기존 유지) */
+        .user-menu {
+            display: none; /* 기본 숨김 */
+            position: absolute;
+            top: 60px; /* 헤더 높이에 맞게 조정 */
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            z-index: 1000;
+            min-width: 200px;
+            padding: 10px 0;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        .user-menu.show {
             display: block;
         }
-        /* 팝업 리스트의 일정 색상 */
-        .popup-schedule-list li.match-schedule {
-            background-color: #9461e7;
-            color: white;
-        }
-        .popup-schedule-list li.personal-schedule {
-            background-color: #4a90e2;
-            color: white;
-        }
-        .popup-schedule-list li.match-schedule .time,
-        .popup-schedule-list li.personal-schedule .time {
-            color: white;
-        }
-        /* ⭐⭐⭐ [추가 끝] 팝업 및 툴팁 스타일 ⭐⭐⭐ */
 
+        .user-menu .user-info {
+            padding: 10px 20px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .user-menu .user-info strong {
+            display: block;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .user-menu .user-info p {
+            font-size: 13px;
+            color: #777;
+            margin: 0;
+        }
+
+        .user-menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .user-menu li a {
+            display: block;
+            padding: 12px 20px;
+            color: #333;
+            text-decoration: none;
+            font-size: 15px;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .user-menu li a:hover {
+            background-color: #f0f0f0;
+            color: #6c5ce7;
+        }
+
+        .user-menu li a i {
+            margin-right: 10px;
+            color: #999;
+        }
+        .user-menu li a:hover i {
+            color: #6c5ce7;
+        }
+
+        /* 캘린더 헤더 배경색 */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            background-color: rgba(248, 248, 248, 0.8); /* 캘린더 헤더 배경색 조정 */
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+        }
+
+        /* 탭 버튼 색상 통일성 유지 */
+        .tab-buttons .tab-btn.active {
+            color: #6c5ce7;
+            border-bottom-color: #6c5ce7;
+            margin-bottom: -2px;
+        }
     </style>
 </head>
 <body>
@@ -395,23 +588,26 @@
     <div class="header-icons">
         <button id="profile-menu-toggle" class="profile-icon" style="position: relative; display: none;">
             <i class="fas fa-user-circle"></i>
-            <span id="notification-badge" class="notification-badge"></span>
+            <span id="notification-badge" class="notification-badge" style="display: none;"></span>
         </button>
-        <div id="profile-menu" class="user-menu">
-            <div class="user-info">
-                <strong><span id="user-menu-username">사용자</span>님</strong>
-                <p>환영합니다!</p>
-            </div>
-            <ul>
-                <li><a href="/notifications" id="nav-notifications-link"><i class="fas fa-bell"></i> 알림 목록</a></li>
-                <li><a href="/mypage"><i class="fas fa-user"></i> 마이페이지</a></li>
-                <li><a href="/profile/edit"><i class="fas fa-user-edit"></i> 프로필 수정</a></li>
-                <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
-            </ul>
-        </div>
         <button id="menu-toggle" class="menu-toggle-btn"><i class="fas fa-bars"></i></button>
     </div>
-    <nav id="main-menu" class="main-nav">
+
+
+    <div id="profile-menu" class="user-menu">
+        <div class="user-info">
+            <strong><span id="user-menu-username">사용자</span>님</strong>
+            <p>환영합니다!</p>
+        </div>
+        <ul>
+            <li><a href="/notifications" id="nav-notifications-link"><i class="fas fa-bell"></i> 알림 목록</a></li>
+            <li><a href="/mypage"><i class="fas fa-user"></i> 마이페이지</a></li>
+            <li><a href="/profile/edit"><i class="fas fa-user-edit"></i> 프로필 수정</a></li>
+            <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
+        </ul>
+    </div>
+
+    <nav id="main-menu" class="main-menu">
         <ul>
             <li><a href="/"><i class="fas fa-home"></i> 메인 (Home)</a></li>
             <li><a href="/fields"><i class="fas fa-search"></i> 구장검색</a></li>
@@ -433,12 +629,8 @@
                     <button class="tab-btn" data-tab="tab-friends">친구 관리</button>
                 </div>
 
-                <div id="day-schedule-popup">
-                    <button id="popup-close-btn">&times;</button>
-                    <h3 id="popup-date-title" style="font-size: 18px; margin-bottom: 10px;">11월 5일 일정</h3>
-                    <ul class="popup-schedule-list" id="popup-schedule-list">
-                    </ul>
-                </div>
+                <div id="day-schedule-popup" style="display: none;"></div>
+
                 <div id="tab-info" class="tab-content active">
                     <h3 style="font-size: 24px; color: #2c3e50; margin-top: 20px; margin-bottom: 25px;">회원정보 확인</h3>
 
@@ -487,30 +679,56 @@
                 </div>
 
                 <div id="tab-calendar" class="tab-content">
-                    <h3 style="font-size: 24px; color: #2c3e50; margin-top: 20px; margin-bottom: 20px;">내 일정 (캘린더)</h3>
-                    <a href="/schedule/add" id="add-schedule-btn" class="login-button" style="margin-bottom: 20px; padding: 12px; font-size: 16px; text-decoration: none; display: block; text-align: center;">
-                        <i class="fas fa-plus-circle" style="margin-right: 8px;"></i>새 일정 추가하기
-                    </a>
-                    <div class="calendar-container">
-                        <div class="calendar-header">
-                            <nav class="calendar-nav">
-                                <button id="prev-month">&lt;</button>
-                            </nav>
-                            <h2 id="current-month-year">2025년 10월</h2>
-                            <nav class="calendar-nav">
-                                <button id="next-month">&gt;</button>
-                            </nav>
+                    <h3 style="font-size: 24px; color: #2c3e50; margin-top: 20px; margin-bottom: 20px;">내 일정</h3>
+
+                    <div class="calendar-layout-wrapper">
+
+                        <div class="calendar-container">
+                            <div class="calendar-header">
+                                <nav class="calendar-nav">
+                                    <button id="prev-month">&lt;</button>
+                                </nav>
+                                <h2 id="current-month-year">2025년 10월</h2>
+                                <nav class="calendar-nav">
+                                    <button id="next-month">&gt;</button>
+                                </nav>
+                            </div>
+                            <div class="calendar-grid" id="calendar-days-header">
+                                <div class="calendar-header-cell">일</div>
+                                <div class="calendar-header-cell">월</div>
+                                <div class="calendar-header-cell">화</div>
+                                <div class="calendar-header-cell">수</div>
+                                <div class="calendar-header-cell">목</div>
+                                <div class="calendar-header-cell">금</div>
+                                <div class="calendar-header-cell">토</div>
+                            </div>
+                            <div class="calendar-grid" id="calendar-days-grid"></div>
                         </div>
-                        <div class="calendar-grid" id="calendar-days-header">
-                            <div class="calendar-header-cell">일</div>
-                            <div class="calendar-header-cell">월</div>
-                            <div class="calendar-header-cell">화</div>
-                            <div class="calendar-header-cell">수</div>
-                            <div class="calendar-header-cell">목</div>
-                            <div class="calendar-header-cell">금</div>
-                            <div class="calendar-header-cell">토</div>
+
+                        <div id="fixed-schedule-detail">
+
+                            <button id="close-detail-btn">&times;</button>
+                            <h3 id="detail-current-date" style="font-size: 16px; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; margin-bottom: 10px;">11월 05일 일정</h3>
+
+                            <ul class="fixed-schedule-list" id="fixed-schedule-list" style="list-style: none; padding: 0; margin-bottom: 15px; max-height: 200px; overflow-y: auto;">
+                            </ul>
+
+                            <h3 id="new-schedule-title" style="font-size: 16px; margin-top: 15px; font-weight: 700; display: none;">새 개인 일정 등록</h3>
+                            <h3 id="personal-schedule-title" style="font-size: 16px; margin-top: 15px; font-weight: 700;">개인 일정 상세 정보</h3>
+
+                            <div id="fixed-detail-edit-area">
+                                <input type="hidden" id="selected-schedule-id">
+                                <input type="time" id="selected-schedule-time" style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ddd; display: none;">
+
+                                <input type="text" id="selected-schedule-name" placeholder="일정명" disabled style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ddd;">
+                                <textarea id="selected-schedule-content" rows="4" placeholder="세부 내용을 입력하세요." disabled style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd;"></textarea>
+
+                                <div style="text-align: right;">
+                                    <button id="save-schedule-btn" disabled style="padding: 8px 15px; margin-left: 10px; background-color: #ccc; color: white; border: none; border-radius: 5px;">저장</button>
+                                    <button id="delete-schedule-btn" disabled style="padding: 8px 15px; background-color: #ccc; color: white; border: none; border-radius: 5px;">삭제</button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="calendar-grid" id="calendar-days-grid"></div>
                     </div>
                 </div>
 
@@ -547,8 +765,8 @@
 
                     <div id="sub-tab-friend-add" class="sub-tab-content">
 
-                        <div id="friend-add-search-results">
-                        </div>
+                        <ul id="friend-add-search-results" class="friend-item-list">
+                        </ul>
 
                         <div id="friend-request-message" style="border: 1px dashed #ddd; border-radius: 8px; padding: 15px; min-height: 100px; text-align: center; display: none; margin-top: 20px;">
                             <p style="color: #999;">새로운 친구 요청이 없습니다.</p>
@@ -557,38 +775,44 @@
 
                 </div> </div>
         </div>
-        <div class="background-image-section">
-        </div>
     </div>
 </main>
 
 <script>
     // --- (★공통★) 메뉴 토글 및 로그아웃 로직 ---
     const menuToggle = document.getElementById('menu-toggle');
-    const mainMenu = document.getElementById('main-menu');
+    const mainMenu = document.getElementById('main-menu'); // 메인 네비게이션 메뉴
     const profileMenuToggle = document.getElementById('profile-menu-toggle');
     const profileMenu = document.getElementById('profile-menu');
     const logoutButton = document.getElementById('logout-button');
 
     if (menuToggle) {
-        menuToggle.addEventListener('click', () => {
+        menuToggle.addEventListener('click', (event) => {
+            event.stopPropagation(); // 이벤트 버블링 방지
             mainMenu.classList.toggle('show');
-            profileMenu.classList.remove('show');
+            if(profileMenu) profileMenu.classList.remove('show'); // 프로필 메뉴는 닫기
         });
     }
     if (profileMenuToggle) {
-        profileMenuToggle.addEventListener('click', () => {
-            profileMenu.classList.toggle('show');
-            mainMenu.classList.remove('show');
+        profileMenuToggle.addEventListener('click', (event) => {
+            event.stopPropagation(); // 이벤트 버블링 방지
+            if(profileMenu) profileMenu.classList.toggle('show');
+            if(mainMenu) mainMenu.classList.remove('show'); // 메인 메뉴는 닫기
         });
     }
+    // 문서 전체 클릭 시 메뉴 닫기
     document.addEventListener('click', (event) => {
-        const isClickInsideMainMenu = mainMenu.contains(event.target);
-        const isClickInsideProfileMenu = profileMenu.contains(event.target);
-        const isMenuToggle = menuToggle.contains(event.target);
-        const isProfileToggle = profileMenuToggle.contains(event.target);
-        if (!isClickInsideMainMenu && !isMenuToggle) { mainMenu.classList.remove('show'); }
-        if (!isClickInsideProfileMenu && !isProfileToggle) { profileMenu.classList.remove('show'); }
+        const isClickInsideMainMenu = mainMenu && mainMenu.contains(event.target);
+        const isClickInsideProfileMenu = profileMenu && profileMenu.contains(event.target);
+        const isMenuToggle = menuToggle && menuToggle.contains(event.target);
+        const isProfileToggle = profileMenuToggle && profileMenuToggle.contains(event.target);
+
+        if (mainMenu && !isClickInsideMainMenu && !isMenuToggle) {
+            mainMenu.classList.remove('show');
+        }
+        if (profileMenu && !isClickInsideProfileMenu && !isProfileToggle) {
+            profileMenu.classList.remove('show');
+        }
     });
     if (logoutButton) {
         logoutButton.addEventListener('click', (e) => {
@@ -604,7 +828,9 @@
     let hasScheduleNotif = false;
 
     function updateGlobalBadge() {
-        badge.style.display = (hasReviewNotif || hasScheduleNotif) ? 'block' : 'none';
+        if (badge) {
+            badge.style.display = (hasReviewNotif || hasScheduleNotif) ? 'block' : 'none';
+        }
     }
 
     async function checkPendingReviews() {
@@ -626,13 +852,13 @@
             address: "서울시 서초구",
             skillLevel: "중급"
         };
-        document.getElementById('view-email').textContent = myInfo.email;
-        document.getElementById('view-username').textContent = myInfo.username;
-        document.getElementById('view-nickname').textContent = myInfo.nickname;
-        document.getElementById('view-address').textContent = myInfo.address;
-
-        document.getElementById('view-position-score').textContent = myInfo.position;
-        document.getElementById('view-skill-level').textContent = myInfo.skillLevel;
+        if(document.getElementById('view-email')) document.getElementById('view-email').textContent = myInfo.email;
+        if(document.getElementById('view-username')) document.getElementById('view-username').textContent = myInfo.username;
+        if(document.getElementById('view-nickname')) document.getElementById('view-nickname').textContent = myInfo.nickname;
+        if(document.getElementById('view-address')) document.getElementById('view-address').textContent = myInfo.address;
+        if(document.getElementById('view-position-score')) document.getElementById('view-position-score').textContent = myInfo.position;
+        if(document.getElementById('view-skill-level')) document.getElementById('view-skill-level').textContent = myInfo.skillLevel;
+        if(document.getElementById('user-menu-username')) document.getElementById('user-menu-username').textContent = myInfo.nickname;
     }
 
     // --- 캘린더 (경기 일정, 오늘 날짜 강조, 현재 월 표시 로직) ---
@@ -641,92 +867,218 @@
     const prevMonthBtn = document.getElementById('prev-month');
     const nextMonthBtn = document.getElementById('next-month');
 
-    const popup = document.getElementById('day-schedule-popup'); // ⭐ 팝업 요소
-    const popupCloseBtn = document.getElementById('popup-close-btn'); // ⭐ 닫기 버튼
-    const popupList = document.getElementById('popup-schedule-list'); // ⭐ 팝업 리스트
+    const fixedDetailWindow = document.getElementById('fixed-schedule-detail');
+    const detailList = document.getElementById('fixed-schedule-list');
+    const detailDateTitle = document.getElementById('detail-current-date');
+    const saveBtn = document.getElementById('save-schedule-btn');
+    const deleteBtn = document.getElementById('delete-schedule-btn');
+    const scheduleNameInput = document.getElementById('selected-schedule-name');
+    const scheduleContentInput = document.getElementById('selected-schedule-content');
+    const selectedScheduleIdInput = document.getElementById('selected-schedule-id');
+    const closeDetailBtn = document.getElementById('close-detail-btn');
+    const scheduleTimeInput = document.getElementById('selected-schedule-time');
 
-    // ⭐ [추가] 팝업 닫기 이벤트 리스너
-    if (popupCloseBtn) {
-        popupCloseBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            popup.style.display = 'none';
-        });
-    }
-
-    // ⭐ [추가] 팝업 외부 클릭 시 닫기 (새로 추가된 로직)
-    document.addEventListener('click', (e) => {
-        if (popup && popup.style.display === 'block' &&
-            !popup.contains(e.target) &&
-            !e.target.closest('.calendar-day-cell')) {
-            popup.style.display = 'none';
-        }
-    });
-
+    const newScheduleTitle = document.getElementById('new-schedule-title');
+    const personalScheduleTitle = document.getElementById('personal-schedule-title');
 
     let currentDate = new Date();
-    currentDate.setDate(1);
+    currentDate.setDate(1); // 항상 1일로 설정하여 월 계산 기준점 통일
 
-    // ⭐⭐ [수정] 5일에 '경기일정'과 '개인일정'을 표시하고 유형 구분
-    const MOCK_SCHEDULES = [
-        { day: 5, time: "09:00", type: 'match', title: '강남 팀 매치', id: 1, detail: "장소: 강남 풋살장, 레벨: 중급, 인원: 10명" },
-        { day: 5, time: "13:00", type: 'personal', title: '용산 개인 일정', id: 2, detail: "개인 약속, 축구화 세척 필요" },
-        { day: 25, time: "20:00", type: 'match', title: '수원 팀 매치', id: 3, detail: "장소: 수원 월드컵 구장, 레벨: 고급" }
+    // ⭐⭐ MOCK_SCHEDULES - year/month 속성 추가 및 데이터 정리
+    let MOCK_SCHEDULES = [
+        { id: 1, year: 2025, month: 10, day: 5, time: "09:00", type: 'match', title: '09:00 경기 일정', detail: "장소: 강남 풋살장, 레벨: 중급, 인원: 10명" },
+        { id: 2, year: 2025, month: 10, day: 5, time: "13:00", type: 'personal', title: '13:00 개인 약속', detail: "축구화 세척 및 개인 연습 일정" },
+        { id: 3, year: 2025, month: 10, day: 25, time: "20:00", type: 'match', title: '수원 팀 매치', detail: "장소: 수원 월드컵 구장, 레벨: 고급" },
+        { id: 4, year: 2025, month: 11, day: 10, time: "18:00", type: 'personal', title: '친구와 풋살', detail: "잠실 풋살장" }
     ];
 
-    // ⭐ [추가] 날짜 클릭 시 팝업 열기 함수
     function openDaySchedule(day, event) {
-        const schedulesToday = MOCK_SCHEDULES.filter(s => s.day === day);
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth(); // 0부터 시작
 
-        // 팝업 위치 계산 (클릭된 셀 기준)
-        const cellRect = event.currentTarget.getBoundingClientRect();
-        const containerRect = document.querySelector('.calendar-container').getBoundingClientRect();
+        const schedulesToday = MOCK_SCHEDULES.filter(s =>
+            s.year === year && s.month === month && s.day === day
+        );
 
-        // 팝업 위치 설정 (캘린더 컨테이너 기준)
-        // Y축: 셀 하단 + 5px
-        const topOffset = cellRect.top - containerRect.top + cellRect.height + 5;
-        // X축: 셀 중앙
-        const leftOffset = cellRect.left - containerRect.left + cellRect.width / 2;
+        detailDateTitle.textContent = `${month + 1}월 ${day}일 일정`;
+        detailList.innerHTML = '';
 
-        popup.style.top = `${topOffset}px`;
-        popup.style.left = `${leftOffset}px`;
-        popup.style.transform = `translateX(-50%)`; // 팝업 중앙 정렬
+        fixedDetailWindow.dataset.selectedDate = `${year}-${month + 1}-${day}`;
 
-        document.getElementById('popup-date-title').textContent = `${currentDate.getMonth() + 1}월 ${day}일 일정`;
-        popupList.innerHTML = '';
 
-        if (schedulesToday.length === 0) {
-            popupList.innerHTML = '<li style="color: #999; text-align: center; background: none;">이 날은 일정이 없습니다.</li>';
-        } else {
+        if (schedulesToday.length > 0) {
+            personalScheduleTitle.style.display = 'block';
+            newScheduleTitle.style.display = 'none';
+            scheduleTimeInput.style.display = 'none';
+
             schedulesToday.forEach(schedule => {
                 const li = document.createElement('li');
                 const eventClass = schedule.type === 'match' ? 'match-schedule' : 'personal-schedule';
 
                 li.className = eventClass;
-                li.innerHTML = `
-                    <span class="time">${schedule.time}</span>
-                    <span>${schedule.title}</span>
-                    <div class="schedule-tooltip">
-                        <b>${schedule.title} (${schedule.time})</b> <br>
-                        ${schedule.detail}
-                    </div>
-                `;
-                li.style.position = 'relative';
+                li.dataset.scheduleId = schedule.id;
 
-                popupList.appendChild(li);
+                li.innerHTML = `<span style="font-weight: 700;">${schedule.time}</span> ${schedule.title}`;
+
+                li.onclick = (e) => bindScheduleToDetail(e, schedule);
+
+                detailList.appendChild(li);
             });
+            clearDetailEditArea();
+
+        } else {
+            personalScheduleTitle.style.display = 'none';
+            newScheduleTitle.style.display = 'block';
+            setNewScheduleMode();
+        }
+        fixedDetailWindow.style.display = 'block';
+        event.stopPropagation();
+    }
+
+    function setNewScheduleMode() {
+        detailList.innerHTML = '<li style="color: #6c5ce7; text-align: center; padding: 10px;">새 일정을 등록하세요.</li>';
+        scheduleNameInput.value = '';
+        scheduleContentInput.value = '';
+        selectedScheduleIdInput.value = '';
+
+        scheduleTimeInput.value = '';
+        scheduleTimeInput.style.display = 'block';
+
+        saveBtn.disabled = false;
+        saveBtn.textContent = "등록";
+        saveBtn.style.backgroundColor = 'rgba(46, 204, 113, 0.85)';
+        saveBtn.setAttribute('data-mode', 'add');
+        deleteBtn.style.display = 'none';
+
+        scheduleNameInput.disabled = false;
+        scheduleContentInput.disabled = false;
+        scheduleNameInput.placeholder = "일정명 (필수)";
+        scheduleContentInput.placeholder = "세부 내용 (선택)";
+    }
+
+    function clearDetailEditArea() {
+        scheduleNameInput.value = '';
+        scheduleContentInput.value = '';
+        selectedScheduleIdInput.value = '';
+
+        personalScheduleTitle.style.display = 'block';
+        newScheduleTitle.style.display = 'none';
+        scheduleTimeInput.style.display = 'none';
+
+        saveBtn.disabled = true;
+        saveBtn.textContent = "저장";
+        saveBtn.style.backgroundColor = 'rgba(204, 204, 204, 0.7)';
+        saveBtn.setAttribute('data-mode', 'edit');
+        deleteBtn.style.display = 'inline-block';
+        deleteBtn.disabled = true;
+        deleteBtn.style.backgroundColor = 'rgba(204, 204, 204, 0.7)';
+
+        scheduleNameInput.disabled = true;
+        scheduleContentInput.disabled = true;
+        scheduleNameInput.placeholder = "일정을 선택하거나, 경기는 상세보기를 이용하세요.";
+        scheduleContentInput.placeholder = "일정을 선택하거나, 경기는 상세보기를 이용하세요.";
+
+        detailList.querySelectorAll('li').forEach(li => li.classList.remove('active'));
+    }
+
+    function bindScheduleToDetail(event, schedule) {
+        if (schedule.type === 'match') {
+            window.location.href = `/schedule/detail/${schedule.id}`;
+            return;
         }
 
-        // 팝업 표시
-        popup.style.display = 'block';
-        event.stopPropagation(); // 캘린더 컨테이너나 다른 상위 요소 클릭 방지
+        clearDetailEditArea();
+        event.currentTarget.classList.add('active');
+
+        personalScheduleTitle.style.display = 'block';
+        newScheduleTitle.style.display = 'none';
+        scheduleTimeInput.style.display = 'block';
+
+        scheduleNameInput.value = schedule.title;
+        scheduleContentInput.value = schedule.detail;
+        selectedScheduleIdInput.value = schedule.id;
+        scheduleTimeInput.value = schedule.time;
+
+        if (schedule.type === 'personal') {
+            scheduleNameInput.disabled = false;
+            scheduleContentInput.disabled = false;
+            saveBtn.disabled = false;
+            saveBtn.textContent = "저장";
+            saveBtn.style.backgroundColor = 'rgba(74, 144, 226, 0.85)';
+            saveBtn.setAttribute('data-mode', 'edit');
+            deleteBtn.disabled = false;
+            deleteBtn.style.backgroundColor = 'rgba(231, 76, 60, 0.85)';
+            scheduleNameInput.placeholder = "일정명 (수정 가능)";
+            scheduleContentInput.placeholder = "세부 내용 (수정 가능)";
+        }
     }
 
+    saveBtn.addEventListener('click', function() {
+        if(saveBtn.disabled) return;
 
-    function handleEventClick(event, schedule) {
-        event.stopPropagation();
-        // 개별 일정 클릭 시 상세 페이지로 이동 (원래 의도대로)
-        window.location.href = `/schedule/detail/${schedule.id}`;
-    }
+        const id = selectedScheduleIdInput.value;
+        const newTitle = scheduleNameInput.value.trim();
+        const newDetail = scheduleContentInput.value.trim();
+        const newTime = scheduleTimeInput.value;
+
+        if (!newTitle || !newTime) {
+            alert("일정명과 시간을 모두 입력해주세요.");
+            return;
+        }
+
+        const selectedDateParts = fixedDetailWindow.dataset.selectedDate.split('-');
+        const selectedYear = parseInt(selectedDateParts[0]);
+        const selectedMonth = parseInt(selectedDateParts[1]) - 1; // month는 0부터 시작
+        const selectedDay = parseInt(selectedDateParts[2]);
+
+        if (!id) { // 등록 (ID가 없을 때)
+            const newId = Date.now();
+
+            const newSchedule = {
+                id: newId,
+                year: selectedYear,
+                month: selectedMonth,
+                day: selectedDay,
+                time: newTime,
+                type: 'personal',
+                title: newTitle,
+                detail: newDetail
+            };
+
+            MOCK_SCHEDULES.push(newSchedule);
+            alert(`✅ 새 개인 일정이 등록되었습니다!`);
+
+        } else { // 수정 (ID가 있을 때)
+            const targetIndex = MOCK_SCHEDULES.findIndex(s => s.id === parseInt(id));
+            if (targetIndex !== -1) {
+                MOCK_SCHEDULES[targetIndex].title = newTitle;
+                MOCK_SCHEDULES[targetIndex].detail = newDetail;
+                MOCK_SCHEDULES[targetIndex].time = newTime;
+                MOCK_SCHEDULES[targetIndex].year = selectedYear;
+                MOCK_SCHEDULES[targetIndex].month = selectedMonth;
+                MOCK_SCHEDULES[targetIndex].day = selectedDay;
+                alert(`✅ 개인 일정이 수정되었습니다! ID: ${id}`);
+            }
+        }
+        renderCalendar();
+        fixedDetailWindow.style.display = 'none';
+    });
+
+    deleteBtn.addEventListener('click', function() {
+        if(deleteBtn.disabled) return;
+
+        if (confirm("정말로 이 일정을 삭제하시겠습니까?")) {
+            const id = selectedScheduleIdInput.value;
+            const initialLength = MOCK_SCHEDULES.length;
+            MOCK_SCHEDULES = MOCK_SCHEDULES.filter(s => s.id !== parseInt(id));
+
+            if (MOCK_SCHEDULES.length < initialLength) {
+                alert(`✅ 개인 일정이 삭제되었습니다! ID: ${id}`);
+                renderCalendar();
+                fixedDetailWindow.style.display = 'none';
+            }
+        }
+    });
 
     function renderCalendar() {
         if (!daysGrid) return;
@@ -740,7 +1092,7 @@
 
 
         const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
+        const month = currentDate.getMonth(); // 0-11
         monthYearElement.textContent = `${year}년 ${month + 1}월`;
         const firstDayOfMonth = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -760,23 +1112,21 @@
                 cell.classList.add('today');
             }
 
+            const schedulesToday = MOCK_SCHEDULES.filter(s =>
+                s.year === year && s.month === month && s.day === day
+            );
 
-            const schedulesToday = MOCK_SCHEDULES.filter(s => s.day === day);
             if (schedulesToday.length > 0) {
                 schedulesToday.forEach(schedule => {
                     const eventDiv = document.createElement('div');
-
                     const eventClass = schedule.type === 'match' ? 'match-schedule' : 'personal-schedule';
-
                     eventDiv.className = `calendar-event ${eventClass}`;
-                    eventDiv.textContent = schedule.title;
+                    eventDiv.textContent = schedule.time;
                     eventDiv.title = schedule.title;
-
-                    eventDiv.onclick = (e) => handleEventClick(e, schedule);
+                    eventDiv.onclick = (e) => e.stopPropagation();
                     cell.appendChild(eventDiv);
                 });
             }
-            // ⭐ [수정] 날짜 셀 클릭 이벤트 연결 ⭐ (openDaySchedule 호출)
             const dayToPass = day;
             cell.onclick = (e) => openDaySchedule(dayToPass, e);
 
@@ -786,19 +1136,92 @@
     if (prevMonthBtn) prevMonthBtn.addEventListener('click', () => {
         currentDate.setMonth(currentDate.getMonth() - 1);
         renderCalendar();
+        fixedDetailWindow.style.display = 'none';
     });
     if (nextMonthBtn) nextMonthBtn.addEventListener('click', () => {
         currentDate.setMonth(currentDate.getMonth() + 1);
         renderCalendar();
+        fixedDetailWindow.style.display = 'none';
     });
 
+    if (closeDetailBtn) {
+        closeDetailBtn.addEventListener('click', () => {
+            fixedDetailWindow.style.display = 'none';
+        });
+    }
+
     // --- 친구 요청 더미 데이터 ---
-    const MOCK_REQUESTS = [
-        { id: 1, name: 'UserA', userId: 'userA_id', type: 'received' },
-        { id: 2, name: 'UserB', userId: 'userB_id', type: 'received' }
+    let MOCK_FRIENDS = [
+        { id: 101, name: 'User1', userId: 'user1_id' },
+        { id: 102, name: 'User2', userId: 'user2_id' },
+        { id: 103, name: '축구왕', userId: 'soccerKing_id' }
+    ];
+    let MOCK_REQUESTS = [
+        { id: 1, name: 'RequestUserA', userId: 'requestA_id', type: 'received' },
+        { id: 2, name: 'RequestUserB', userId: 'requestB_id', type: 'received' }
     ];
 
-    // --- 친구 요청 렌더링 함수 ---
+    function handleRequestItemClick(event) {
+        const clickedItem = event.currentTarget;
+        if (event.target.closest('.request-actions')) {
+            return;
+        }
+        const container = clickedItem.parentElement;
+        container.querySelectorAll('.friend-request-item.active').forEach(item => {
+            if (item !== clickedItem) {
+                item.classList.remove('active');
+            }
+        });
+        clickedItem.classList.toggle('active');
+    }
+
+    function renderFriendList() {
+        const listContainer = document.getElementById('friend-list');
+        const countDisplay = document.getElementById('friend-count-display');
+        const messageContainer = document.getElementById('no-friends-message');
+        const searchInput = document.getElementById('friend-list-search-input') ? document.getElementById('friend-list-search-input').value.toLowerCase() : '';
+
+        listContainer.innerHTML = '';
+        const filteredFriends = MOCK_FRIENDS.filter(f => f.name.toLowerCase().includes(searchInput) || f.userId.toLowerCase().includes(searchInput));
+
+        if (countDisplay) countDisplay.textContent = filteredFriends.length;
+
+        if (filteredFriends.length === 0) {
+            if(messageContainer) messageContainer.style.display = 'block';
+            return;
+        }
+        if(messageContainer) messageContainer.style.display = 'none';
+
+        filteredFriends.forEach(friend => {
+            const li = document.createElement('li');
+            li.dataset.friendId = friend.id;
+            li.innerHTML = `
+                <strong>${friend.name}</strong> (${friend.userId})
+                <div class="action-buttons">
+                    <button class="btn-chat" onclick="event.stopPropagation(); alert('${friend.name}님과 1:1 채팅 시작');">채팅</button>
+                    <button class="btn-delete" onclick="event.stopPropagation(); deleteFriend(${friend.id}, '${friend.name}');">삭제</button>
+                </div>
+            `;
+            li.onclick = () => {
+                listContainer.querySelectorAll('li').forEach(item => item.classList.remove('active'));
+                li.classList.add('active');
+            };
+            listContainer.appendChild(li);
+        });
+    }
+
+    function searchFriendList() {
+        renderFriendList();
+    }
+
+    function deleteFriend(id, name) {
+        if (confirm(`${name}님을 친구 목록에서 삭제하시겠습니까?`)) {
+            MOCK_FRIENDS = MOCK_FRIENDS.filter(f => f.id !== id);
+            renderFriendList();
+            alert(`${name}님이 삭제되었습니다.`);
+        }
+    }
+
     function renderFriendRequests() {
         const listContainer = document.getElementById('friend-add-search-results');
         const messageContainer = document.getElementById('friend-request-message');
@@ -807,79 +1230,59 @@
         const receivedRequests = MOCK_REQUESTS.filter(r => r.type === 'received');
 
         if (receivedRequests.length === 0) {
-            messageContainer.style.display = 'block';
+            if(messageContainer) messageContainer.style.display = 'block';
             return;
         }
-        messageContainer.style.display = 'none';
+        if(messageContainer) messageContainer.style.display = 'none';
 
         receivedRequests.forEach(request => {
-            const item = document.createElement('div');
-            item.className = 'wireframe-list-item';
-            item.dataset.requestId = request.id;
+            const li = document.createElement('li');
+            li.className = 'friend-request-item';
+            li.dataset.requestId = request.id;
 
-            // ⭐ 1. 항목 클릭 시 토글 이벤트 연결 ⭐
-            item.onclick = handleRequestItemClick;
+            li.onclick = handleRequestItemClick;
 
-            item.innerHTML = `
-                <span class="wireframe-user-name">${request.name} (${request.userId})</span>
-
-                <div class="wireframe-actions">
-                    <button class="btn-wire-accept" onclick="handleRequestAction(${request.id}, 'accept', event)"><i class="fas fa-check"></i></button>
-                    <button class="btn-wire-reject" onclick="handleRequestAction(${request.id}, 'reject', event)"><i class="fas fa-times"></i></button>
+            li.innerHTML = `
+                <span>${request.name} (${request.userId})</span>
+                <div class="request-actions">
+                    <button class="btn-accept" onclick="event.stopPropagation(); handleFriendRequest(${request.id}, '${request.name}', 'accept');"><i class="fas fa-check"></i> 수락</button>
+                    <button class="btn-reject" onclick="event.stopPropagation(); handleFriendRequest(${request.id}, '${request.name}', 'reject');"><i class="fas fa-times"></i> 거절</button>
                 </div>
             `;
-            listContainer.appendChild(item);
+            listContainer.appendChild(li);
         });
     }
 
-    // ⭐⭐⭐ 요청 항목 클릭 시 버튼 토글 함수 ⭐⭐⭐
-    function handleRequestItemClick(event) {
-        const clickedItem = event.currentTarget; // wireframe-list-item
-
-        // 버튼 자체를 클릭한 경우, 토글을 막고 액션만 실행
-        if (event.target.closest('.wireframe-actions')) {
-            return;
-        }
-
-        const container = clickedItem.parentElement;
-
-        // 다른 활성 항목 비활성화
-        container.querySelectorAll('.wireframe-list-item.active').forEach(item => {
-            if (item !== clickedItem) {
-                item.classList.remove('active');
-            }
-        });
-
-        // 현재 항목 활성화/비활성화 토글
-        clickedItem.classList.toggle('active');
-    }
-    // --- ⭐⭐⭐ 요청 항목 클릭 시 버튼 토글 함수 끝 ⭐⭐⭐
-
-    // 친구 요청 액션 핸들러 (수락/거절)
-    function handleRequestAction(requestId, action, event) {
-        event.stopPropagation(); // 부모 요소로의 이벤트 전파 방지 (토글 막기)
-
+    function handleFriendRequest(id, name, action) {
+        MOCK_REQUESTS = MOCK_REQUESTS.filter(r => r.id !== id);
         if (action === 'accept') {
-            alert(`요청 ID ${requestId} 수락 (더미)`);
-            const acceptedRequest = MOCK_REQUESTS.find(r => r.id === requestId);
-            if (acceptedRequest) {
-                myFriends.push({ nickname: acceptedRequest.name, username: acceptedRequest.userId, status: 'offline' });
-            }
-        } else if (action === 'reject') {
-            alert(`요청 ID ${requestId} 거절 (더미)`);
-        }
-
-        // UI 갱신: 더미 데이터에서 요청 제거 후 다시 렌더링
-        const index = MOCK_REQUESTS.findIndex(r => r.id === requestId);
-        if (index !== -1) {
-            MOCK_REQUESTS.splice(index, 1);
+            MOCK_FRIENDS.push({ id: id, name: name, userId: name.toLowerCase() + '_id' });
+            alert(`${name}님의 친구 요청을 수락했습니다!`);
+        } else {
+            alert(`${name}님의 친구 요청을 거절했습니다.`);
         }
         renderFriendRequests();
-        renderFriendList(); // 친구 목록도 갱신될 수 있도록 호출 (수락 시)
+        renderFriendList();
     }
 
+    const subTabButtons = document.querySelectorAll('.sub-tabs .sub-tab-btn');
+    const subTabContents = document.querySelectorAll('.sub-tab-content');
+    subTabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const targetTab = button.getAttribute('data-sub-tab');
+            subTabButtons.forEach(btn => btn.classList.remove('active'));
+            subTabContents.forEach(content => content.classList.remove('active'));
+            button.classList.add('active');
+            document.getElementById(targetTab).classList.add('active');
 
-    // --- 메인 탭 전환 (친구 관리 탭 클릭 시 서브 탭 초기화 포함) ---
+            if (targetTab === 'sub-tab-friend-add') {
+                renderFriendRequests();
+            } else if (targetTab === 'sub-tab-friend-list') {
+                renderFriendList();
+            }
+        });
+    });
+
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
     tabButtons.forEach(button => {
@@ -890,215 +1293,53 @@
             button.classList.add('active');
             document.getElementById(targetTab).classList.add('active');
 
-            if (targetTab === 'tab-friends') {
-                // 친구 관리 탭 선택 시, '친구 목록' 탭을 기본 활성화
-                const listTab = document.querySelector('.sub-tab-btn[data-sub-tab="sub-tab-friend-list"]');
-                if (listTab && !listTab.classList.contains('active')) {
-                    listTab.click(); // 강제로 목록 탭 클릭
-                } else {
-                    renderFriendList(); // 기본 목록 렌더링
-                }
-            }
+            fixedDetailWindow.style.display = 'none'; // 탭 전환 시 상세 창 닫기
         });
     });
 
-    // --- 친구 관리 서브 탭 로직 ---
-    const subTabButtons = document.querySelectorAll('.sub-tab-btn');
-    const subTabContents = document.querySelectorAll('.sub-tab-content');
 
-    subTabButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const targetSubTab = button.getAttribute('data-sub-tab');
-            subTabButtons.forEach(btn => btn.classList.remove('active'));
-            subTabContents.forEach(content => content.classList.remove('active'));
-            button.classList.add('active');
-            document.getElementById(targetSubTab).classList.add('active');
-
-            if (targetSubTab === 'sub-tab-friend-list') {
-                renderFriendList();
-                document.getElementById('friend-list-search-input').value = '';
-            } else if (targetSubTab === 'sub-tab-friend-add') {
-                // '친구 요청' 탭이 활성화될 때 요청 목록 렌더링
-                renderFriendRequests();
-                // document.querySelector('.friend-add-actions').style.display = 'none'; // 친구 추가 탭용 액션 숨김
-            }
-        });
-    });
-
-    // 더미 친구 데이터 (초기 목록)
-    let myFriends = [
-        { nickname: 'User1', username: 'user1_id', status: 'online' },
-        { nickname: 'User2', username: 'user2_id', status: 'offline' },
-        { nickname: '축구왕', username: 'soccerKing_id', status: 'online' }
-    ];
-
-    // 친구 목록 탭 - 친구 목록 렌더링 (로직 유지)
-    function renderFriendList(filterQuery = '') {
-        const friendListEl = document.getElementById('friend-list');
-        const friendCountDisplay = document.getElementById('friend-count-display');
-        const noFriendsMessage = document.getElementById('no-friends-message');
-
-        friendListEl.innerHTML = '';
-
-        const filteredFriends = myFriends.filter(friend =>
-            friend.nickname.toLowerCase().includes(filterQuery.toLowerCase()) || friend.username.toLowerCase().includes(filterQuery.toLowerCase())
-        );
-
-        if (filteredFriends.length === 0) {
-            noFriendsMessage.style.display = 'block';
-            friendCountDisplay.textContent = myFriends.length;
-            return;
-        } else {
-            noFriendsMessage.style.display = 'none';
-        }
-
-        filteredFriends.forEach(friend => {
-            const li = document.createElement('li');
-            li.dataset.username = friend.username;
-
-            li.innerHTML = `
-                <strong>${friend.nickname} (${friend.username})</strong>
-                <div class="action-buttons">
-                    <button class="btn-chat" onclick="startOneOnOneChat(event, '${friend.username}')">1:1 채팅</button>
-                    <button class="btn-delete" onclick="removeFriend(event, '${friend.username}')">친구 삭제</button>
-                </div>
-            `;
-
-            li.addEventListener('click', function(e) {
-                if (e.target.closest('.action-buttons')) {
-                    e.stopPropagation();
-                    return;
-                }
-                document.querySelectorAll('.friend-item-list li').forEach(item => {
-                    if (item !== li) {
-                        item.classList.remove('active');
-                        const actions = item.querySelector('.action-buttons');
-                        if (actions) { actions.style.display = 'none'; }
-                    }
-                });
-                li.classList.toggle('active');
-                const actions = li.querySelector('.action-buttons');
-                if (actions) {
-                    actions.style.display = li.classList.contains('active') ? 'flex' : 'none';
-                }
-            });
-
-            friendListEl.appendChild(li);
-        });
-        friendCountDisplay.textContent = myFriends.length;
-    }
-
-    // 친구 목록 탭 - 친구 검색 (필터링) (로직 유지)
-    function searchFriendList() {
-        const query = document.getElementById('friend-list-search-input').value.trim();
-        renderFriendList(query);
-    }
-
-    // 친구 목록 탭 - 1:1 채팅 시작 (더미) (로직 유지)
-    function startOneOnOneChat(event, username) {
-        event.stopPropagation();
-        alert(`${username}님과 1:1 채팅을 시작합니다! (채팅 페이지로 이동)`);
-        window.location.href = `/chat?user=${username}`;
-    }
-
-    // 친구 목록 탭 - 친구 삭제 (로직 유지)
-    function removeFriend(event, username) {
-        event.stopPropagation();
-        if (confirm(`정말로 ${username}님을 친구 목록에서 삭제하시겠습니까?`)) {
-            myFriends = myFriends.filter(friend => friend.username !== username);
-            renderFriendList();
-            alert(`${username}님을 친구 목록에서 삭제했습니다.`);
-        }
-    }
-
-    // 친구 추가/검색/삭제 관련 로직은 사용되지 않으므로 유지
-    const MOCK_SEARCH_ADD_FRIENDS = [
-        { nickname: '새로운친구1', username: 'newFriend1_id', location: '서울 강남구' },
-        { nickname: '새로운친구2', username: 'newFriend2_id', location: '경기 수원시' },
-        { nickname: '테스트맨', username: 'testMan_id', location: '부산 해운대구' },
-        { nickname: '개발자', username: 'dev_id', location: '제주도' },
-        { nickname: '풋살매니아', username: 'futsal_man', location: '인천 연수구' },
-    ];
-    let currentAddSearchResults = [];
-
-    function searchNewFriends() {
-        alert("친구 요청 탭이므로 검색 기능은 비활성화됩니다. (더미)");
-    }
-
-    function removeSearchResultItem(button, usernameToRemove) {
-        button.closest('.friend-add-result-item').remove();
-        currentAddSearchResults = currentAddSearchResults.filter(user => user.username !== usernameToRemove);
-
-        if (document.getElementById('friend-add-search-results').children.length === 0) {
-            document.querySelector('.friend-add-actions').style.display = 'none';
-        }
-    }
-
-    function addSelectedFriends() {
-        const checkboxes = document.querySelectorAll('#friend-add-search-results input[type="checkbox"]:checked');
-        if (checkboxes.length === 0) {
-            alert('추가할 친구를 선택해 주세요.');
-            return;
-        }
-
-        const addedFriendNames = [];
-        checkboxes.forEach(checkbox => {
-            const username = checkbox.value;
-            const friendToAdd = MOCK_SEARCH_ADD_FRIENDS.find(f => f.username === username);
-            if (friendToAdd && !myFriends.some(f => f.username === username)) {
-                myFriends.push({ ...friendToAdd, status: 'offline' });
-                addedFriendNames.push(friendToAdd.nickname);
-            }
-        });
-
-        if (addedFriendNames.length > 0) {
-            alert(`${addedFriendNames.join(', ')}님에게 친구 요청을 보냈습니다!`);
-            document.querySelector('.sub-tab-btn[data-sub-tab="sub-tab-friend-list"]').click();
-        } else {
-            alert('이미 친구이거나 추가할 친구가 없습니다.');
-        }
-
-        document.getElementById('friend-add-search-results').innerHTML = '<p style="color: #999;">친구 요청 결과가 없습니다.</p>';
-        document.querySelector('.friend-add-actions').style.display = 'none';
-    }
-
-
-    // --- DOMContentLoaded 초기화 로직 (유지 및 수정) ---
     document.addEventListener('DOMContentLoaded', async () => {
         const accessToken = localStorage.getItem('accessToken');
         if (!accessToken) {
             alert("로그인이 필요한 페이지입니다.");
             window.location.href = '/login';
         } else {
-            profileMenuToggle.style.display = 'block';
+            if (profileMenuToggle) profileMenuToggle.style.display = 'block';
             await checkPendingReviews();
             await checkUpcomingSchedules();
             updateGlobalBadge();
             fetchMyInfo(accessToken);
 
-            const calendarGrid = document.getElementById('calendar-days-grid');
-            if (calendarGrid) {
+            if (daysGrid) {
                 renderCalendar();
+                fixedDetailWindow.style.display = 'none'; // 초기 로드 시 캘린더 상세창 닫기
             }
 
-            // 페이지 로드 시 '회원정보' 탭을 기본으로 설정
             const urlParams = new URLSearchParams(window.location.search);
             const mainTab = urlParams.get('tab');
             const subTab = urlParams.get('subtab');
 
             if (mainTab && mainTab === 'friends') {
-                document.querySelector('.tab-btn[data-tab="tab-friends"]').click();
+                const friendsTabBtn = document.querySelector('.tab-btn[data-tab="tab-friends"]');
+                if (friendsTabBtn) friendsTabBtn.click();
                 if (subTab && subTab === 'add') {
-                    document.querySelector('.sub-tab-btn[data-sub-tab="sub-tab-friend-add"]').click();
+                    const friendAddSubTabBtn = document.querySelector('.sub-tab-btn[data-sub-tab="sub-tab-friend-add"]');
+                    if (friendAddSubTabBtn) friendAddSubTabBtn.click();
                 } else {
-                    document.querySelector('.sub-tab-btn[data-sub-tab="sub-tab-friend-list"]').click();
+                    const friendListSubTabBtn = document.querySelector('.sub-tab-btn[data-sub-tab="sub-tab-friend-list"]');
+                    if (friendListSubTabBtn) friendListSubTabBtn.click();
                 }
-            } else {
-                // 기본 '회원정보' 탭 활성화 (수정된 로직)
-                document.querySelector('.tab-btn[data-tab="tab-info"]').classList.add('active');
-                document.getElementById('tab-info').classList.add('active');
-                renderFriendList();
+            } else if (mainTab && mainTab === 'calendar') {
+                const calendarTabBtn = document.querySelector('.tab-btn[data-tab="tab-calendar"]');
+                if (calendarTabBtn) calendarTabBtn.click();
             }
+            else {
+                const infoTabBtn = document.querySelector('.tab-btn[data-tab="tab-info"]');
+                const infoTabContent = document.getElementById('tab-info');
+                if (infoTabBtn) infoTabBtn.classList.add('active');
+                if (infoTabContent) infoTabContent.classList.add('active');
+            }
+            renderFriendList();
         }
     });
 
