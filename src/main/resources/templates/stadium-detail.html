@@ -1109,6 +1109,16 @@
                 }
             });
         }
+        window.addEventListener('pageshow', (event) => {
+            // stadiumId 다시 구하기
+            const stadiumId = new URLSearchParams(window.location.search).get('id') || '1';
+            const matchDateFilterInput = document.getElementById('match-date-filter');
+
+            if (matchDateFilterInput && matchDateFilterInput.value) {
+                // localStorage의 최신 match_schedules 기준으로 다시 렌더링
+                renderMatchList(stadiumId, matchDateFilterInput.value);
+            }
+        });
     });
 </script>
 
