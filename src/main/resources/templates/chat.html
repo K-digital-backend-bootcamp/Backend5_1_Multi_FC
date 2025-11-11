@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <style>
-        /* [기존 스타일 유지] */
         .chat-main {
             padding-top: 70px;
             display: flex;
@@ -809,6 +808,48 @@
         ]
     };
 
+    // ✅ 채팅방 리스트 저장/복원용 Key & 함수들
+    const ROOM_STORAGE_KEY = 'chat_rooms_v1';
+
+    function saveRoomsToStorage() {
+        try {
+            localStorage.setItem(ROOM_STORAGE_KEY, JSON.stringify(MOCK_ROOMS));
+        } catch (e) {
+            console.error('채팅방 정보 저장 중 오류:', e);
+        }
+    }
+
+    function loadRoomsFromStorage() {
+        try {
+            const raw = localStorage.getItem(ROOM_STORAGE_KEY);
+            if (!raw) return;
+
+            const parsed = JSON.parse(raw);
+
+            if (parsed.group && Array.isArray(parsed.group)) {
+                MOCK_ROOMS.group = parsed.group;
+            }
+            if (parsed['one-on-one'] && Array.isArray(parsed['one-on-one'])) {
+                MOCK_ROOMS['one-on-one'] = parsed['one-on-one'];
+            }
+
+            // 저장된 방들 기준으로 nextChatRoomId 조정
+            let maxId = 0;
+            Object.values(MOCK_ROOMS).forEach(roomArr => {
+                roomArr.forEach(r => {
+                    if (typeof r.id === 'number' && r.id > maxId) {
+                        maxId = r.id;
+                    }
+                });
+            });
+            if (maxId >= 300) {
+                nextChatRoomId = maxId + 1;
+            }
+        } catch (e) {
+            console.error('채팅방 정보 복원 중 오류:', e);
+        }
+    }
+
     const MOCK_HISTORY = {
         1: [
             { sender: 'UserA', content: '경기 장소 혹시 변경된 건 없나요?', timestamp: '오전 10:00' },
@@ -989,7 +1030,7 @@
             return;
         }
 
-        rooms.forEach((room, index) => {
+        rooms.forEach((room) => {
             const isActive = room.id === currentRoomId;
             const item = document.createElement('div');
             item.className = 'room-item' + (isActive ? ' active' : '');
@@ -1052,6 +1093,10 @@
             if (currentRoomId === roomIdToDelete) {
                 currentRoomId = null;
             }
+
+            // ✅ 삭제 후 저장
+            saveRoomsToStorage();
+
             loadRoomList(currentChatType);
         }
     }
@@ -1073,7 +1118,7 @@
         const activeItem = document.querySelector('.room-item.active');
         if (activeItem) {
             activeItem.classList.remove('active');
-            if(participantSidebar.classList.contains('open')) {
+            if (participantSidebar.classList.contains('open')) {
                 openParticipantList(false);
             }
         }
@@ -1084,7 +1129,7 @@
         if (newActiveItem) {
             newActiveItem.classList.add('active');
             const badge = newActiveItem.querySelector('.unread-badge');
-            if(badge) badge.remove();
+            if (badge) badge.remove();
             room.unreadCount = 0;
         }
 
@@ -1319,6 +1364,9 @@
             timestamp: new Date().toLocaleTimeString('ko-KR')
         }];
 
+        // ✅ 새 방 생성 후 저장
+        saveRoomsToStorage();
+
         openNewChatModal(false);
 
         chatTypeTabs.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
@@ -1458,6 +1506,10 @@
 
         currentRoom.participants.push(...Array.from(selectedInvitees).map(name => name));
         loadParticipantList(currentRoomId);
+
+        // ✅ 참여자 변경 후 저장
+        saveRoomsToStorage();
+
         openInviteModal(false);
     }
 
@@ -1492,9 +1544,11 @@
             timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
         }];
 
+        // ✅ 경기 마감으로 생성된 방도 저장
+        saveRoomsToStorage();
+
         chatTypeTabs.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
         const groupTab = document.querySelector('[data-type="group"]');
-        if (groupTab) groupTab.addClass = 'active';
         if (groupTab) groupTab.classList.add('active');
 
         currentChatType = 'group';
@@ -1540,6 +1594,9 @@
             window.location.href = '/login';
             return;
         }
+
+        // ✅ localStorage에 저장된 채팅방 먼저 복원
+        loadRoomsFromStorage();
 
         const defaultType = 'group';
         let activeTab = document.querySelector(`[data-type="${defaultType}"]`);
