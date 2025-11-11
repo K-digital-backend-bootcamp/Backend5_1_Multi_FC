@@ -453,15 +453,6 @@
     let isParticipating = false;
     let isHost = false;
 
-    // ✅ 리스트에서 쓰는 주최자 이름(match.creator)을 가져오는 함수
-    function getHostNicknameFromMatch() {
-        const matchId = getMatchId();
-        if (!matchId) return null;
-        const matches = JSON.parse(localStorage.getItem('match_schedules') || '[]');
-        const match = matches.find(m => String(m.id) === String(matchId));
-        return match && match.creator ? match.creator : null;
-    }
-
     // ✅ 참여 여부를 로컬스토리지에 저장/조회
     function getParticipationState() {
         const matchId = getMatchId();
@@ -487,15 +478,6 @@
     let currentParticipants = [];
 
     function buildInitialParticipants() {
-        // ✅ 여기서 Host 닉네임을 match.creator 값으로 덮어쓰기
-        const hostNickname = getHostNicknameFromMatch();
-        if (hostNickname) {
-            const host = MOCK_PARTICIPANTS.find(p => p.role === 'Host');
-            if (host) {
-                host.nickname = hostNickname;
-            }
-        }
-
         // 기본: 나를 뺀 더미 참가자들
         currentParticipants = MOCK_PARTICIPANTS.filter(p => p.id !== CURRENT_USER_ID);
 
@@ -921,6 +903,7 @@
                     localStorage.setItem("calendarUpdated", "true");
 
                     alert("✅ 참여가 취소되었습니다.");
+                    // ❌ 더 이상 캘린더 페이지로 이동하지 않음
                 }
             });
         }
@@ -937,11 +920,12 @@
 
         loadMatchDetailFromLocal();
 
-        // ✅ 로컬스토리지 기반으로 처음 참가자 상태 구성 + 주최자 이름 동기화
+        // ✅ 로컬스토리지 기반으로 처음 참가자 상태 구성
         buildInitialParticipants();
         renderParticipantList();
     });
 </script>
+
 
 
 </body>
