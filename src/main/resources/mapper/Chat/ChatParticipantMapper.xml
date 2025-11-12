@@ -15,10 +15,21 @@
         where chat_room_id = #{roomId}
     </select>
 
+    <select id="findByUserIdAndRoomId" resultMap="ChatParticipantResultMap">
+        select *
+        from Chat_Participant
+        where user_id=#{userId} and chat_room_id = #{roomId}
+    </select>
+
     <insert id="insertParticipant" parameterType="com.multi.backend5_1_multi_fc.chat.dto.ChatParticipantDto" useGeneratedKeys="true" keyProperty="chatPartId">
         insert into Chat_Participant (chat_room_id, user_id, joined_at)
         values (#{roomId}, #{userId}, now())
     </insert>
+    
+    <delete id="deleteByUserIdAndRoomId">
+        delete from Chat_participant
+        where user_id = #{userId} and chat_room_id = #{roomId}
+    </delete>
 
     <delete id="deleteParticipant" parameterType="long">
         delete from Chat_Participant
