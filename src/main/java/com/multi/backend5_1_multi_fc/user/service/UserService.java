@@ -33,7 +33,7 @@ public class UserService {
 
         // 2. S3에 파일 업로드
         String imageUrl = s3Service.uploadFile(profileImage);
-        userDto.setProfile_image(imageUrl); // DTO에 S3 URL 저장
+        userDto.setProfileImage(imageUrl); // DTO에 S3 URL 저장
 
         // 3. 비밀번호 암호화
         userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));

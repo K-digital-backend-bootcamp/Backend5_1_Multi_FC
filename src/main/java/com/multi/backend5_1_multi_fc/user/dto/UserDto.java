@@ -5,11 +5,12 @@ import java.sql.Timestamp;
 
 @Data
 public class UserDto {
-    private Long user_id;          // PK
+    private Long userId;          // PK
+    private Long LastCheckedCommentId;
     private String username;       // 아이디 (Unique)
     private String password;
     private String nickname;       // 닉네임
-    private String profile_image;
+    private String profileImage;
     private String address;
     private String email;
 
@@ -18,10 +19,10 @@ public class UserDto {
     private String position;
     private String gender;
 
-    private Integer login_fail_count;
-    private Timestamp locked_until;
-    private Timestamp created_at;
-    private Timestamp updated_at;
-    private String reset_code;
-    private Timestamp reset_code_expires;
+    private Integer loginFailCount;
+    private Timestamp lockedUntil;
+    private Timestamp createdAt;
+    private Timestamp updatedAt;
+    private String resetCode;
+    private Timestamp resetCodeExpires;
 }

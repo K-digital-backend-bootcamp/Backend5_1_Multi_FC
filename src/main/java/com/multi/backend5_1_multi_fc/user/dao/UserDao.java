@@ -25,7 +25,7 @@ public class UserDao {
                 user.getPosition(),
                 user.getGender(),
                 user.getAddress(),
-                user.getProfile_image()
+                user.getProfileImage()
         );
     }
 
@@ -48,5 +48,59 @@ public class UserDao {
     public int countByNickname(String nickname) {
         String sql = "SELECT COUNT(*) FROM User WHERE nickname = ?";
         return jdbcTemplate.queryForObject(sql, Integer.class, nickname);
+    }
+
+    // user_id로 사용자 조회
+    public UserDto findByUserId(Long userId) {
+        String sql = "SELECT * FROM User WHERE user_id = ?";
+
+        return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+            UserDto user = new UserDto();
+            user.setUserId(rs.getLong("user_id"));
+            user.setUsername(rs.getString("username"));
+            user.setPassword(rs.getString("password"));
+            user.setNickname(rs.getString("nickname"));
+            user.setProfileImage(rs.getString("profile_image"));
+            user.setAddress(rs.getString("address"));
+            user.setEmail(rs.getString("email"));
+            user.setLevel(rs.getString("level"));
+            user.setPosition(rs.getString("position"));
+            user.setGender(rs.getString("gender"));
+            user.setLoginFailCount(rs.getInt("login_fail_count"));
+            user.setLockedUntil(rs.getTimestamp("locked_until"));
+            user.setCreatedAt(rs.getTimestamp("created_at"));
+            user.setUpdatedAt(rs.getTimestamp("updated_at"));
+            user.setResetCode(rs.getString("reset_code"));
+            user.setResetCodeExpires(rs.getTimestamp("reset_code_expires"));
+            user.setLastCheckedCommentId(rs.getLong("last_checked_comment_id"));
+            return user;
+        }, userId);
+    }
+
+    // username으로 사용자 조회
+    public UserDto findByUsername(String username) {
+        String sql = "SELECT * FROM User WHERE username = ?";
+
+        return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+            UserDto user = new UserDto();
+            user.setUserId(rs.getLong("user_id"));
+            user.setUsername(rs.getString("username"));
+            user.setPassword(rs.getString("password"));
+            user.setNickname(rs.getString("nickname"));
+            user.setProfileImage(rs.getString("profile_image"));
+            user.setAddress(rs.getString("address"));
+            user.setEmail(rs.getString("email"));
+            user.setLevel(rs.getString("level"));
+            user.setPosition(rs.getString("position"));
+            user.setGender(rs.getString("gender"));
+            user.setLoginFailCount(rs.getInt("login_fail_count"));
+            user.setLockedUntil(rs.getTimestamp("locked_until"));
+            user.setCreatedAt(rs.getTimestamp("created_at"));
+            user.setUpdatedAt(rs.getTimestamp("updated_at"));
+            user.setResetCode(rs.getString("reset_code"));
+            user.setResetCodeExpires(rs.getTimestamp("reset_code_expires"));
+            user.setLastCheckedCommentId(rs.getLong("last_checked_comment_id"));
+            return user;
+        }, username);
     }
 }
