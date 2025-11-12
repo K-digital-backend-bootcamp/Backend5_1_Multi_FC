@@ -1,3 +1,5 @@
+stadium-detail.html
+
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -453,7 +455,6 @@
             <li><a href="/fields" class="active"><i class="fas fa-search"></i> 구장검색</a></li>
             <li><a href="/community"><i class="fas fa-users"></i> 커뮤니티</a></li>
             <li id="nav-chat-link-li"><a href="/chat" id="nav-chat-link"><i class="fas fa-comments"></i> 실시간채팅</a></li>
-            <li><a href="/schedule"><i class="fas fa-calendar-alt"></i> 일정</a></li>
         </ul>
     </nav>
 </header>
@@ -876,6 +877,7 @@
     }
 
     // 경기 생성 제출 로직
+    // 경기 생성 제출 로직
     function submitMatchForm() {
         const stadiumId = new URLSearchParams(window.location.search).get('id') || '1';
         const stadiumNameInput = document.getElementById('stadiumName');
@@ -927,21 +929,7 @@
         localMatchSchedules.unshift(newMatchData);
         localStorage.setItem('match_schedules', JSON.stringify(localMatchSchedules));
 
-        // 개인 일정에도 추가
-        const newCalendarEvent = {
-            id: NEW_MATCH_ID,
-            title: `${stadiumNameInput.value} 경기`,
-            date: matchDate,
-            time: `${startTime} ~ ${endTime}`,
-            type: "match",
-            matchId: NEW_MATCH_ID,
-            location: stadiumNameInput.value
-        };
-        let personalSchedules = JSON.parse(localStorage.getItem('personalSchedules')) || [];
-        personalSchedules.push(newCalendarEvent);
-        localStorage.setItem('personalSchedules', JSON.stringify(personalSchedules));
-
-        localStorage.setItem('calendarUpdated', 'true');
+        // ❌ 여기 있던 personalSchedules 추가 코드는 전부 삭제!
 
         alert(`'${newMatchData.location}' 경기가 성공적으로 개설되었습니다!`);
         openMatchModal(false);
@@ -954,6 +942,14 @@
             renderMatchList(stadiumId, matchDateFilterInput.value);
         }
     }
+
+
+    // ✅ 검색 페이지와 공유할 더미 구장 데이터
+    const MOCK_STADIUMS = [
+        { id: 1, name: "강남 풋살 아레나", address: "서울 강남구 테헤란로 123", size: "6 vs 6", fee: "50,000원/시간", contact: "02-1234-5678" },
+        { id: 2, name: "수원 월드컵 구장",  address: "경기 수원시 팔달구 100",      size: "5 vs 5", fee: "45,000원/시간", contact: "031-9876-5432" },
+        { id: 3, name: "인천 문학 미니구장", address: "인천 연수구 동춘동 50",       size: "5 vs 5", fee: "40,000원/시간", contact: "032-1111-2222" }
+    ];
 
     // DOMContentLoaded
     document.addEventListener('DOMContentLoaded', () => {
@@ -985,20 +981,41 @@
         }
         activateTab('match');
 
-        const DUMMY_DATA = {
-            name: "강남 풋살 아레나",
-            address: "서울 강남구 테헤란로 123",
-            contact: "02-1234-5678",
-            fee: "50,000원/시간",
-            size: "5 vs 5"
-        };
+        // 🔽🔽 여기부터 네가 요청한 부분 🔽🔽
+        const nameEl    = document.getElementById('stadium-name');
+        const addrEl    = document.getElementById('stadium-address');
+        const contactEl = document.getElementById('stadium-contact');
+        const feeEl     = document.getElementById('stadium-fee');
+        const sizeEl    = document.getElementById('stadium-size');
 
-        document.getElementById('stadium-name').textContent = `${DUMMY_DATA.name} (ID: ${stadiumId})`;
-        document.getElementById('stadium-address').textContent = DUMMY_DATA.address;
-        document.getElementById('stadium-contact').textContent = DUMMY_DATA.contact;
-        document.getElementById('stadium-fee').textContent = DUMMY_DATA.fee;
-        document.getElementById('stadium-size').textContent = DUMMY_DATA.size;
+        // stadiumId로 더미 데이터에서 찾기
+        const stadium = MOCK_STADIUMS.find(s => String(s.id) === String(stadiumId));
 
+        if (stadium) {
+            // ✅ 검색 결과에서 클릭한 구장 이름/정보 사용
+            if (nameEl)    nameEl.textContent    = `${stadium.name} (ID: ${stadiumId})`;
+            if (addrEl)    addrEl.textContent    = stadium.address;
+            if (contactEl) contactEl.textContent = stadium.contact;
+            if (feeEl)     feeEl.textContent     = stadium.fee;
+            if (sizeEl)    sizeEl.textContent    = stadium.size;
+        } else {
+            // ❗ 혹시 못 찾았을 때를 위해 기본값(fallback)
+            const DUMMY_DATA = {
+                name: "알 수 없는 구장",
+                address: "주소 정보 없음",
+                contact: "-",
+                fee: "-",
+                size: "-"
+            };
+            if (nameEl)    nameEl.textContent    = `${DUMMY_DATA.name} (ID: ${stadiumId})`;
+            if (addrEl)    addrEl.textContent    = DUMMY_DATA.address;
+            if (contactEl) contactEl.textContent = DUMMY_DATA.contact;
+            if (feeEl)     feeEl.textContent     = DUMMY_DATA.fee;
+            if (sizeEl)    sizeEl.textContent    = DUMMY_DATA.size;
+        }
+        // 🔼🔼 여기까지 수정 포인트 🔼🔼
+
+        // 리뷰 데이터 세팅
         let baseReviews = generateMockReviews();
         const localReviews = JSON.parse(localStorage.getItem(`reviews_${stadiumId}`)) || [];
         const allReviews = [...localReviews, ...baseReviews];
@@ -1011,6 +1028,7 @@
         MOCK_ALL_REVIEWS = uniqueReviews;
         renderReviews(currentPage);
 
+        // 버튼 링크에 stadiumId 반영
         document.getElementById('btn-schedule').href = `/schedule?stadiumId=${stadiumId}`;
         document.getElementById('btn-create-match').href = `/match/create?stadiumId=${stadiumId}`;
 
@@ -1019,9 +1037,13 @@
             document.getElementById('profile-menu-toggle').style.display = 'block';
         }
 
+        // stadium-detail.html 스크립트의 DOMContentLoaded 외부 (혹은 내부)
+// ...
         const btnCreateMatch = document.getElementById('btn-create-match');
-        const DEFAULT_USER = "로그인 사용자";
+// ❗❗❗ 이 부분의 DEFAULT_USER 정의를 수정합니다 ❗❗❗
+        const DEFAULT_USER = localStorage.getItem('userNickname') || "로그인 사용자";
         const hostNameInput = document.getElementById('hostName');
+// ...
         const stadiumNameInput = document.getElementById('stadiumName');
         const hiddenStadiumIdInput = document.getElementById('stadiumId');
         const matchDateInput = document.getElementById('matchDate');
@@ -1056,7 +1078,8 @@
         }
 
         function initMatchModalFields() {
-            hostNameInput.value = DEFAULT_USER;
+            // ⭐ 이 부분이 수정되어야 합니다. ⭐
+            hostNameInput.value = DEFAULT_USER; // 이제 '리얼유저' 값이 들어갑니다.
 
             const fullNameText = document.getElementById('stadium-name').textContent;
             const pureName = fullNameText.split('(ID')[0].trim();
@@ -1109,18 +1132,18 @@
                 }
             });
         }
+
         window.addEventListener('pageshow', (event) => {
-            // stadiumId 다시 구하기
             const stadiumId = new URLSearchParams(window.location.search).get('id') || '1';
             const matchDateFilterInput = document.getElementById('match-date-filter');
 
             if (matchDateFilterInput && matchDateFilterInput.value) {
-                // localStorage의 최신 match_schedules 기준으로 다시 렌더링
                 renderMatchList(stadiumId, matchDateFilterInput.value);
             }
         });
     });
 </script>
+
 
 </body>
 </html>

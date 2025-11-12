@@ -366,6 +366,21 @@ body, html {
     transition: all 0.3s ease;
     overflow: hidden;
 }
+
+.schedule-button {
+    width: 100%;
+    margin-top: 10px;
+    padding: 16px;
+    font-size: 18px;
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(108, 92, 231, 0.4), inset 0 -3px 0 rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
 .login-button:hover {
     transform: translateY(-2px);
     box-shadow: 0 12px 25px rgba(108, 92, 231, 0.5);

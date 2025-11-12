@@ -1,4 +1,4 @@
-package com.multi.backend5_1_multi_fc.chat.controller;
+package com.multi.backend5_1_multi_fc.Match.controller;
 
-public class ChatController {
+public class MatchController {
 }

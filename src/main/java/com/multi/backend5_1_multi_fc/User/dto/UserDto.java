@@ -1,22 +1,27 @@
 package com.multi.backend5_1_multi_fc.User.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.sql.Timestamp;
 
 @Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class UserDto {
-    private Long userId;
+    // --- [수정] snake_case -> camelCase ---
+
+    private Long userId;          // PK (user_id -> userId)
     private String username;
-    private String email;
     private String password;
     private String nickname;
-    private String profileImage;
-    private String lastCheckedCommentId;
+    private String profileImage;  // profile_image -> profileImage
     private String address;
+    private String email;
     private String level;
+    private String position;
+    private String gender;
+
+    private Integer loginFailCount; // login_fail_count -> loginFailCount
+    private Timestamp lockedUntil;    // locked_until -> lockedUntil
+    private Timestamp createdAt;      // created_at -> createdAt
+    private Timestamp updatedAt;      // updated_at -> updatedAt
+    private String resetCode;         // reset_code -> resetCode
+    private Timestamp resetCodeExpires; // reset_code_expires -> resetCodeExpires
 }
