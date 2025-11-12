@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.multi.backend5_1_multi_fc.schedule.mapper.ScheduleMapper">
+
+    <!-- username -> user_id 얻기 -->
+    <select id="findUserIdByUsername" parameterType="string" resultType="long">
+        SELECT user_id
+        FROM User
+        WHERE username = #{username}
+            LIMIT 1
+    </select>
+
+    <!-- 캘린더/위젯용 결과 매핑 -->
+    <resultMap id="DayItemMap" type="com.multi.backend5_1_multi_fc.schedule.dto.ScheduleDto$DayItem">
+        <id     property="scheduleId"   column="schedule_id"/>
+        <result property="title"        column="title"/>
+        <result property="scheduleType" column="schedule_type"/>
+        <result property="scheduleDate" column="schedule_date"/>
+        <result property="scheduleTime" column="schedule_time"/>
+    </resultMap>
+
+    <!-- 개인 일정 추가  -->
+    <insert id="insertPersonal" parameterType="map">
+        INSERT INTO Schedule (user_id, title, content, schedule_type, schedule_date, schedule_time)
+        VALUES (#{userId}, #{req.title}, #{req.content}, '개인 일정', #{req.scheduleDate}, #{req.scheduleTime})
+    </insert>
+
+    <!-- 개인 일정 수정 (본인 + 개인 일정만) -->
+    <update id="updatePersonal" parameterType="map">
+        UPDATE Schedule
+        SET title = #{req.title},
+            content = #{req.content},
+            schedule_date = #{req.scheduleDate},
+            schedule_time = #{req.scheduleTime}
+        WHERE schedule_id = #{scheduleId}
+          AND user_id = #{userId}
+          AND schedule_type = '개인 일정'
+    </update>
+
+    <!-- 개인 일정 삭제 -->
+    <delete id="deletePersonal" parameterType="map">
+        DELETE FROM Schedule
+        WHERE schedule_id = #{scheduleId}
+          AND user_id = #{userId}
+          AND schedule_type = '개인 일정'
+    </delete>
+
+    <!-- 달력 한칸에 날짜별 가장 빠른 2개 -->
+    <select id="findTop2ByDate" parameterType="map" resultMap="DayItemMap">
+        SELECT schedule_id, title, schedule_type, schedule_date, schedule_time
+        FROM Schedule
+        WHERE user_id = #{userId}
+          AND schedule_date = #{date}
+        ORDER BY schedule_time ASC, schedule_id ASC
+            LIMIT 2
+    </select>
+
+    <!-- 날짜 전체 목록 -->
+    <select id="findAllByDate" parameterType="map" resultMap="DayItemMap">
+        SELECT schedule_id, title, schedule_type, schedule_date, schedule_time
+        FROM Schedule
+        WHERE user_id = #{userId}
+          AND schedule_date = #{date}
+        ORDER BY schedule_time ASC, schedule_id ASC
+    </select>
+
+    <!-- 메인 오늘 현재시각 이후 + 내일부터는 하루 전체 중 빠른 순으로 5개 -->
+    <select id="findUpcoming7d" parameterType="map" resultMap="DayItemMap">
+        SELECT schedule_id, title, schedule_type, schedule_date, schedule_time
+        FROM Schedule
+        WHERE user_id = #{userId}
+          AND (
+            (schedule_date = #{today} AND schedule_time IS NULL OR schedule_time >= #{nowTime})
+                OR
+            (schedule_date BETWEEN #{tomorrow} AND #{sixDaysLater})
+            )
+        ORDER BY schedule_date ASC, schedule_time ASC, schedule_id ASC
+        LIMIT 5
+    </select>
+
+    <!-- 경기 자동 연동 (승인 + 모집완료/경기완료, 중복 방지) -->
+    <insert id="upsertApprovedMatches" parameterType="map">
+        INSERT INTO Schedule (user_id, title, schedule_type, schedule_date, schedule_time)
+        SELECT
+            mp.user_id, st.name, '경기', mr.match_date, mr.match_time
+        FROM Match_Participant mp
+                 JOIN Match_Room mr   ON mr.room_id    = mp.room_id
+                 LEFT JOIN Stadium st ON st.stadium_id = mr.stadium_id
+        WHERE mp.user_id = #{userId}
+          AND mp.status  = '승인'
+          AND mr.status = '모집완료'
+          AND mr.match_date >= CURDATE()
+          AND NOT EXISTS (
+            SELECT 1
+            FROM Schedule s
+            WHERE s.user_id       = mp.user_id
+              AND s.schedule_type = '경기'
+              AND s.schedule_date = mr.match_date
+              AND s.schedule_time = mr.match_time
+        )
+    </insert>
+
+</mapper>

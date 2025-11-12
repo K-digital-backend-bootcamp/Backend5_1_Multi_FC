@@ -24,10 +24,41 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/users/signup", "/", "/login").permitAll()
+                        .requestMatchers("/api/users/signup", "/", "/login","/schedule-test.html").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults());
         return http.build();
     }
 }
+//@Configuration
+//@EnableWebSecurity
+//public class SecurityConfig {
+//
+//    @Bean
+//    public PasswordEncoder passwordEncoder() {
+//        return new BCryptPasswordEncoder();
+//    }
+//
+//    @Bean
+//    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+//        http
+//                .csrf(AbstractHttpConfigurer::disable)
+//                .authorizeHttpRequests(auth -> auth
+//                        .requestMatchers(
+//                                "/",
+//                                "/login",
+//                                "/api/users/signup",
+//                                "/mypage-test.html",
+//                                "/api/mypage/**",      // ★ MyPage 전부 인증 없이 허용
+//                                "/schedule-test.html",
+//                                "/api/schedule/**"
+//                        ).permitAll()
+//                        .anyRequest().authenticated()
+//                )
+//                // 테스트 중에는 Basic 로그인 팝업도 꺼버리자
+//                .httpBasic(AbstractHttpConfigurer::disable);
+//
+//        return http.build();
+//    }
+//}
