@@ -12,17 +12,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.Map;
 
-/**
- * 사용자 인증 및 주요 페이지 라우팅을 담당하는 컨트롤러.
- * (모든 페이지 뷰 요청과 인증/프로필 관련 더미 API 요청을 처리합니다.)
- */
+
 @Controller
 public class AuthController {
 
-    // ===========================================
-    // 1. 메인 및 인증 페이지 (VIEW)
-    // ===========================================
 
+    // 1. 메인 및 인증 페이지 (VIEW)
     @GetMapping("/")
     public String home() { return "main"; }
 
@@ -35,10 +30,8 @@ public class AuthController {
     @GetMapping("/register")
     public String registerPage() { return "register"; }
 
-    // ===========================================
-    // 2. 인증 및 계정 관리 API (POST)
-    // ===========================================
 
+    // 2. 인증 및 계정 관리 API (POST)
     @PostMapping("/login")
     public ResponseEntity<?> handleLogin(@RequestBody Map<String, String> loginRequest) {
         String username = loginRequest.get("username");
@@ -73,10 +66,8 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "비밀번호 재설정 이메일 발송됨 (구현 필요)"));
     }
 
-    // ===========================================
-    // 3. 프로필 수정 API 및 페이지 (VIEW/POST)
-    // ===========================================
 
+    // 3. 프로필 수정 API 및 페이지 (VIEW/POST)
     @GetMapping("/profile/edit")
     public String profileEditPage() {
         return "profile-edit"; // templates/profile-edit.html
@@ -112,12 +103,8 @@ public class AuthController {
         }
     }
 
-    // ===========================================
+
     // 4. 구장, 일정, 마이페이지, 알림 (VIEW)
-    // ===========================================
-
-
-    // ⭐⭐ 추가: 팀 생성 및 관리 페이지 ⭐⭐
     @GetMapping("/team/create")
     public String teamCreatePage() {
         return "team-create"; // templates/team-create.html
@@ -128,13 +115,12 @@ public class AuthController {
         model.addAttribute("teamId", id);
         return "team-manage"; // templates/team-manage.html
     }
-    // ⭐⭐ 추가 끝 ⭐⭐
+
 
     @GetMapping("/fields")
     public String fieldsPage() {
         return "fields"; // 구장 검색 (fields.html)
     }
-
 
     // 구장 상세 페이지 매핑 (ID 기반)
     @GetMapping("/stadium/detail")
@@ -142,7 +128,6 @@ public class AuthController {
         model.addAttribute("stadiumId", id);
         return "stadium-detail"; // templates/stadium-detail.html
     }
-
 
     @GetMapping("/mypage")
     public String myPage() {
@@ -176,10 +161,7 @@ public class AuthController {
         return "write-review"; // 후기 작성 (write-review.html)
     }
 
-    // ===========================================
     // 5. 커뮤니티 및 채팅 (VIEW)
-    // ===========================================
-
     @GetMapping("/community")
     public String communityPage() {
         return "community"; // community.html
