@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MULTI FC - 프로필 수정</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+<header class="quick-menu">
+    <div class="logo"><a href="/">MULTI FC</a></div>
+    <div class="header-icons">
+        <button id="profile-menu-toggle" class="profile-icon" style="position: relative; display: none;">
+            <i class="fas fa-user-circle"></i>
+            <span id="notification-badge" class="notification-badge"></span>
+        </button>
+        <div id="profile-menu" class="user-menu">
+            <div class="user-info">
+                <strong><span id="user-menu-username">사용자</span>님</strong>
+                <p>환영합니다!</p>
+            </div>
+            <ul>
+                <li><a href="/notifications" id="nav-notifications-link"><i class="fas fa-bell"></i> 알림 목록</a></li>
+                <li><a href="/mypage"><i class="fas fa-user"></i> 마이페이지</a></li>
+                <li><a href="/profile/edit" class="active"><i class="fas fa-user-edit"></i> 프로필 수정</a></li>
+                <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
+            </ul>
+        </div>
+        <button id="menu-toggle" class="menu-toggle-btn"><i class="fas fa-bars"></i></button>
+    </div>
+    <nav id="main-menu" class="main-nav">
+        <ul>
+            <li><a href="/"><i class="fas fa-home"></i> 메인 (Home)</a></li>
+            <li><a href="/fields"><i class="fas fa-search"></i> 구장검색</a></li>
+            <li><a href="/community"><i class="fas fa-users"></i> 커뮤니티</a></li>
+            <li><a href="/chat"><i class="fas fa-comments"></i> 실시간채팅</a></li>
+            <li><a href="/login" id="nav-login-link"><i class="fas fa-sign-in-alt"></i> 로그인</a></li>
+            <li><a href="#" id="nav-logout-link"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main class="login-page-main">
+    <div class="main-wrapper">
+        <div class="main-section">
+            <div class="login-container">
+
+                <!-- 비밀번호 재확인 영역 -->
+                <div id="password-confirmation-wrapper">
+                    <h1 class="title-login">보안 확인</h1>
+                    <p style="margin-bottom: 20px; font-size: 15px; color: #555;">회원 정보를 안전하게 보호하기 위해<br>비밀번호를 다시 한 번 입력해주세요.</p>
+                    <p id="confirm-error-message" class="error-message" style="display:none;"></p>
+                    <form id="password-confirm-form">
+                        <div class="input-group">
+                            <label for="current-password-confirm">비밀번호</label>
+                            <div class="password-wrapper input-with-icon">
+                                <i class="fas fa-lock input-icon"></i>
+                                <input type="password" id="current-password-confirm" required>
+                                <i class="fas fa-eye-slash toggle-password" style="right: 15px; left: auto;"></i>
+                            </div>
+                        </div>
+                        <button type="submit" class="login-button" style="margin-top: 20px;">확인</button>
+                    </form>
+                </div>
+
+                <!-- 실제 내 정보 수정 영역 -->
+                <div id="profile-edit-wrapper" style="display:none;">
+                    <h1 class="title-login">내 정보 수정</h1>
+
+                    <p id="profile-success-message" class="info-message" style="display:none;"></p>
+                    <p id="profile-error-message" class="error-message" style="display:none;"></p>
+                    <p id="nickname-message" class="info-message" style="display:none;"></p>
+
+                    <form id="profile-update-form" enctype="multipart/form-data">
+
+                        <!-- 🔹 이메일 수정 추가 -->
+                        <div class="input-group">
+                            <label for="email">이메일</label>
+                            <input type="email"
+                                   id="email"
+                                   name="email"
+                                   placeholder="example@multi.com"
+                                   required>
+                        </div>
+
+                        <!-- 닉네임 + 중복 확인 버튼 -->
+                        <div class="input-group with-button">
+                            <div class="input-wrapper">
+                                <label for="nickname">닉네임</label>
+                                <input type="text" id="nickname" name="nickname" placeholder="새 닉네임" required>
+                            </div>
+                            <button type="button" id="check-nickname-btn" class="check-duplicate-btn">중복 확인</button>
+                        </div>
+
+                        <!-- 포지션 설정 -->
+                        <div class="input-group">
+                            <label for="position">포지션 설정</label>
+                            <select id="position" name="position" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: #f7f7f7;">
+                                <option value="ALL">전체 (ALL)</option>
+                                <option value="FIXO">픽소 (FIXO)</option>
+                                <option value="ALA">아라 (ALA)</option>
+                                <option value="PIVO">피보 (PIVO)</option>
+                                <option value="GOLEIRO">골레이로 (GOLEIRO)</option>
+                            </select>
+                        </div>
+
+                        <!-- 🔹 실력 레벨 수정 추가 -->
+                        <div class="input-group">
+                            <label for="skill-level">나의 실력 레벨</label>
+                            <select id="skill-level" name="skillLevel" required
+                                    style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: #f7f7f7;">
+                                <option value="">실력을 선택하세요</option>
+                                <option value="beginner">초급</option>
+                                <option value="intermediate">중급</option>
+                                <option value="advanced">고급</option>
+                            </select>
+                        </div>
+
+                        <!-- 활동 장소 -->
+                        <div class="input-group">
+                            <label for="location">활동 장소 설정</label>
+                            <input type="text" id="location" name="location" placeholder="예: 서울시 강남구" required>
+                        </div>
+
+                        <!-- 프로필 사진 -->
+                        <div class="input-group">
+                            <label>프로필 사진 수정</label>
+                            <img id="profile-preview" th:src="@{/images/default-profile.png}" alt="프로필 미리보기" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; border: 1px solid #ddd;">
+                            <input type="file" id="profile-pic" name="profilePic" accept="image/*">
+                        </div>
+
+                        <button type="submit" id="profile-submit-btn" class="login-button" style="margin-top: 15px;" disabled>
+                            정보 저장
+                        </button>
+                    </form>
+
+                    <h3 style="font-size: 24px; color: #2c3e50; margin-top: 40px; border-top: 1px solid #ddd; padding-top: 30px;">비밀번호 수정</h3>
+                    <p id="password-success-message" class="info-message" style="display:none;"></p>
+                    <p id="password-error-message" class="error-message" style="display:none;"></p>
+
+                    <form id="password-change-form">
+                        <div class="input-group">
+                            <label for="current-password">현재 비밀번호</label>
+                            <div class="password-wrapper input-with-icon">
+                                <i class="fas fa-lock input-icon"></i>
+                                <input type="password" id="current-password" name="currentPassword" required>
+                                <i class="fas fa-eye-slash toggle-password" style="right: 15px; left: auto;"></i>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="new-password">새 비밀번호</label>
+                            <div class="password-wrapper input-with-icon">
+                                <i class="fas fa-lock input-icon"></i>
+                                <input type="password" id="new-password" name="newPassword" placeholder="8자 이상, 영문/숫자/특수문자 조합" required pattern="^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$">
+                                <i class="fas fa-eye-slash toggle-password" style="right: 15px; left: auto;"></i>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="confirm-password">새 비밀번호 확인</label>
+                            <div class="password-wrapper input-with-icon">
+                                <i class="fas fa-lock input-icon"></i>
+                                <input type="password" id="confirm-password" name="confirmPassword" required>
+                                <i class="fas fa-eye-slash toggle-password" style="right: 15px; left: auto;"></i>
+                            </div>
+                        </div>
+                        <button type="submit" class="login-button" style="margin-top: 15px;">비밀번호 변경</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // --- (★공통★) 메뉴 토글 및 로그아웃 로직 ---
+    const menuToggle = document.getElementById('menu-toggle');
+    const mainMenu = document.getElementById('main-menu');
+    const profileMenuToggle = document.getElementById('profile-menu-toggle');
+    const profileMenu = document.getElementById('profile-menu');
+    const logoutButton = document.getElementById('logout-button');
+    const navNotificationsLink = document.getElementById('nav-notifications-link');
+
+    const navLoginLink = document.getElementById('nav-login-link');
+    const navLogoutLink = document.getElementById('nav-logout-link');
+
+    if (menuToggle) {
+        menuToggle.addEventListener('click', () => {
+            mainMenu.classList.toggle('show');
+            profileMenu.classList.remove('show');
+        });
+    }
+    if (profileMenuToggle) {
+        profileMenuToggle.addEventListener('click', () => {
+            profileMenu.classList.toggle('show');
+            mainMenu.classList.remove('show');
+        });
+    }
+    document.addEventListener('click', (event) => {
+        if (!mainMenu.contains(event.target) && !menuToggle.contains(event.target) &&
+            !profileMenu.contains(event.target) && !profileMenuToggle.contains(event.target)) {
+            mainMenu.classList.remove('show');
+            profileMenu.classList.remove('show');
+        }
+    });
+
+    if (logoutButton) {
+        logoutButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('hasReadReviews');
+            localStorage.removeItem('hasReadSchedules');
+            window.location.href = '/login';
+        });
+    }
+    if (navLogoutLink) {
+        navLogoutLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('hasReadReviews');
+            localStorage.removeItem('hasReadSchedules');
+            window.location.href = '/login';
+        });
+    }
+
+    if (navNotificationsLink) {
+        navNotificationsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.setItem('hasReadReviews', 'true');
+            localStorage.setItem('hasReadSchedules', 'true');
+            window.location.href = '/notifications';
+        });
+    }
+
+    // --- (★공통★) 알림 배지 로드 함수 ---
+    const badge = document.getElementById('notification-badge');
+    let hasReviewNotif = false;
+    let hasScheduleNotif = false;
+
+    function updateGlobalBadge() {
+        if (hasReviewNotif || hasScheduleNotif) {
+            if (badge) badge.style.display = 'block';
+        } else {
+            if (badge) badge.style.display = 'none';
+        }
+    }
+    async function checkPendingReviews() {
+        if (localStorage.getItem('hasReadReviews') === 'true') {
+            hasReviewNotif = false;
+            return;
+        }
+        try {
+            await new Promise(r => setTimeout(r, 200));
+            const mockReviews = { "count": 1 };
+            if (mockReviews.count > 0) {
+                hasReviewNotif = true;
+            }
+        } catch (error) { console.error("후기 알림 요청 중 오류:", error); }
+    }
+    async function checkUpcomingSchedules() {
+        if (localStorage.getItem('hasReadSchedules') === 'true') {
+            hasScheduleNotif = false;
+            return;
+        }
+        try {
+            await new Promise(r => setTimeout(r, 500));
+            const mockSchedules = [ { id: 1, date: "2025-11-01" } ];
+            if (mockSchedules.length > 0) {
+                hasScheduleNotif = true;
+            }
+        } catch (error) { console.error("일정 요청 중 오류 발생:", error); }
+    }
+
+    // --- (★페이지별★) 로직 실행 ---
+    document.addEventListener('DOMContentLoaded', async () => {
+        const accessToken = localStorage.getItem('accessToken');
+
+        if (accessToken) {
+            // [회원일 때]
+            if (profileMenuToggle) profileMenuToggle.style.display = 'block';
+            if (navLoginLink) navLoginLink.parentElement.style.display = 'none';
+            if (navLogoutLink) navLogoutLink.parentElement.style.display = 'list-item';
+
+            // (★) 글로벌 알림 배지 체크
+            await checkPendingReviews();
+            await checkUpcomingSchedules();
+            updateGlobalBadge();
+
+            // (★) profile-edit.html 고유 로직은
+            // 비밀번호 확인(confirmForm) 성공 시 fetchMyEditInfo() 호출로 실행됩니다.
+
+        } else {
+            // [비회원일 때]
+            if (profileMenuToggle) profileMenuToggle.style.display = 'none';
+            if (navLoginLink) navLoginLink.parentElement.style.display = 'list-item';
+            if (navLogoutLink) navLogoutLink.parentElement.style.display = 'none';
+
+            // (페이지 접근 제어)
+            alert("로그인이 필요한 페이지입니다. 로그인 페이지로 이동합니다.");
+            window.location.href = '/login';
+        }
+    });
+
+    // --- (★페이지별★) profile-edit.html 고유 함수들 ---
+
+    // (비밀번호 토글 - 동일)
+    document.querySelectorAll('.toggle-password').forEach(icon => {
+        icon.addEventListener('click', function() {
+            const passwordInput = this.parentElement.querySelector('input[type="password"], input[type="text"]');
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.classList.toggle('fa-eye');
+            this.classList.toggle('fa-eye-slash');
+        });
+    });
+
+    // (프로필 사진 미리보기 - 동일)
+    const profilePicInput = document.getElementById('profile-pic');
+    const profilePreview = document.getElementById('profile-preview');
+    if(profilePicInput) {
+        profilePicInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    profilePreview.src = e.target.result;
+                }
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    }
+
+    // (비밀번호 확인 폼 - 동일)
+    const confirmForm = document.getElementById('password-confirm-form');
+    const confirmButton = confirmForm.querySelector('button[type="submit"]');
+    const confirmPasswordInput = document.getElementById('current-password-confirm');
+    const confirmErrorMsg = document.getElementById('confirm-error-message');
+    const confirmWrapper = document.getElementById('password-confirmation-wrapper');
+    const editWrapper = document.getElementById('profile-edit-wrapper');
+    let attemptCount = 0;
+    const MAX_ATTEMPTS = 5;
+
+    confirmForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        confirmErrorMsg.style.display = 'none';
+        if (attemptCount >= MAX_ATTEMPTS) {
+            confirmErrorMsg.textContent = '❌ 5회 이상 실패하여 확인이 잠겼습니다. 잠시 후 다시 시도해주세요.';
+            confirmErrorMsg.style.display = 'block';
+            return;
+        }
+        const password = confirmPasswordInput.value;
+        if (!password) {
+            confirmErrorMsg.textContent = '❌ 비밀번호를 입력해주세요.';
+            confirmErrorMsg.style.display = 'block';
+            return;
+        }
+        confirmButton.disabled = true;
+        confirmButton.textContent = '확인 중...';
+
+        try {
+            const response = await fetch('/profile/confirm-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('accessToken')
+                },
+                body: JSON.stringify({ currentPassword: password })
+            });
+
+            if (response.ok) {
+                confirmWrapper.style.display = 'none';
+                editWrapper.style.display = 'block';
+                fetchMyEditInfo(); // (★) 성공 시 실제 내 정보 불러오기
+            } else {
+                attemptCount++;
+                const data = await response.json();
+                if (attemptCount >= MAX_ATTEMPTS) {
+                    confirmErrorMsg.textContent = '❌ 5회 실패하여 확인이 잠겼습니다. 잠시 후 다시 시도해주세요.';
+                    confirmButton.disabled = true;
+                    confirmPasswordInput.disabled = true;
+                } else {
+                    confirmErrorMsg.textContent = `❌ ${data.message || '비밀번호가 일치하지 않습니다.'} (${MAX_ATTEMPTS - attemptCount}회 남음)`;
+                    confirmPasswordInput.value = '';
+                    confirmPasswordInput.focus();
+                }
+                confirmErrorMsg.style.display = 'block';
+            }
+        } catch (error) {
+            attemptCount++;
+            confirmErrorMsg.textContent = `❌ 요청 중 오류가 발생했습니다. (${MAX_ATTEMPTS - attemptCount}회 남음)`;
+            confirmErrorMsg.style.display = 'block';
+        } finally {
+            if (attemptCount < MAX_ATTEMPTS) {
+                confirmButton.disabled = false;
+                confirmButton.textContent = '확인';
+            }
+        }
+    });
+
+    // --- 닉네임 / 프로필 수정 로직 ---
+    const nicknameInput = document.getElementById('nickname');
+    const checkNicknameBtn = document.getElementById('check-nickname-btn');
+    const nicknameMsg = document.getElementById('nickname-message');
+    const profileSubmitBtn = document.getElementById('profile-submit-btn');
+    const profileErrorMsg = document.getElementById('profile-error-message');
+    const profileForm = document.getElementById('profile-update-form');
+    const profileSuccessMsg = document.getElementById('profile-success-message');
+
+    // 🔹 새로 추가된 요소: 이메일, 실력 레벨
+    const emailInput = document.getElementById('email');
+    const skillLevelSelect = document.getElementById('skill-level');
+
+    let isNicknameChecked = true;
+    let originalNickname = "";
+
+    // 🔹 내 정보 불러오기 (더미 → 나중에 실제 API로 교체)
+    async function fetchMyEditInfo() {
+        await new Promise(r => setTimeout(r, 100));
+        const myInfo = {
+            email: "real.user@example.com",
+            nickname: "리얼유저",
+            position: "FIXO",      // 풋살 포지션
+            location: "서울시 서초구",
+            skillLevel: "intermediate", // beginner / intermediate / advanced
+            profilePicUrl: null
+        };
+
+        // 폼에 데이터 채우기
+        emailInput.value = myInfo.email;
+        nicknameInput.value = myInfo.nickname;
+        document.getElementById('position').value = myInfo.position;
+        document.getElementById('location').value = myInfo.location;
+
+        if (myInfo.skillLevel) {
+            skillLevelSelect.value = myInfo.skillLevel;
+        } else {
+            skillLevelSelect.value = "";
+        }
+
+        if (myInfo.profilePicUrl) {
+            profilePreview.src = myInfo.profilePicUrl;
+        }
+
+        originalNickname = myInfo.nickname;
+        isNicknameChecked = true;
+
+        profileSubmitBtn.disabled = false;
+        profileSubmitBtn.textContent = '정보 저장';
+    }
+
+    // 닉네임 입력 시 상태 변경
+    nicknameInput.addEventListener('input', () => {
+        nicknameMsg.style.display = 'none';
+        if (nicknameInput.value === originalNickname) {
+            isNicknameChecked = true;
+            checkNicknameBtn.disabled = true;
+            checkNicknameBtn.classList.remove('success');
+            profileSubmitBtn.disabled = false;
+            profileSubmitBtn.textContent = '정보 저장';
+        } else {
+            isNicknameChecked = false;
+            checkNicknameBtn.disabled = false;
+            checkNicknameBtn.classList.remove('success');
+            profileSubmitBtn.disabled = true;
+            profileSubmitBtn.textContent = '닉네임 중복 확인 필요';
+        }
+    });
+
+    // 닉네임 중복 확인 버튼 클릭
+    checkNicknameBtn.addEventListener('click', async () => {
+        profileErrorMsg.style.display = 'none';
+        const nickname = nicknameInput.value.trim();
+        if (!nickname) {
+            nicknameMsg.textContent = '❌ 닉네임을 입력해주세요.';
+            nicknameMsg.className = 'error-message';
+            nicknameMsg.style.display = 'block';
+            return;
+        }
+        try {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            const isDuplicate = (nickname === 'futsal'); // 더미
+            if (isDuplicate) {
+                nicknameMsg.textContent = '❌ 이미 사용 중인 닉네임입니다.';
+                nicknameMsg.className = 'error-message';
+                isNicknameChecked = false;
+            } else {
+                nicknameMsg.textContent = '✅ 사용 가능한 닉네임입니다.';
+                nicknameMsg.className = 'info-message';
+                isNicknameChecked = true;
+                checkNicknameBtn.disabled = true;
+                checkNicknameBtn.classList.add('success');
+                profileSubmitBtn.disabled = false;
+                profileSubmitBtn.textContent = '정보 저장';
+            }
+            nicknameMsg.style.display = 'block';
+        } catch (error) {
+            profileErrorMsg.textContent = '❌ 중복 확인 중 오류가 발생했습니다.';
+            profileErrorMsg.style.display = 'block';
+            isNicknameChecked = false;
+        }
+    });
+
+    // --- 프로필 정보 수정 폼 제출 ---
+    profileForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        profileSuccessMsg.style.display = 'none';
+        profileErrorMsg.style.display = 'none';
+
+        if (!isNicknameChecked) {
+            profileErrorMsg.textContent = '❌ 닉네임 중복 확인을 완료해주세요.';
+            profileErrorMsg.style.display = 'block';
+            return;
+        }
+
+        const formData = new FormData(profileForm);
+        try {
+            const response = await fetch('/profile/update', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('accessToken')
+                }
+            });
+            const data = await response.json();
+            if (response.ok) {
+                profileSuccessMsg.textContent = '✅ ' + data.message;
+                profileSuccessMsg.style.display = 'block';
+                originalNickname = nicknameInput.value;
+                checkNicknameBtn.disabled = true;
+            } else {
+                profileErrorMsg.textContent = '❌ ' + data.message;
+                profileErrorMsg.style.display = 'block';
+            }
+        } catch (error) {
+            profileErrorMsg.textContent = '❌ 요청 중 오류가 발생했습니다.';
+            profileErrorMsg.style.display = 'block';
+        }
+    });
+
+    // --- 비밀번호 변경 폼 로직 ---
+    const passwordForm = document.getElementById('password-change-form');
+    const passwordSuccessMsg = document.getElementById('password-success-message');
+    const passwordErrorMsg = document.getElementById('password-error-message');
+
+    passwordForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        passwordSuccessMsg.style.display = 'none';
+        passwordErrorMsg.style.display = 'none';
+
+        const newPassword = document.getElementById('new-password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+        const currentPassword = document.getElementById('current-password').value;
+
+        if (newPassword !== confirmPassword) {
+            passwordErrorMsg.textContent = '❌ 새 비밀번호가 일치하지 않습니다.';
+            passwordErrorMsg.style.display = 'block';
+            return;
+        }
+        try {
+            const response = await fetch('/profile/change-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('accessToken')
+                },
+                body: JSON.stringify({
+                    currentPassword: currentPassword,
+                    newPassword: newPassword
+                }),
+            });
+            const data = await response.json();
+            if (response.ok) {
+                passwordSuccessMsg.textContent = '✅ ' + data.message;
+                passwordSuccessMsg.style.display = 'block';
+                passwordForm.reset();
+            } else {
+                passwordErrorMsg.textContent = '❌ ' + data.message;
+                passwordErrorMsg.style.display = 'block';
+            }
+        } catch (error) {
+            passwordErrorMsg.textContent = '❌ 요청 중 오류가 발생했습니다.';
+            passwordErrorMsg.style.display = 'block';
+        }
+    });
+</script>
+</body>
+</html>

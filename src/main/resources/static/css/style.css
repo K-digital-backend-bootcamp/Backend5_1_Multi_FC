@@ -1,0 +1,1372 @@
+/* ===========================
+   [수정] 공통 스타일 및 초기화 (scroll-behavior: smooth 추가)
+=========================== */
+html {
+    scroll-behavior: smooth;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Noto Sans KR', 'Roboto', sans-serif;
+}
+
+body, html {
+    font-family: 'Noto Sans KR', 'Roboto', sans-serif;
+    height: 100%;
+    overflow: auto;
+    position: relative;
+    background-image: url('futsal_main_background_clean.jpg');
+    background-size: cover;
+    background-position: center;
+    background-color: #f7f7f7;
+
+}
+
+/* ⭐⭐ 퀵 메뉴 헤더 ⭐⭐ */
+.quick-menu {
+    width: 100%;
+    height: 70px;
+    padding: 0 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    z-index: 9999;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+.quick-menu .logo a {
+    font-size: 24px;
+    font-weight: 900;
+    color: #2c3e50;
+    text-decoration: none;
+}
+
+/* ⭐⭐ 우측 아이콘 컨테이너 ⭐⭐ */
+.header-icons {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    position: relative;
+}
+
+.profile-icon {
+    font-size: 28px;
+    color: #6c5ce7;
+    transition: color 0.3s;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: none;
+}
+.profile-icon:hover {
+    color: #8e44ad;
+}
+
+/* ⭐⭐ 알림 배지 (빨간점) 위치 조정 ⭐⭐ */
+.notification-badge {
+    position: absolute;
+    top: -5px; /* ⭐⭐ 수정: 위로 더 당김 ⭐⭐ */
+    right: -5px; /* ⭐⭐ 수정: 오른쪽으로 더 당김 ⭐⭐ */
+    width: 8px;
+    height: 8px;
+    background-color: #e74c3c;
+    border-radius: 50%;
+    border: 1px solid white;
+    z-index: 10000;
+    display: none;
+}
+
+
+/* 메뉴 버튼 (삼선 아이콘) */
+.menu-toggle-btn {
+    background: none;
+    border: none;
+    color: #2c3e50;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 5px;
+    display: block;
+    z-index: 1001;
+}
+
+/* ⭐⭐ 메인 네비게이션 (토글) ⭐⭐ */
+.main-nav {
+    display: none;
+    position: absolute;
+    top: 70px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    z-index: 999;
+    padding: 10px 0;
+}
+.main-nav.show {
+    display: block;
+}
+.main-nav ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+}
+.main-nav ul li a {
+    text-decoration: none;
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 15px;
+    transition: background-color 0.3s, color 0.3s;
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+}
+.main-nav ul li a i {
+    color: #2c3e50;
+    margin-right: 12px;
+    font-size: 18px;
+    width: 20px;
+    transition: color 0.3s;
+}
+
+/* ⭐ 마우스 호버, 포커스, 활성 스타일 (하이라이트) ⭐ */
+.main-nav ul li a:hover,
+.main-nav ul li a:focus,
+.main-nav ul li a.active {
+    color: #6c5ce7;
+    background-color: rgba(108, 92, 231, 0.1);
+    border-left: 4px solid #6c5ce7;
+    padding-left: 16px;
+    outline: none;
+}
+.main-nav ul li a:hover i,
+.main-nav ul li a:focus i,
+.main-nav ul li a.active i {
+    color: #6c5ce7;
+}
+
+/* 햄버거 메뉴용 로그아웃 버튼 */
+.main-nav ul li a#nav-logout-link {
+    color: #e74c3c;
+    display: none;
+}
+.main-nav ul li a#nav-logout-link i {
+    color: #e74c3c;
+}
+.main-nav ul li a#nav-logout-link:hover {
+    color: #ffffff;
+    background-color: #e74c3c;
+    border-left-color: #c0392b;
+}
+.main-nav ul li a#nav-logout-link:hover i {
+    color: #ffffff;
+}
+
+/* 사용자 프로필 메뉴 */
+.user-menu {
+    display: none;
+    position: absolute;
+    top: 55px;
+    right: 40px;
+    width: 220px;
+    background: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    z-index: 999;
+    overflow: hidden;
+}
+.user-menu.show {
+    display: block;
+}
+.user-menu .user-info {
+    padding: 15px 20px;
+    background: #f7f7f7;
+    border-bottom: 1px solid #eee;
+}
+.user-menu .user-info strong { font-size: 16px; color: #2c3e50; }
+.user-menu .user-info p { font-size: 13px; color: #555; margin: 0; }
+.user-menu ul { list-style: none; padding: 5px 0; margin: 0; }
+.user-menu ul li a {
+    display: flex; align-items: center; padding: 12px 20px;
+    text-decoration: none; color: #333; font-size: 14px; font-weight: 500;
+}
+.user-menu ul li a i {
+    margin-right: 12px; color: #6c5ce7;
+    width: 16px; font-size: 16px;
+}
+.user-menu ul li a:hover { background-color: rgba(108, 92, 231, 0.1); }
+#logout-button { color: #e74c3c; }
+#logout-button i { color: #e74c3c; }
+
+/* ⭐⭐ 로그인/회원가입 페이지용 레이아웃 ⭐⭐ */
+.login-page-main {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    margin-top: 70px;
+    height: calc(100vh - 70px);
+    overflow-y: auto;
+    padding: 20px 0;
+    background-image: url('futsal_main_background_clean.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+.main-wrapper {
+
+    display: flex;
+    width: 700px;
+    height: auto;
+    min-height: 650px;
+    max-width: 90%;
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    margin: auto auto; /* 중앙 정렬용 가로 auto */
+}
+.login-section {
+    flex: 1;
+    padding: 50px 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    /* 🔹 흰색 50% 투명 */
+    background: rgba(255, 255, 255, 0.3);
+    position: relative;
+    overflow-y: auto;
+}
+
+.main-section {
+    flex: 1;
+    padding: 50px 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    background: rgba(255, 255, 255);
+    position: relative;
+    overflow-y: auto;
+}
+
+.title-login {
+    font-size: 38px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 25px;
+}
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.input-icon {
+    position: absolute;
+    left: 15px;
+    color: #9b59b6;
+    font-size: 16px;
+    z-index: 5;
+    pointer-events: none;
+}
+.input-with-icon input {
+    padding-left: 40px !important;
+    position: relative;
+    z-index: 1;
+}
+.input-group {
+    margin-bottom: 18px;
+}
+.input-group label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #2c3e50;
+}
+.input-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 15px;
+    outline: none;
+    background: #f7f7f7;
+    transition: 0.3s;
+}
+.input-group input:focus {
+    border-color: #6c5ce7;
+    box-shadow: 0 0 8px rgba(108, 92, 231, 0.4);
+}
+.input-group input[type="file"] {
+    background: rgba(255,255,255,0.8);
+    font-size: 14px;
+}
+.input-group input[type="file"]::file-selector-button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    background: #6c5ce7;
+    color: white;
+    cursor: pointer;
+    margin-right: 10px;
+    transition: 0.3s;
+}
+.input-group input[type="file"]::file-selector-button:hover {
+    background: #8e44ad;
+}
+.password-wrapper {
+    position: relative;
+}
+.password-wrapper .toggle-password {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #999;
+    z-index: 6;
+}
+.forgot-remember {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+.forgot-password {
+    color: #a50f00;
+    text-decoration: none;
+}
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.remember-me input {
+    accent-color: #e74c3c;
+}
+.login-button {
+    width: 100%;
+    margin-top: 10px;
+    padding: 16px;
+    font-size: 18px;
+    color: #fff;
+    background: linear-gradient(135deg, #6c5ce7, #8e44ad);
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(108, 92, 231, 0.4), inset 0 -3px 0 rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.schedule-button {
+    width: 100%;
+    margin-top: 10px;
+    padding: 16px;
+    font-size: 18px;
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(108, 92, 231, 0.4), inset 0 -3px 0 rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.login-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(108, 92, 231, 0.5);
+}
+
+.signup-link {
+    margin-top: 25px;
+    text-align: center;
+    font-size: 14px;
+}
+.signup-link a {
+    color: #e74c3c;
+    font-weight: bold;
+    text-decoration: none;
+}
+.social-login {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 35px;
+}
+.social-btn {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 1px solid #ddd;
+    font-size: 20px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+.social-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+.social-btn.google { color: #DB4437; }
+.social-btn.kakao { background: #FEE500; color: #191919; }
+.social-btn.whatsapp { color: #25D366; }
+.social-btn.facebook { color: #4267B2; }
+.social-btn.youtube { color: #FF0000; }
+.background-image-section {
+    position: relative;
+}
+.background-image-section::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, rgba(45, 52, 54, 0.7), rgba(108, 92, 231, 0.3));
+}
+.overlay-content {
+    position: relative;
+    z-index: 2;
+    color: white;
+    padding: 20px;
+    max-width: 80%;
+}
+.section-logo {
+    width: 1px;
+    height: 1px;
+    margin-bottom: 20px;
+}
+.section-slogan {
+    font-size: 32px;
+    font-weight: 900;
+    margin-bottom: 10px;
+    text-shadow: 0 3px 6px rgba(0,0,0,0.4);
+    line-height: 1.3;
+}
+.section-sub-slogan {
+    font-size: 18px;
+    font-weight: 400;
+    opacity: 0.9;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+.tab-buttons {
+    display: flex;
+    margin-bottom: 25px;
+    border-bottom: 2px solid #ddd;
+}
+.tab-btn {
+    flex: 1;
+    padding: 12px 10px;
+    font-size: 16px;
+    font-weight: 700;
+    text-align: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #999;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+.tab-btn.active {
+    color: #6c5ce7;
+    border-bottom-color: #6c5ce7;
+    margin-bottom: -2px;
+}
+.tab-btn:hover:not(.active) {
+    color: #555;
+}
+.tab-content {
+    display: none;
+}
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.5s;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.back-to-login {
+    margin-top: 30px;
+    text-align: center;
+}
+.back-to-login a {
+    color: #6c5ce7;
+    font-weight: bold;
+    text-decoration: none;
+    font-size: 14px;
+    transition: 0.3s;
+}
+.back-to-login a:hover {
+    color: #8e44ad;
+}
+.info-message {
+    color: green;
+    border-radius: 5px;
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+.error-message {
+    color: #D8000C;
+    background-color: #FFD2D2;
+    border: 1px solid #D8000C;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+.terms-agreement{margin-top:15px;font-size:13px;display:flex;align-items:center;gap:8px}.terms-agreement input[type=checkbox]{width:auto;margin:0}.terms-agreement label{margin-bottom:0;font-weight:400;cursor:pointer}.terms-agreement a{color:#6c5ce7;text-decoration:none}.terms-agreement a:hover{text-decoration:underline}
+@media (max-width: 900px) {
+    body {
+        overflow: auto;
+    }
+    .login-page-main {
+        padding: 20px 0;
+        align-items: flex-start;
+    }
+    .main-wrapper {
+        flex-direction: column;
+        width: 95%;
+        height: auto;
+        min-height: 0;
+        margin: 20px 0;
+    }
+    .login-section {
+        padding: 40px 30px;
+        overflow-y: visible;
+    }
+    .background-image-section {
+        height: 250px;
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    }
+    .background-image-section::before {
+        clip-path: none;
+        background: rgba(0,0,0,0.3);
+    }
+    .background-image-section .overlay-content {
+        display: none;
+    }
+    .quick-menu {
+        padding: 10px 20px;
+    }
+    .main-nav {
+        right: 10px;
+    }
+
+    /* 모바일 환경에서 슬라이더 조정 */
+    .schedule-slider-container {
+        padding: 0 30px;
+    }
+    .schedule-slider-viewport {
+        max-width: none;
+        width: 100%;
+    }
+    .schedule-item {
+        width: 90vw;
+        max-width: 400px;
+        margin: 0 10px;
+        padding: 15px;
+    }
+    .slider-arrow.prev { left: 0px; }
+    .slider-arrow.next { right: 0px; }
+}
+
+/* ===========================
+   [수정/추가] 회원가입 중복 확인 버튼 스타일 개선
+=========================== */
+.input-group.with-button {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.input-group.with-button .input-wrapper {
+    flex-grow: 1;
+}
+.input-group.with-button .input-wrapper label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #2c3e50;
+    font-size: 14px;
+}
+.input-group.with-button .input-wrapper input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 15px;
+    outline: none;
+    background: #f7f7f7;
+    transition: 0.3s;
+    box-sizing: border-box;
+}
+.input-group.with-button .input-wrapper input:focus {
+    border-color: #6c5ce7;
+    box-shadow: 0 0 8px rgba(108, 92, 231, 0.4);
+}
+.check-duplicate-btn {
+    padding: 12px 15px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #6c5ce7;
+    background: #f7f7f7;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+    white-space: nowrap;
+    min-width: 80px;
+    box-sizing: border-box;
+}
+.check-duplicate-btn:hover {
+    background: rgba(108, 92, 231, 0.1);
+    border-color: #6c5ce7;
+}
+.check-duplicate-btn:disabled {
+    background: #eee;
+    color: #999;
+    border-color: #eee;
+    cursor: not-allowed;
+}
+.check-duplicate-btn.success {
+    background: #e6ffed;
+    color: #28a745;
+    border-color: #28a745;
+}
+#username-message.info-message, #nickname-message.info-message {
+    color: green;
+    background: none;
+    border: none;
+    padding: 0 5px;
+    font-size: 13px;
+    margin-top: -15px;
+    margin-bottom: 10px;
+}
+#nickname-message.error-message {
+    color: red;
+    background: none;
+    border: none;
+    padding: 0 5px;
+    font-size: 13px;
+    margin-top: -15px;
+    margin-bottom: 10px;
+}
+
+/* ===========================
+   [추가] 마이페이지 탭 및 캘린더 스타일
+=========================== */
+.calendar-container {
+    width: 100%;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+}
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.calendar-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #2c3e50;
+}
+.calendar-nav button {
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 0 5px;
+    transition: background-color 0.3s;
+}
+.calendar-nav button:hover {
+    background-color: #eee;
+}
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+.calendar-header-cell {
+    text-align: center;
+    font-weight: 600;
+    color: #555;
+    font-size: 13px;
+    padding-bottom: 10px;
+}
+.calendar-day-cell {
+    height: 80px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    padding: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    background-color: white;
+    transition: background-color 0.3s;
+}
+.calendar-day-cell.other-month {
+    background-color: #f7f7f7;
+    color: #ccc;
+}
+.calendar-day-cell:not(.other-month):hover {
+    background-color: #f0f0f0;
+}
+.calendar-event {
+    background-color: rgba(108, 92, 231, 0.2);
+    border-left: 3px solid #6c5ce7;
+    padding: 3px 6px;
+    font-size: 12px;
+    border-radius: 3px;
+    margin-top: 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.calendar-event:hover {
+    background-color: rgba(108, 92, 231, 0.4);
+}
+/* ★★★ IAMGROUND 스타일 추가 ★★★ */
+
+/* 1. 풀스크린 비디오 컨테이너 */
+.video-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+    background-image: url('futsal_main_background_clean.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+.video-background video {
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* 2. 오버레이 (텍스트 명료화) */
+.video-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: -1;
+}
+
+/* 3. 히어로 섹션 (첫 화면) */
+.hero-section {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    color: white;
+    padding-top: 70px;
+    z-index: 5;
+}
+
+/* 4. 텍스트 스타일 재정의 */
+.hero-message {
+    font-size: 6vw;
+    font-weight: 900;
+    text-shadow: 0 6px 15px rgba(0, 0, 0, 0.8);
+    line-height: 1.1;
+    margin-bottom: 20px;
+}
+
+.hero-sub-message {
+    font-size: 2vw;
+    font-weight: 400;
+    text-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
+    opacity: 0.9;
+    margin-bottom: 40px;
+}
+@media (max-width: 768px) {
+    .hero-message { font-size: 10vw; }
+    .hero-sub-message { font-size: 4vw; }
+}
+
+/* 5. CTA 버튼 스타일 재정의 */
+.cta-button {
+    display: inline-block;
+    padding: 18px 40px;
+    font-size: 20px;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, #6c5ce7, #8e44ad);
+    border: none;
+    border-radius: 35px;
+    text-decoration: none;
+    box-shadow: 0 12px 25px rgba(108, 92, 231, 0.4), inset 0 -4px 0 rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+    z-index: 50;
+    letter-spacing: 1px;
+}
+
+.cta-button:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 18px 35px rgba(108, 92, 231, 0.6);
+    filter: brightness(1.1);
+}
+
+.cta-button:active {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(108, 92, 231, 0.3);
+}
+
+/* 3. ⭐⭐ 후기 및 일정 관련 텍스트 스타일 개선 ⭐⭐ */
+/* 후기 알림 및 작성 링크 스타일 */
+#review-notification-section {
+    background-color: rgba(44, 62, 80, 0.9);
+    color: white;
+    padding: 15px 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    margin-bottom: 25px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+.review-notification-link {
+    text-decoration: none;
+    color: white;
+    background-color: #e74c3c;
+    padding: 8px 18px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 700;
+    transition: background-color 0.3s;
+    font-family: 'Noto Sans KR', sans-serif;
+    letter-spacing: -0.5px;
+}
+
+.review-notification-link:hover {
+    background-color: #c0392b;
+}
+
+/* 일정 타이틀 스타일 */
+.schedule-title {
+    color: #f7f7f7;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+    margin-bottom: 30px;
+    font-size: 28px;
+    font-weight: 900;
+    font-family: 'Noto Sans KR', sans-serif;
+    letter-spacing: -0.5px;
+}
+
+/* ⭐⭐ 일정 목록 아이템 레이아웃 (하나씩 보이도록) ⭐⭐ */
+.schedule-slider-container {
+    max-width: 600px;
+    margin: 0 auto;
+    position: relative;
+    padding: 0 40px;
+    box-sizing: border-box;
+}
+
+.schedule-slider-viewport {
+    overflow: hidden;
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+}
+
+#schedule-list-items {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+    justify-content: flex-start;
+}
+
+/* ⭐⭐ 일정 아이템 디자인 개선 ⭐⭐ */
+.schedule-item {
+    padding: 25px 20px;
+    background: linear-gradient(135deg, #ffffff, #f0f0f0);
+    border-radius: 12px;
+    margin: 0 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+    border-left: 5px solid #6c5ce7;
+    border-bottom: 2px solid #ddd;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+    font-family: 'Noto Sans KR', sans-serif;
+    width: 500px;
+    flex-shrink: 0;
+}
+
+.schedule-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+}
+
+.schedule-item-info {
+    color: #2c3e50;
+    font-size: 16px;
+    margin-bottom: 15px;
+    font-family: 'Noto Sans KR', sans-serif;
+    line-height: 1.5;
+}
+
+.schedule-item-info strong {
+    font-weight: 800;
+    color: #6c5ce7;
+    display: block;
+    margin-bottom: 5px;
+    font-size: 19px;
+    letter-spacing: -0.3px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* 상세보기 링크를 버튼처럼 보이도록 재구성 */
+.schedule-item-link {
+    text-decoration: none;
+    color: white;
+    background: linear-gradient(45deg, #6c5ce7, #8e44ad);
+    font-weight: 700;
+    padding: 8px 20px;
+    border-radius: 25px;
+    font-size: 14px;
+    transition: background 0.3s, transform 0.3s;
+    font-family: 'Noto Sans KR', sans-serif;
+    align-self: flex-end;
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.25);
+    letter-spacing: 0.5px;
+}
+
+.schedule-item-link:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.35);
+}
+
+/* ⭐⭐ 수정: 슬라이더 화살표 (위치 조정) ⭐⭐ */
+.slider-arrow {
+    position: absolute;
+    /* ⭐⭐ 40%로 조정하여 카드 높이 중앙에 가깝게 위치 ⭐⭐ */
+    top: 40%;
+    transform: translateY(-50%);
+    background: rgba(108, 92, 231, 0.85);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 22px;
+    cursor: pointer;
+    z-index: 60;
+    line-height: 1;
+    text-shadow: none;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.slider-arrow:hover {
+    background: #6c5ce7;
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+.slider-arrow.prev { left: 0px; }
+.slider-arrow.next { right: 0px; }
+
+
+/* 페이지네이션 (점들) 스타일 */
+.slider-pagination {
+    text-align: center;
+    margin-top: 20px;
+    position: relative;
+    z-index: 55;
+}
+.slider-pagination .dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin: 0 6px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.slider-pagination .dot.active {
+    background: #6c5ce7;
+    width: 12px;
+    height: 12px;
+    border: 1px solid #6c5ce7;
+    box-shadow: 0 0 8px rgba(108, 92, 231, 0.6);
+}
+/* ⭐⭐ 끝: 일정 슬라이더 레이아웃 및 아이템 ⭐⭐ */
+
+
+/* 추가 섹션 스타일 */
+#features-section {
+    width: 100%;
+    min-height: 80vh;
+    background: white;
+    padding: 50px 0;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 10;
+}
+
+/* ===========================
+   [추가] 메인 페이지 피처 카드 스타일 (IAMGROUND Section)
+=========================== */
+.features-grid {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+    flex-wrap: wrap;
+}
+
+/* ⭐⭐ 피처 카드 디자인 개선 ⭐⭐ */
+.feature-card {
+    flex: 1 1 300px;
+    min-width: 280px;
+    background: #ffffff;
+    padding: 40px 30px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-align: center;
+    border-bottom: 5px solid #6c5ce7;
+    border-top: none;
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+}
+
+.feature-card .icon-wrapper {
+    color: #6c5ce7;
+    font-size: 56px;
+    margin-bottom: 20px;
+    background: rgba(108, 92, 231, 0.1);
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s;
+}
+
+.feature-card:hover .icon-wrapper {
+    background: rgba(108, 92, 231, 0.2);
+}
+
+.feature-card h3 {
+    font-size: 24px;
+    font-weight: 800;
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+
+.feature-card p {
+    font-size: 16px;
+    color: #555;
+    line-height: 1.7;
+    margin-bottom: 25px;
+}
+
+.feature-card .card-link {
+    display: inline-block;
+    padding: 10px 25px;
+    background: #6c5ce7;
+    color: white;
+    font-weight: 700;
+    border-radius: 25px;
+    text-decoration: none;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.feature-card .card-link:hover {
+    background-color: #8e44ad;
+    transform: translateY(-2px);
+}
+/* ⭐⭐ 끝: 피처 카드 디자인 개선 ⭐⭐ */
+
+/* ===========================
+   [추가] 메인페이지 대시보드 요소 스타일
+=========================== */
+.value-section {
+    width: 100%;
+    background: #2c3e50;
+    color: white;
+    padding: 80px 0;
+    text-align: center;
+    position: relative;
+    z-index: 15;
+}
+
+.value-section h2 {
+    font-size: 30px;
+    font-weight: 800;
+    margin-bottom: 50px;
+}
+
+.value-grid {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    max-width: 1000px;
+    margin: 0 auto;
+    flex-wrap: wrap;
+}
+
+.value-card {
+    flex: 1 1 200px;
+    padding: 20px;
+    background: rgba(44, 62, 80, 0.7);
+    border-radius: 10px;
+    border-bottom: 3px solid #6c5ce7;
+    transition: transform 0.3s;
+}
+
+.value-card:hover {
+    transform: translateY(-5px);
+}
+
+.value-card i {
+    font-size: 2.5rem;
+    color: #6c5ce7;
+    margin-bottom: 15px;
+}
+
+.value-card h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.value-card p {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.global-cta-section {
+    width: 100%;
+    background: linear-gradient(135deg, #f0f0f0, #ffffff);
+    padding: 80px 0;
+    text-align: center;
+    position: relative;
+    z-index: 15;
+}
+
+.global-cta-section h2 {
+    font-size: 30px;
+    font-weight: 800;
+    color: #2c3e50;
+    margin-bottom: 30px;
+}
+
+/* ★★★ 추가: 실시간 채팅 섹션 스타일 ★★★ */
+.chat-promo-section {
+    width: 100%;
+    background: linear-gradient(135deg, #f7f7f7, #ffffff);
+    padding: 50px 0;
+    text-align: center;
+    position: relative;
+    z-index: 15;
+    border-bottom: 1px solid #eee;
+}
+.chat-promo-section h2 {
+    font-size: 32px;
+    font-weight: 800;
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+.chat-promo-box {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 30px;
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border-left: 5px solid #2ecc71;
+}
+.chat-promo-box p {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 20px;
+}
+.chat-action-link {
+    padding: 12px 25px;
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+    background-color: #2ecc71;
+    border-radius: 30px;
+    text-decoration: none;
+    transition: background 0.3s;
+    display: inline-block;
+}
+.chat-action-link:hover {
+    background-color: #27ae60;
+}
+
+/* ---------------------------------
+   [추가] 프로젝트 정보 푸터 스타일
+--------------------------------- */
+.project-footer {
+    width: 100%;
+    padding: 30px 20px;
+    background-color: #34495e;
+    color: #ecf0f1;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.8;
+    z-index: 10;
+    position: relative;
+    border-top: 3px solid #6c5ce7;
+}
+
+.project-footer .footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    opacity: 0.85;
+}
+
+.project-footer p strong {
+    font-weight: 700;
+    color: #f7f7f7;
+}
+
+/* ---------------------------------
+   [추가] 프로젝트 정보 푸터 링크 스타일
+--------------------------------- */
+.project-footer a {
+    text-decoration: none !important;
+    transition: opacity 0.2s;
+    font-weight: 600;
+}
+.project-footer a:hover {
+    opacity: 0.7;
+}
+
+/* ---------------------------------
+   [추가] 채팅 페이지 사용자 프로필 정보 창 스타일 (가정)
+--------------------------------- */
+.user-profile-modal-content, .profile-info-container, .profile-detail-view {
+    max-width: 350px;
+    width: 90%;
+    height: auto;
+
+    background: #fff;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    z-index: 10000;
+    border: 1px solid #eee;
+}
+
+.profile-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #2c3e50;
+    transition: color 0.2s;
+}
+.profile-close-btn:hover {
+    color: #e74c3c;
+}
+
+.profile-action-button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 12px;
+    border: none;
+    border-radius: 25px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 15px;
+}
+
+.chat-button {
+    background: #6c5ce7;
+    color: white;
+    box-shadow: 0 4px 10px rgba(108, 92, 231, 0.4);
+}
+.chat-button:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.friend-request-button {
+    background: #f0f0f0;
+    color: #2c3e50;
+    border: 1px solid #ddd;
+}
+.friend-request-button:hover {
+    background: #e0e0e0;
+}
+
+.search-content {
+    display: flex;
+    gap: 20px;
+}
+
+
+
+/* chat.html style block 내부에 있던 인라인 프로필 상세 정보 스타일 (재정의 방지) */
+.inline-profile-detail {
+    /* 이 스타일은 chat.html 내부 <style> 태그에서 관리되므로, 여기에 덮어쓰기 하지 않습니다. */
+}
