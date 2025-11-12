@@ -738,6 +738,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 
 <script>
+    // --- [수정된] 메뉴 및 프로필 토글 로직 ---
     const menuToggle = document.getElementById('menu-toggle');
     const mainMenu = document.getElementById('main-menu');
     const profileMenuToggle = document.getElementById('profile-menu-toggle');
@@ -747,18 +748,83 @@
     const navLogoutLink = document.querySelector('#main-menu ul li:last-child');
 
     if (menuToggle) {
-        menuToggle.addEventListener('click', () => {
+        menuToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
             mainMenu.classList.toggle('show');
             if (profileMenu) profileMenu.classList.remove('show');
         });
     }
 
     if (profileMenuToggle) {
-        profileMenuToggle.addEventListener('click', () => {
+        profileMenuToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
             profileMenu.classList.toggle('show');
             if (mainMenu) mainMenu.classList.remove('show');
         });
     }
+
+    // ⭐⭐⭐ [핵심 추가] 외부 클릭 시 메뉴 및 모달 닫기 로직 ⭐⭐⭐
+    const inlineProfileDetail = document.getElementById('inline-profile-detail');
+    const newChatModal = document.getElementById('new-chat-modal');
+    const profileModal = document.getElementById('profile-modal');
+    const inviteModal = document.getElementById('invite-modal');
+
+    document.addEventListener('click', (event) => {
+        const isClickInsideMenu = mainMenu.contains(event.target) || menuToggle.contains(event.target);
+        const isClickInsideProfile = profileMenu.contains(event.target) || profileMenuToggle.contains(event.target);
+
+        // 인라인 프로필 관련 (participant-item 클릭은 openInlineProfileDetail 내부에서 처리됨)
+        const isClickInsideInlineProfile =
+            inlineProfileDetail &&
+            (inlineProfileDetail.contains(event.target) || event.target.closest('.participant-item'));
+
+        // 🔹 "새 채팅 시작" 버튼인지 확인
+        const isNewChatButton = event.target.closest('#new-chat-btn');
+
+        // 모달 관련
+        const isClickInsideNewChatModal =
+            newChatModal.contains(event.target) || isNewChatButton;
+        const isClickInsideProfileModal = profileModal.contains(event.target);
+        const isClickInsideInviteModal = inviteModal.contains(event.target);
+
+        // 1. 메인 메뉴 닫기
+        if (!isClickInsideMenu && mainMenu.classList.contains('show')) {
+            mainMenu.classList.remove('show');
+        }
+
+        // 2. 프로필 메뉴 닫기
+        if (!isClickInsideProfile && profileMenu && profileMenu.classList.contains('show')) {
+            profileMenu.classList.remove('show');
+        }
+
+        // 3. 인라인 프로필 상세 창 닫기
+        if (inlineProfileDetail && inlineProfileDetail.classList.contains('open') && !isClickInsideInlineProfile) {
+            openInlineProfileDetail(false);
+        }
+
+        // 4. 모달 창 닫기 (모달 콘텐츠 자체가 아닌 바깥쪽 오버레이 클릭 시)
+        if (newChatModal.classList.contains('open') && !isClickInsideNewChatModal) {
+            openNewChatModal(false);
+        }
+        if (profileModal.classList.contains('open') && !isClickInsideProfileModal) {
+            openProfileModal(false);
+        }
+        if (inviteModal.classList.contains('open') && !isClickInsideInviteModal) {
+            openInviteModal(false);
+        }
+
+        // 5. 사이드바 닫기 (채팅 영역을 클릭했을 때)
+        const isClickInsideSidebar =
+            participantSidebar.contains(event.target) ||
+            event.target.closest('button[onclick="openParticipantList()"]');
+        const isClickInsideChatContent =
+            chatContentArea.contains(event.target) && !isClickInsideInlineProfile;
+
+        if (participantSidebar.classList.contains('open') && isClickInsideChatContent && !isClickInsideSidebar) {
+            openParticipantList(false);
+        }
+    });
+    // --- [수정된] 메뉴 및 프로필 토글 로직 끝 ---
 
     let stompClient = null;
     let currentRoomId = null;
@@ -772,14 +838,10 @@
     const participantSidebar = document.getElementById('participant-sidebar');
     const participantListContainer = document.getElementById('participant-list-container');
     const chatMainWrapper = document.getElementById('chat-main-wrapper');
-    const newChatModal = document.getElementById('new-chat-modal');
-    const profileModal = document.getElementById('profile-modal');
-    const inviteModal = document.getElementById('invite-modal');
     const friendListToInvite = document.getElementById('friend-list-to-invite');
     const selectedInviteCountElement = document.getElementById('selected-invite-count');
     let selectedInvitees = new Set();
 
-    const inlineProfileDetail = document.getElementById('inline-profile-detail');
     const chatContentArea = document.querySelector('.chat-content-area');
     const roomStatusDisplay = document.getElementById('room-status-display');
     const roomParticipantCount = document.getElementById('room-participant-count');
@@ -800,7 +862,7 @@
     const MOCK_ROOMS = {
         'group': [
             { id: 1, name: '⚽ 11/05 수원 풋살 (10명)', lastMessage: 'UserA: 네, 거기서 봬요!', participants: ['MyUser123 (방장)', 'UserA', 'UserB', 'UserC', 'UserD'], maxParticipants: 10, createdAt: '2025-10-28', unreadCount: 5 },
-            { id: 2, name: '📌 팀원 모집 - 캡틴손', lastMessage: '좋아요, 포지션은 DF 가능합니다.', participants: ['MyUser123 (방장)', '캡틴손', '구원투수'], maxParticipants: 12, createdAt: '2025-11-02', unreadCount: 0 }
+            { id: 2, name: '📌 팀원 모집 - 캡틴손', lastMessage: '좋아요, 포지션은 DF 가능합니다.', participants: ['MyUser123', '캡틴손', '구원투수'], maxParticipants: 12, createdAt: '2025-11-02', unreadCount: 0 }
         ],
         'one-on-one': [
             { id: 101, name: '1:1 채팅 - 심판장 (운영진)니', lastMessage: '규정 위반 관련 문의 답변입니다.', participants: ['MyUser123', '심판장 (운영진)'], maxParticipants: 2, createdAt: '2025-09-01', unreadCount: 1 },
@@ -1118,7 +1180,7 @@
         const activeItem = document.querySelector('.room-item.active');
         if (activeItem) {
             activeItem.classList.remove('active');
-            if (participantSidebar.classList.contains('open')) {
+            if(participantSidebar.classList.contains('open')) {
                 openParticipantList(false);
             }
         }
@@ -1129,7 +1191,7 @@
         if (newActiveItem) {
             newActiveItem.classList.add('active');
             const badge = newActiveItem.querySelector('.unread-badge');
-            if (badge) badge.remove();
+            if(badge) badge.remove();
             room.unreadCount = 0;
         }
 
@@ -1423,7 +1485,11 @@
 
         const availableSlots = currentRoom.maxParticipants - currentRoom.participants.length;
 
-        MOCK_FRIENDS.filter(friend => friend.name !== myUsername.split(' ')[0] && !currentParticipantsNames.includes(friend.name))
+        MOCK_FRIENDS
+            .filter(friend =>
+                friend.name !== myUsername.split(' ')[0] &&
+                !currentParticipantsNames.includes(friend.name)
+            )
             .forEach(friend => {
                 const item = document.createElement('div');
                 item.className = 'invite-friend-item';
@@ -1530,7 +1596,10 @@
             participants: [hostName, ...otherParticipants],
             maxParticipants: matchChatData.maxParticipants || 10,
             createdAt: new Date().toISOString().slice(0, 10),
-            unreadCount: 0
+            unreadCount: 0,
+
+            // ✅ 어떤 경기에서 만들어진 채팅방인지 저장
+            fromMatchId: matchChatData.fromMatchId || null
         };
 
         if (!MOCK_ROOMS['group']) {
@@ -1544,7 +1613,7 @@
             timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
         }];
 
-        // ✅ 경기 마감으로 생성된 방도 저장
+        // ✅ 저장
         saveRoomsToStorage();
 
         chatTypeTabs.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
