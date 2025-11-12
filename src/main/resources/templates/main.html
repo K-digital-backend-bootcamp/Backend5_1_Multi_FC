@@ -3,32 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi FC - 메인 페이지</title> <link rel="stylesheet" th:href="@{/css/style.css?v=219}">
+    <title>Multi FC - 메인 페이지</title>
+    <link rel="stylesheet" th:href="@{/css/style.css?v=219}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <style>
-        /* 기존 main.html 내의 스타일을 IAMGROUND 스타일에 맞게 정리 */
+        /* (원본 코드 복구 및 Global CTA 섹션 스타일만 수정했습니다.) */
 
         .main-content {
-            /* 이 클래스는 전체 페이지 레이아웃을 위해 그대로 사용 */
             min-height: 100vh;
-            /* Hero 섹션 아래 콘텐츠들이 body 배경 위로 올라오도록 투명하게 설정 */
             background: transparent;
             padding: 0;
+            overflow-x: hidden; /* 가로 스크롤 방지 */
         }
 
-        /* Hero 섹션 아래 콘텐츠들이 body 배경 위로 올라오도록 투명하게 설정 */
+        /* Hero 섹션에 포함되지 않는 나머지 콘텐츠 영역 */
         #upcoming-schedule-section, #review-notification-section {
             position: relative;
-            z-index: 10; /* 비디오 배경 위에 오도록 */
+            z-index: 10;
         }
 
-        /* ⭐⭐⭐ [추가] 알림 배너 닫기 버튼 스타일 ⭐⭐⭐ */
-        #review-notification-section {
-            /* 기존 스타일 유지: flex를 사용했다는 가정 하에 padding을 조정 */
+        /* ⭐⭐⭐ Hero 섹션을 배경 컨테이너로 설정 (스크롤 문제 해결 핵심) ⭐⭐⭐ */
+        .hero-section {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
             position: relative;
-            padding-right: 40px; /* 닫기 버튼 공간 확보 */
+            color: white;
+            padding-top: 70px;
+            z-index: 5;
+            overflow: hidden;
+
+            /* 배경 이미지를 Hero 섹션에 직접 적용 */
+            background-image: url('futsal_main_background_clean.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; /* 스크롤 시 배경 고정 */
+        }
+
+        /* Hero 섹션의 오버레이를 ::before 가상 요소로 구현 */
+        .hero-section::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* ⭐⭐⭐ 텍스트 가독성을 위한 진한 오버레이 (0.6) 적용 ⭐⭐⭐ */
+            background: rgba(0, 0, 0, 0.6);
+            z-index: -1;
+        }
+
+        /* ⭐⭐⭐ [복구] 알림 배너 스타일 (원본 유지) ⭐⭐⭐ */
+        #review-notification-section {
+            background-color: rgba(44, 62, 80, 0.9); /* 원본 다크 그레이 */
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            margin-bottom: 25px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 15px;
+            font-weight: 500;
+            position: relative;
+            padding-right: 40px;
+        }
+        #review-notification-section .review-notification-text strong {
+            color: #f1c40f;
+        }
+        .review-notification-link {
+            background: #e74c3c; /* 원본 빨간색 버튼 */
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: 700;
+            transition: background 0 0.3s ease;
+        }
+        .review-notification-link:hover {
+            background: #c0392b;
         }
         .close-review-btn {
             position: absolute;
@@ -36,7 +98,7 @@
             right: 5px;
             background: none;
             border: none;
-            color: white;
+            color: rgba(255, 255, 255, 0.8);
             font-size: 16px;
             cursor: pointer;
             padding: 5px;
@@ -47,10 +109,11 @@
         }
         .close-review-btn:hover {
             opacity: 1;
+            color: white;
         }
-        /* ⭐⭐⭐ [추가 끝] ⭐⭐⭐ */
+        /* 알림 배너 스타일 끝 */
 
-        /* 비회원 로그인 유도 버튼은 hero 섹션 아래에 배치되도록 조정 */
+        /* 비회원 로그인 유도 버튼 (원본 복구) */
         .login-prompt-button {
             z-index: 50;
             display: inline-block;
@@ -59,67 +122,655 @@
             font-size: 16px;
             font-weight: 600;
             color: white;
-            background: #6c5ce7;
+            background: #3498db;
             border-radius: 25px;
             text-decoration: none;
             transition: background 0.3s;
         }
+        .login-prompt-button:hover {
+            background: #2980b9;
+        }
 
-        /* ⭐⭐⭐ 슬라이더 아이템 스타일 (이전 요청의 최종 수정 내용 유지) ⭐⭐⭐ */
+
+        /* 일정 타이틀 스타일 (원본 복구) */
+        .schedule-title {
+            color: white;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 900;
+            text-align: center;
+        }
+
+        /* 일정 슬라이더 컨테이너 (원본 복구) */
+        .schedule-slider-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+        }
+        /* 일정 슬라이더 아이템 스타일 (원본 복구) */
+        /* 일정 카드: 흰색 배경 + 검정 테두리 */
         .schedule-item {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 240, 240, 0.95)) !important;
-            color: #2c3e50 !important;
-            border: 1px solid rgba(0,0,0,0.1);
-            text-align: left;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border-left: 5px solid #000;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            padding: 25px 20px;
+            color: #222;
+            width: 500px;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .schedule-item:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(0, 0, 0, 0.3);
+        }
+
+        /* 텍스트 */
+        .schedule-item .item-type {
+            color: #000;
+            font-weight: 700;
         }
         .schedule-item strong {
-            font-size: 17px;
-            color: #2c3e50;
+            color: #111;
+        }
+        .schedule-item .item-location {
+            color: #444;
+        }
+        .schedule-item .item-location i {
+            color: #000;
+            margin-right: 6px;
+        }
+
+        /* ===========================
+           🔹 상세보기 버튼
+           =========================== */
+        .schedule-item-link {
+            background: linear-gradient(145deg, #000, #333);
+            color: white !important;
+            border-radius: 8px;
+            padding: 8px 18px;
+            font-weight: 600;
+            display: inline-block;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        .schedule-item-link:hover {
+            background: linear-gradient(145deg, #111, #000);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
+        }
+
+        /* ===========================
+           🔹 화살표 버튼 (검정색 입체)
+           =========================== */
+        .slider-arrow {
+            background: linear-gradient(145deg, #000, #222) !important;
+            color: white !important;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: none;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.25s ease;
+        }
+        .slider-arrow:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4);
+        }
+
+        /* ===========================
+           🔹 페이지 점 (pagination)
+           =========================== */
+        .slider-pagination .dot {
+            background-color: rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        .slider-pagination .dot.active {
+            background: #000;
+            transform: scale(1.4);
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+        }
+
+        /* ===========================
+           🔹 제목 (7일 이내의 일정)
+           =========================== */
+        .schedule-title {
+            font-size: 28px;
+            font-weight: 900;
+            color: #222;
+            text-shadow: 0 2px 6px rgba(255, 255, 255, 0.8);
+            border-bottom: 3px solid #000;
+            display: inline-block;
+            padding-bottom: 6px;
+            margin-bottom: 25px;
+            animation: fadeUp 0.8s ease-out forwards;
+        }
+
+        /* ===========================
+           🔹 등장 애니메이션 (공통)
+           =========================== */
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(25px);
+            animation: fadeUp 0.8s ease-out forwards;
+        }
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* CTA 버튼 스타일 (Hero 섹션 하단 '매치 찾아보기') (원본 복구) */
+        .cta-button {
+            display: inline-block;
+            margin-top: 40px;
+            padding: 15px 35px;
+            background: linear-gradient(45deg, #2ecc71, #27ae60);
+            color: white;
+            font-size: 22px;
+            font-weight: 700;
+            border-radius: 30px;
+            text-decoration: none;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        .cta-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+        }
+
+        /* Hero 섹션 메시지 스타일 (원본 복구) */
+        .hero-message {
+            font-size: 60px;
+            font-weight: 900;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+            color: white;
+        }
+        .hero-sub-message {
+            font-size: 28px;
+            font-weight: 500;
+            text-shadow: 0 0 7px rgba(0, 0, 0, 0.6);
+            color: white;
+        }
+        /* Hero 섹션 메시지 스타일 끝 */
+
+        /* Footer 색상 조정 (원본 복구) */
+        .project-footer {
+            background-color: #34495e; /* 어두운 남색 계열 */
+            color: #ecf0f1;
+            padding: 30px 20px;
+            text-align: center;
+            font-size: 14px;
+            line-height: 1.8;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .project-footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .project-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Quick Menu (헤더) 색상 조정 (원본 복구) */
+        .quick-menu {
+            background: rgba(30, 45, 60, 0.9);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+        .quick-menu .logo {
+            font-size: 28px;
+            font-weight: 900;
+        }
+        .quick-menu .logo a {
+            color: #ffffff; /* ✅ 진한 검정으로 변경함 */
+            text-decoration: none;
+        }
+        .quick-menu .header-icons {
+            display: flex;
+            align-items: center;
+            /* ⭐⭐⭐ [수정] 햄버거와 프로필 사이 간격을 15px로 조정 ⭐⭐⭐ */
+            gap: 15px;
+            padding-right: 20px;
+        }
+        .quick-menu .header-icons button {
+            background: none;
+            border: none;
+            color: #ecf0f1;
+            font-size: 24px; /* 햄버거 메뉴 아이콘 크기는 24px 유지 */
+            cursor: pointer;
+            margin-left: 0;
+            padding: 0;
+        }
+        .profile-icon {
+            font-size: 28px; /* ⭐⭐⭐ [수정] 프로필 로고 크기 28px로 확대 ⭐⭐⭐ */
+            color: #ecf0f1;
+            padding: 0;
+            display: block;
+        }
+        .menu-toggle-btn {
+            font-size: 24px; /* 햄버거 아이콘 크기는 24px 유지 */
+            padding: 0;
+        }
+        .main-nav {
+            display: none; /* Mobile first: 숨김 */
+            position: absolute;
+            top: 70px; /* 헤더 높이 아래 */
+            right: 20px; /* ⭐⭐⭐ [수정] 오른쪽에서 20px 여백 확보 ⭐⭐⭐ */
+            width: 180px; /* ⭐⭐⭐ [수정] 메뉴 폭을 180px로 줄입니다. ⭐⭐⭐ */
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            border-bottom-left-radius: 8px;
+            overflow: hidden;
+            z-index: 99;
+        }
+        .main-nav.show {
+            display: block;
+        }
+        .main-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .main-nav ul li a {
+            display: block;
+            /* ⭐⭐⭐ [수정] 좌우 패딩을 12px로 줄여 메뉴 창 크기를 줄입니다. ⭐⭐⭐ */
+            padding: 15px 12px;
+            color: #bdc3c7;
+            text-decoration: none;
+            font-size: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .main-nav ul li:last-child a {
+            border-bottom: none;
+        }
+        .main-nav ul li a.active,
+        .main-nav ul li a:hover {
+            color: #3498db;
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        .main-nav ul li a i {
+            margin-right: 10px;
+        }
+
+        /* User Menu (프로필 드롭다운) 색상 조정 (원본 복구) */
+        .user-menu {
+            display: none;
+            position: absolute;
+            top: 55px; /* 아이콘 아래 위치 */
+            right: 20px; /* 퀵메뉴의 패딩에 맞춰 오른쪽 위치 조정 */
+            background-color: #34495e;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            width: 200px;
+            z-index: 101;
+            overflow: hidden;
+        }
+        .user-menu.show {
+            display: block;
+        }
+        .user-menu .user-info {
+            padding: 15px;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+        .user-menu .user-info strong {
+            font-size: 1.1em;
             display: block;
             margin-bottom: 5px;
         }
-        .schedule-item .item-location {
-            font-size: 14px;
-            color: #555;
-            display: flex;
-            align-items: center;
+        .user-menu .user-info p {
+            margin: 0;
+            font-size: 0.9em;
+            color: #bdc3c7;
         }
-        .schedule-item .item-location i {
-            margin-right: 5px;
-            color: #8e44ad;
+        .user-menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
         }
-        .schedule-item .item-type {
-            font-size: 13px;
+        .user-menu ul li a {
+            display: block;
+            padding: 12px 15px;
+            color: #ecf0f1;
+            text-decoration: none;
+            font-size: 15px;
+            transition: background-color 0.3s, color 0.3s;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .user-menu ul li:last-child a {
+            border-bottom: none;
+        }
+        .user-menu ul li a:hover {
+            background-color: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+        }
+        .user-menu ul li a i {
+            margin-right: 8px;
+        }
+        .notification-badge {
+            position: absolute;
+            top: -2px; /* 24px 아이콘에 맞게 조정 */
+            right: 0px; /* 24px 아이콘에 맞게 조정 */
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 8px;
+            height: 8px;
+            padding: 0;
+            font-size: 0;
+            line-height: 1;
+            display: none; /* 초기에는 숨김 */
+            border: 1px solid rgba(255,255,255,0.8); /* 흰색 테두리 추가하여 대비 효과 */
+        }
+        /* ⭐⭐⭐ Value Section (서비스 핵심 가치) 조정 ⭐⭐⭐ */
+        .value-section {
+            background-color: #1a2a3a; /* 훨씬 더 어두운 배경색 */
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+        .value-section h2 {
+            color: white;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+            font-size: 40px;
+            font-weight: 900;
+            margin-bottom: 60px;
+        }
+        .value-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .value-card {
+            background: rgba(255, 255, 255, 0.1); /* 투명한 흰색 배경 */
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3); /* 그림자 강화 */
+            padding: 30px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-bottom: 4px solid #6c5ce7; /* 보라색 강조 */
+            backdrop-filter: blur(5px); /* 유리 효과 */
+            border: 1px solid rgba(255, 255, 255, 0.15); /* 테두리 */
+        }
+        .value-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+        }
+        .value-card i {
+            color: #6c5ce7; /* 보라색 아이콘 */
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(108, 92, 231, 0.5);
+        }
+        .value-card h3 {
+            color: white; /* 흰색 제목 */
+            font-size: 24px;
+            margin-bottom: 15px;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+        .value-card p {
+            color: #bdc3c7; /* 밝은 회색 내용 */
+            line-height: 1.6;
+        }
+        /* ⭐⭐ Value Section의 반응형 레이아웃 오버라이드 ⭐⭐ */
+        @media (max-width: 1200px) {
+            .value-grid {
+                grid-template-columns: repeat(2, 1fr); /* 2개씩으로 전환 */
+            }
+        }
+        @media (max-width: 768px) {
+            .value-grid {
+                grid-template-columns: 1fr; /* 1개씩 */
+            }
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+
+        /* ⭐⭐⭐ Chat Promo Section 조정 ⭐⭐⭐ */
+        .chat-promo-section {
+            background: linear-gradient(135deg, #34495e, #2c3e50); /* 어두운 파란색 계열 그라데이션 */
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+        .chat-promo-section h2 {
+            font-size: 36px;
+            margin-bottom: 30px;
+            font-weight: 800;
+            color: white;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+        }
+        .chat-promo-section h2 i {
+            color: #f1c40f; /* 노란색 아이콘 강조 */
+            margin-right: 10px;
+        }
+        .chat-promo-box {
+            background: rgba(255, 255, 255, 0.15); /* 투명한 흰색 배경 */
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); /* 그림자 강화 */
+            backdrop-filter: blur(8px); /* 유리 효과 강화 */
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-left: 5px solid #f1c40f; /* 노란색 강조 */
+        }
+        .chat-promo-box p {
+            font-size: 18px;
+            line-height: 1.7;
+            margin-bottom: 30px;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            color: #ecf0f1;
+        }
+        .chat-action-link {
+            display: inline-block;
+            padding: 15px 30px;
+            background: #f1c40f; /* 노란색 버튼 */
+            color: #333; /* 검은색 텍스트 */
+            font-size: 18px;
             font-weight: 700;
-            color: #e74c3c;
-            margin-bottom: 5px;
+            border-radius: 30px;
+            transition: background 0.3s ease, transform 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
-        /* ⭐⭐⭐ 슬라이더 아이템 스타일 끝 ⭐⭐⭐ */
+        .chat-action-link:hover {
+            background: #f39c12;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        /* ⭐⭐⭐ Features Section (주요 서비스) 조정 ⭐⭐⭐ */
+        #features-section {
+            background-color: #1a2a3a; /* Value Section과 동일한 어두운 배경 */
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+        #features-section h2 {
+            color: white;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+            font-size: 40px;
+            margin-bottom: 60px;
+            font-weight:900;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1); /* 투명한 흰색 배경 */
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-bottom: 4px solid #6c5ce7; /* 보라색 강조 */
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+        }
+        .feature-card .icon-wrapper {
+            background: #6c5ce7; /* 보라색 아이콘 배경 */
+            color: white;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 25px;
+            font-size: 32px;
+            box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4);
+        }
+        .feature-card h3 {
+            color: white; /* 흰색 제목 */
+            font-size: 26px;
+            margin-bottom: 15px;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+        .feature-card p {
+            color: #bdc3c7; /* 밝은 회색 내용 */
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+        .card-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #f1c40f; /* 노란색 링크 버튼 */
+            color: #333; /* 검은색 텍스트 */
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background 0.3s ease;
+            margin-top: 10px; /* ⭐⭐⭐ [추가] 버튼 상단 여백 추가 ⭐⭐⭐ */
+        }
+        .card-link:hover {
+            background: #f39c12;
+        }
+
+        /* ⭐⭐⭐ Global CTA Register (회원가입 유도) 조정 ⭐⭐⭐ */
+        .global-cta-section {
+            background: linear-gradient(135deg, #2c3e50, #34495e); /* 검정/남색 계열로 변경 */
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+        .global-cta-section h2 {
+            font-size: 40px;
+            margin-bottom: 40px;
+            font-weight: 900;
+            text-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+            color: white; /* 어두운 배경에 흰색 제목 */
+            line-height: 1.2;
+        }
+        .login-button { /* .global-cta-section 내 .login-button */
+            display: inline-block;
+            padding: 18px 45px;
+            background: #6c5ce7; /* 보라색 */
+            color: white;
+            font-size: 22px;
+            font-weight: 700;
+            border-radius: 35px; /* 원본 CTA 버튼처럼 둥글게 */
+            text-decoration: none;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            transition: background 0.3s ease, transform 0.3s ease;
+            white-space: nowrap; /* 버튼 텍스트가 한 줄에 나오도록 보장 */
+            width: auto; /* width: 300px 대신 auto */
+        }
+        .login-button:hover {
+            background: #8e44ad;
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+        }
+
+        /* No Schedule View 메시지 스타일 (원본 복구) */
+        #no-schedule-view {
+            padding: 40px;
+            background: rgba(44, 62, 80, 0.7);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            color: white;
+            font-size: 20px;
+            text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+        }
+        @media (max-width: 768px) {
+            .value-grid, .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
 
     </style>
 </head>
 <body>
 
 <header class="quick-menu">
-    <div class="logo"><a href="/">Multi FC</a></div>
+    <div class="logo">
+        <a href="/">Multi FC</a>
+    </div>
     <div class="header-icons">
-        <button id="profile-menu-toggle" class="profile-icon" style="position: relative;">
+        <button id="profile-menu-toggle" class="profile-icon" style="display: none;">
             <i class="fas fa-user-circle"></i>
             <span id="notification-badge" class="notification-badge"></span>
         </button>
+
         <div id="profile-menu" class="user-menu">
             <div class="user-info">
                 <strong><span id="user-menu-username">사용자</span>님</strong>
                 <p>환영합니다!</p>
             </div>
             <ul>
-                <li><a href="/notifications" id="nav-notifications-link"><i class="fas fa-bell"></i> 알림 목록</a></li>
+                <li><a href="/notifications"><i class="fas fa-bell"></i> 알림 목록</a></li>
                 <li><a href="/mypage"><i class="fas fa-user"></i> 마이페이지</a></li>
                 <li><a href="/profile/edit"><i class="fas fa-user-edit"></i> 프로필 수정</a></li>
                 <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
             </ul>
         </div>
-        <button id="menu-toggle" class="menu-toggle-btn"><i class="fas fa-bars"></i></button>
+
+        <button id="menu-toggle" class="menu-toggle-btn">
+            <i class="fas fa-bars"></i>
+        </button>
     </div>
 
     <nav id="main-menu" class="main-nav">
@@ -127,24 +778,22 @@
             <li><a href="/" class="active"><i class="fas fa-home"></i> 메인 (Home)</a></li>
             <li><a href="/fields"><i class="fas fa-search"></i> 구장검색</a></li>
             <li><a href="/community"><i class="fas fa-users"></i> 커뮤니티</a></li>
-            <li id="nav-chat-link-li"><a href="/chat" id="nav-chat-link"><i class="fas fa-comments"></i> 실시간채팅</a></li>
-            <li><a href="/login" id="nav-login-link"><i class="fas fa-sign-in-alt"></i> 로그인</a></li>
-            <li><a href="#" id="nav-logout-link"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
+            <li><a href="/chat"><i class="fas fa-comments"></i> 실시간채팅</a></li>
+
         </ul>
     </nav>
 </header>
 
-<div class="video-background">
-    <video poster="" autoplay muted loop>
-    </video>
-</div>
-<div class="video-overlay"></div>
-
 <main class="main-content">
 
- <section class="hero-section">
+    <section class="hero-section">
 
-        <div id="no-schedule-view-hero" style="display:none; position:relative; z-index:50;">
+        <div class="video-background" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;">
+            <video poster="" autoplay muted loop></video>
+        </div>
+        <div class="video-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;"></div>
+
+        <div id="no-schedule-view-hero" style="position:relative; z-index:50; display:none;">
             <p class="no-schedule-message" style="color:white; font-size:1.5rem; text-shadow: 0 0 5px black;">
                 로그인하고 7일 이내의<br>나의 일정을 확인하세요! ⚽
             </p>
@@ -176,14 +825,14 @@
             </div>
         </div>
 
-        <h1 class="hero-message">Multi FC</h1> <h2 class="hero-sub-message">실시간 풋살 매칭, 지금 시작하세요!</h2>
+        <h1 class="hero-message" style="position:relative; z-index:50;">Multi FC</h1> <h2 class="hero-sub-message" style="position:relative; z-index:50;">실시간 풋살 매칭, 지금 시작하세요!</h2>
 
         <a href="/fields" class="cta-button" style="z-index:50; position:relative;">매치 찾아보기</a>
 
     </section>
 
     <section class="value-section">
-        <h2 style="font-size: 30px; font-weight: 800; margin-bottom: 50px;">서비스 핵심 가치</h2>
+        <h2>서비스 핵심 가치</h2>
         <div class="value-grid">
 
             <div class="value-card">
@@ -194,8 +843,8 @@
 
             <div class="value-card">
                 <i class="fas fa-shield-alt"></i>
-                <h3>매너 시스템</h3>
-                <p>평점 기반의 엄격한 매너 관리로 불쾌한 경험 없는 깨끗한 풋살 환경을 제공합니다.</p>
+                <h3>공정하고 안전한 환경</h3>
+                <p>운영진의 관리와 시스템을 통해 모두가 즐길 수 있는 깨끗한 풋살 환경을 제공합니다.</p>
             </div>
 
             <div class="value-card">
@@ -213,7 +862,7 @@
     </section>
 
     <section class="chat-promo-section">
-        <h2><i class="fas fa-comments" style="color:#2ecc71; margin-right: 10px;"></i> 실시간 소통 채널</h2>
+        <h2><i class="fas fa-comments"></i> 실시간 소통 채널</h2>
         <div class="chat-promo-box">
             <p>
                 현재 진행 중인 매칭방, 팀원 모집방, 자유 수다방에서<br>
@@ -226,39 +875,43 @@
     </section>
 
     <section id="features-section">
-        <h2 style="font-size: 36px; color: #2c3e50; margin-bottom: 60px; font-weight:900;">Multi FC, 주요 서비스</h2> <div class="features-grid">
+        <h2>Multi FC, 주요 서비스</h2>
+        <div class="features-grid">
 
-        <div class="feature-card">
-            <div class="icon-wrapper">
-                <i class="fas fa-map-marked-alt"></i>
+            <div class="feature-card">
+                <div class="icon-wrapper">
+                    <i class="fas fa-map-marked-alt"></i>
+                </div>
+                <h3>최적의 구장 검색</h3>
+                <p>위치, 인원, 시간대별 맞춤형 필터로 주변 풋살장을 빠르게 찾아보세요. 지도 연동으로 접근성을 높입니다.</p>
+                <a href="/fields" class="card-link">구장 찾기</a>
             </div>
-            <h3>최적의 구장 검색</h3>
-            <p>위치, 인원, 시간대별 맞춤형 필터로 주변 풋살장을 빠르게 찾아보세요. 지도 연동으로 접근성을 높입니다.</p>
-            <a href="/fields" class="card-link">구장 찾기</a>
-        </div>
 
-        <div class="feature-card">
-            <div class="icon-wrapper">
-                <i class="fas fa-calendar-alt"></i>
+            <div class="feature-card">
+                <div class="icon-wrapper">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <h3>실시간 매치 스케줄</h3>
+                <p>팀 또는 개인 매치 일정을 등록하고, 남은 인원을 확인하세요. 모든 참여자는 알림을 통해 일정을 관리합니다.</p>
+                <a href="/schedule" class="card-link">일정 확인</a>
             </div>
-            <h3>실시간 매치 스케줄</h3>
-            <p>팀 또는 개인 매치 일정을 등록하고, 남은 인원을 확인하세요. 모든 참여자는 알림을 통해 일정을 관리합니다.</p>
-            <a href="/schedule" class="card-link">일정 확인</a>
-        </div>
 
-        <div class="feature-card">
-            <div class="icon-wrapper">
-                <i class="fas fa-users"></i>
+            <div class="feature-card">
+                <div class="icon-wrapper">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3>팀 & 커뮤니티 소통</h3>
+                <p>팀원을 모집하고 관리하며, 실시간 채팅과 자유게시판을 통해 활발하게 소통합니다.</p>
+                <a href="/community" class="card-link">커뮤니티 바로가기</a>
             </div>
-            <h3>매너 기반 커뮤니티</h3>
-            <p>매치 후 팀원을 평가하여 신뢰도를 쌓으세요. 실시간 채팅과 자유게시판을 통해 활발하게 소통합니다.</p>
-            <a href="/community" class="card-link">커뮤니티 바로가기</a>
         </div>
-    </div>
     </section>
 
     <section class="global-cta-section" id="global-cta-register">
-        <h2>지금 바로 당신의 풋살 팀을 찾으세요!</h2>
+        <h2>
+            <span style="font-size: 1.5em; font-weight: 900; display: block; margin-bottom: 10px;">Multi FC</span>
+            지금 바로 당신의 풋살 팀을 찾으세요!
+        </h2>
         <a href="/register" class="login-button" style="width: 300px; margin: 0 auto; text-decoration: none;">계정 생성하고 시작하기</a>
     </section>
 
@@ -269,13 +922,13 @@
         <p>
             프로젝트 조명 : Multi FC <br>
             프로젝트 팀원 : 팀장 - 박태란 / 팀원 - 권성민, 문진우, 윤승근, 최준호, 홍예린 <br>
-            담당 업무 : 프론트- 윤승근(조장), 권성민 / 백엔드 - 박태란(조장), 문진우, 최준호, 홍예린 <br>
+            담당 업무 : 프론트- 윤승근(조장), 권성민 / 백엔드 - 최준호(조장), 문진우, 박태란, 홍예린 <br>
             프로젝트 주제 : WebSocket 기반 실시간 스포츠 매칭 플랫폼
         </p>
     </div>
 </footer>
 <script>
-    // --- (★공통★) 메뉴 토글 및 로그아웃 로직 ---
+    // --- (★공통★) 메뉴 토글 및 로그아웃 로직 (기존 코드 그대로 유지함) ---
     const menuToggle = document.getElementById('menu-toggle');
     const mainMenu = document.getElementById('main-menu');
     const profileMenuToggle = document.getElementById('profile-menu-toggle');
@@ -284,8 +937,6 @@
     const navNotificationsLink = document.getElementById('nav-notifications-link');
     const navLoginLink = document.getElementById('nav-login-link');
     const navLogoutLink = document.getElementById('nav-logout-link');
-
-    // ⭐⭐ 추가된 선택자: 메뉴바의 채팅 링크 ⭐⭐
     const navChatLinkElement = document.getElementById('nav-chat-link');
 
     if (menuToggle) {
@@ -336,7 +987,7 @@
         });
     }
 
-    // --- (★공통★) 알림 배지 로드 함수 ---
+    // --- (★공통★) 알림 배지 로드 함수 (기존 코드 그대로 유지) ---
     const badge = document.getElementById('notification-badge');
     let hasReviewNotif = false;
     let hasScheduleNotif = false;
@@ -359,7 +1010,7 @@
             if (mockReviews.count > 0) {
                 hasReviewNotif = true;
             }
-        } catch (error) { console.error("후기 알림 요청 중 오류:", error); }
+        } catch (error) { console.error("일정 요청 중 오류 발생:", error); }
     }
     async function checkUpcomingSchedules() {
         if (localStorage.getItem('hasReadSchedules') === 'true') {
@@ -368,7 +1019,6 @@
         }
         try {
             await new Promise(r => setTimeout(r, 500));
-            // 이전 이미지에서는 3개의 일정이 있었으므로, 3개 이상의 목업 데이터를 가정합니다.
             const mockSchedules = [
                 { id: 1, date: "2025-11-01", time: "19:00", location: "서울 강남 풋살장", type: "개인 매치" },
                 { id: 2, date: "2025-11-03", time: "20:00", location: "수원 월드컵 풋살장", type: "팀 매치" },
@@ -381,62 +1031,99 @@
         } catch (error) { console.error("일정 요청 중 오류 발생:", error); }
     }
 
-    // ⭐⭐ [추가] 알림 닫기 로직: 리뷰 알림 배너 숨기기 ⭐⭐
+    // ⭐⭐ 알림 닫기 로직: 리뷰 알림 배너 숨기기 (기존 코드 그대로 유지) ⭐⭐
     function closeReviewNotification() {
         const reviewSection = document.getElementById('review-notification-section');
         if (reviewSection) {
             reviewSection.style.display = 'none';
         }
     }
-    // ⭐⭐ [추가 끝] ⭐⭐
+
+    // --- 슬라이더 관련 전역 변수 (DOMContentLoaded 이후 할당됨) ---
+    let currentIndex = 0;
+    let totalSlides = 0;
+    let autoSlideInterval;
+    const slideInterval = 3000; // 3초 설정
+
+    const sliderTrack = document.getElementById('schedule-list-items');
+    const prevBtn = document.getElementById('schedule-prev');
+    const nextBtn = document.getElementById('schedule-next');
+    const paginationContainer = document.getElementById('schedule-pagination');
 
 
     // --- (★페이지별★) 로직 실행 ---
     document.addEventListener('DOMContentLoaded', async () => {
+        // ⭐ 배경 이미지 오버레이 제거 ⭐
+        const videoOverlay = document.querySelector('.video-overlay');
+        if (videoOverlay) {
+            videoOverlay.style.display = 'none';
+        }
+
         const accessToken = localStorage.getItem('accessToken');
-        const mainLoginLink = document.getElementById('main-login-link');
-        const heroSection = document.querySelector('.hero-section');
         const memberContentArea = document.getElementById('member-content-area');
         const noScheduleViewHero = document.getElementById('no-schedule-view-hero');
         const chatPromoLink = document.getElementById('chat-promo-link');
-        const globalCtaRegister = document.getElementById('global-cta-register'); // ⭐ 추가된 CTA 섹션 ID ⭐
-
-
+        const globalCtaRegister = document.getElementById('global-cta-register');
         const scheduleSection = document.getElementById('upcoming-schedule-section');
         const reviewSection = document.getElementById('review-notification-section');
-
-        // 슬라이더 로직 변수
-        let currentIndex = 0;
-        let totalSlides = 0;
-        const sliderTrack = document.getElementById('schedule-list-items');
-        const prevBtn = document.getElementById('schedule-prev');
-        const nextBtn = document.getElementById('schedule-next');
         const noScheduleView = document.getElementById('no-schedule-view');
-        const sliderContainer = document.querySelector('.schedule-slider-container');
-        const paginationContainer = document.getElementById('schedule-pagination');
 
+        // 슬라이더 핵심 기능 함수들 (DOMContentLoaded 내부로 이동)
         function moveSlider() {
             if (sliderTrack && sliderTrack.querySelector('.schedule-item')) {
-                // 아이템 하나 너비(500px + 좌우 마진 20px)를 계산하여 이동
                 const itemWidth = sliderTrack.querySelector('.schedule-item').offsetWidth + 20;
                 sliderTrack.style.transform = `translateX(-${currentIndex * itemWidth}px)`;
             }
         }
-        function updatePaginationDots() {
-            if (paginationContainer) {
-                const dots = paginationContainer.querySelectorAll('.dot');
-                dots.forEach((dot, index) => {
-                    if (index === currentIndex) {
-                        dot.classList.add('active');
-                    } else {
-                        dot.classList.remove('active');
-                    }
-                });
+
+        function startAutoSlide() {
+            if (autoSlideInterval) {
+                clearInterval(autoSlideInterval);
+            }
+            if (totalSlides > 1) {
+                autoSlideInterval = setInterval(() => {
+                    currentIndex = (currentIndex + 1) % totalSlides;
+                    moveSlider();
+                    updateSliderControls();
+                    updatePaginationDots();
+                }, slideInterval);
             }
         }
+
+        function resetAutoSlideTimer() {
+            if (totalSlides > 1) {
+                clearInterval(autoSlideInterval);
+                startAutoSlide();
+            }
+        }
+
+        // 페이지네이션 점 클릭 기능 구현
+        function updatePaginationDots() {
+            if (paginationContainer) {
+                paginationContainer.innerHTML = '';
+                for (let i = 0; i < totalSlides; i++) {
+                    const dot = document.createElement('span');
+                    dot.className = 'dot';
+                    dot.dataset.index = i;
+                    if (i === currentIndex) {
+                        dot.classList.add('active');
+                    }
+
+                    dot.addEventListener('click', (e) => {
+                        currentIndex = parseInt(e.target.dataset.index);
+                        moveSlider();
+                        updateSliderControls();
+                        updatePaginationDots();
+                        resetAutoSlideTimer();
+                    });
+
+                    paginationContainer.appendChild(dot);
+                }
+            }
+        }
+
         function updateSliderControls() {
-            if (prevBtn && nextBtn && sliderContainer) {
-                // 아이템이 1개 초과일 때만 컨트롤 표시
+            if (prevBtn && nextBtn) {
                 if (totalSlides > 1) {
                     prevBtn.style.display = (currentIndex === 0) ? 'none' : 'block';
                     nextBtn.style.display = (currentIndex === totalSlides - 1) ? 'none' : 'block';
@@ -446,12 +1133,16 @@
                 }
             }
         }
+
+
+        // 화살표 이벤트 리스너 할당 (DOMContentLoaded 내부에서 정의된 함수 사용)
         if(nextBtn) nextBtn.addEventListener('click', () => {
             if (currentIndex < totalSlides - 1) {
                 currentIndex++;
                 moveSlider();
                 updateSliderControls();
                 updatePaginationDots();
+                resetAutoSlideTimer();
             }
         });
         if(prevBtn) prevBtn.addEventListener('click', () => {
@@ -460,53 +1151,36 @@
                 moveSlider();
                 updateSliderControls();
                 updatePaginationDots();
+                resetAutoSlideTimer();
             }
         });
 
-        // 페이지네이션 점 클릭 이벤트 리스너 추가
-        if(paginationContainer) {
-            paginationContainer.addEventListener('click', (e) => {
-                if (e.target.classList.contains('dot')) {
-                    currentIndex = parseInt(e.target.dataset.index);
-                    moveSlider();
-                    updateSliderControls();
-                    updatePaginationDots();
-                }
-            });
-        }
 
-
-        // (★수정★) 로그인 상태 확인
+        // (★수정★) 로그인 상태 확인 (기존 코드 그대로 유지)
         if (accessToken) {
-            // [회원일 때] - Hero 섹션에 일정/알림 표시
+            // [회원일 때]
             if (profileMenuToggle) profileMenuToggle.style.display = 'block';
             if (navLoginLink) navLoginLink.parentElement.style.display = 'none';
             if (navLogoutLink) navLogoutLink.parentElement.style.display = 'list-item';
 
-            // Hero 섹션 하단의 로그인 유도 텍스트 숨김
-            if (mainLoginLink) mainLoginLink.style.display = 'none';
             if (noScheduleViewHero) noScheduleViewHero.style.display = 'none';
-
-            // 일정/알림 영역만 표시 준비
             if (memberContentArea) memberContentArea.style.display = 'block';
-
-            // ⭐⭐⭐ 수정: 회원일 때 하단 CTA 숨김 ⭐⭐⭐
             if (globalCtaRegister) {
                 globalCtaRegister.style.display = 'none';
             }
-            // ⭐⭐⭐
 
             await checkPendingReviews();
             await checkUpcomingSchedules();
             updateGlobalBadge();
 
-            // (★) 실시간 채팅 링크 설정 (회원: 바로 페이지 이동)
+            // (★) 실시간 채팅 링크 설정
             if (chatPromoLink) {
                 chatPromoLink.href = "/chat";
                 chatPromoLink.textContent = "실시간 채팅 바로가기";
+                chatPromoLink.onclick = null;
             }
 
-            // (★) 후기 알림 배너 표시 로직 (텍스트 및 닫기 버튼 추가)
+            // (★) 후기 알림 배너 표시 로직
             if (reviewSection && hasReviewNotif) {
                 reviewSection.innerHTML = `
                     <div class="review-notification-text">
@@ -532,27 +1206,19 @@
             // (★) 다가오는 일정 슬라이더 로직
             if (scheduleSection) {
                 scheduleSection.style.display = 'block';
-                const noScheduleView = document.getElementById('no-schedule-view');
-
-                // 목업 데이터 (3개 이상)
-                // ⭐⭐⭐ 수정된 목업 데이터 (type 추가) ⭐⭐⭐
                 const mockSchedules = [
                     { id: 1, date: "2025-11-01", time: "19:00", location: "서울 강남 풋살장", type: "개인 매치" },
                     { id: 2, date: "2025-11-03", time: "20:00", location: "수원 월드컵 풋살장", type: "팀 매치" },
                     { id: 3, date: "2025-11-05", time: "21:00", location: "용인 풋살파크", type: "개인 매치" },
                     { id: 4, date: "2025-11-08", time: "18:00", location: "분당 탄천 구장", type: "팀 매치" }
                 ];
-                // ⭐⭐⭐ 수정된 목업 데이터 끝 ⭐⭐⭐
 
                 if (mockSchedules.length > 0) {
-                    // 슬라이더 DOM 렌더링 및 로직 유지
                     sliderTrack.innerHTML = '';
-                    paginationContainer.innerHTML = '';
 
                     mockSchedules.forEach((schedule, index) => {
                         const item = document.createElement('div');
                         item.className = 'schedule-item';
-                        // ⭐⭐⭐ 수정된 HTML 구조: 날짜, 시간, 장소, 타입을 명확히 표시 ⭐⭐⭐
                         item.innerHTML = `
                             <div class="item-info-wrapper">
                                 <div class="item-type">${schedule.type}</div>
@@ -561,71 +1227,59 @@
                             </div>
                             <a href="/schedule/detail/${schedule.id}" class="schedule-item-link">상세보기</a>
                         `;
-                        // ⭐⭐⭐ 수정된 HTML 구조 끝 ⭐⭐
-
                         sliderTrack.appendChild(item);
-
-                        const dot = document.createElement('span');
-                        dot.className = 'dot';
-                        dot.dataset.index = index;
-                        // 클릭 이벤트는 위에서 통합해서 처리합니다.
-                        paginationContainer.appendChild(dot);
                     });
 
-                    totalSlides = mockSchedules.length; // 각 아이템당 1페이지
+                    totalSlides = mockSchedules.length;
                     currentIndex = 0;
 
-                    updateSliderControls();
                     updatePaginationDots();
+                    updateSliderControls();
+                    moveSlider();
+
+                    startAutoSlide();
+
                     if(document.querySelector('.schedule-slider-container')) document.querySelector('.schedule-slider-container').style.display = 'block';
                     if(noScheduleView) noScheduleView.style.display = 'none';
 
                 } else if (noScheduleView) {
-                    // 일정이 없을 때 빈 메시지 표시 (Hero 섹션 내에서)
-                    noScheduleView.innerHTML = '<p class="no-schedule-message" style="color:white; text-shadow: 0 0 3px black;">아직 7일 이내의 일정이 없습니다. 😥</p>';
+                    noScheduleView.innerHTML = '<p class="no-schedule-message" style="color:white; text-shadow: 0 0 3px black;">아직 7일 이내의 일정이 없습니다.😥</p>';
                     noScheduleView.style.display = 'block';
                     if(document.querySelector('.schedule-slider-container')) document.querySelector('.schedule-slider-container').style.display = 'none';
                 }
             }
 
         } else {
-            // [비회원일 때] - Hero 섹션에 로그인 유도 메시지 표시
+            // [비회원일 때]
             if (profileMenuToggle) profileMenuToggle.style.display = 'none';
             if (navLoginLink) navLoginLink.parentElement.style.display = 'list-item';
             if (navLogoutLink) navLogoutLink.parentElement.style.display = 'none';
-
-            // Hero 섹션 하단의 로그인 유도 텍스트 표시
-            if (mainLoginLink) mainLoginLink.style.display = 'none';
             if (noScheduleViewHero) noScheduleViewHero.style.display = 'block';
             if (memberContentArea) memberContentArea.style.display = 'none';
-
-            // 기존 일정/알림 영역 숨김
             if (scheduleSection) scheduleSection.style.display = 'none';
             if (reviewSection) reviewSection.style.display = 'none';
-
-            // ⭐⭐⭐ 수정: 비회원일 때 하단 CTA 표시 ⭐⭐⭐
             if (globalCtaRegister) {
                 globalCtaRegister.style.display = 'block';
             }
-            // ⭐⭐⭐
 
-            // (★) 실시간 채팅 링크 설정 (비회원: 로그인 유도)
+            clearInterval(autoSlideInterval);
+
+            // (★) 실시간 채팅 링크 설정
             if (chatPromoLink) {
                 chatPromoLink.href = "/login";
                 chatPromoLink.textContent = "로그인 후 이용 가능";
-                // 메인 페이지의 CTA 링크는 자체적으로 경고를 띄웁니다.
                 chatPromoLink.onclick = function(e) {
                     e.preventDefault();
-                    alert("실시간 채팅은 로그인 후 이용 가능합니다.");
-                    window.location.href = "/login";
+                    alert("실시간 채팅은 회원만 이용할 수 없습니다.");
+                    window.location.href = '/login';
                 };
             }
 
             // ⭐⭐ 보강: 메뉴바의 채팅 링크 클릭 방지 ⭐⭐
             if (navChatLinkElement) {
-                navChatLinkElement.querySelector('a').addEventListener('click', function(e) {
+                navChatLinkElement.addEventListener('click', function(e) {
                     e.preventDefault();
-                    alert("❌ 실시간 채팅은 회원만 이용할 수 없습니다.");
+                    alert("실시간 채팅은 회원만 이용할 수 없습니다.");
                     window.location.href = '/login';
                 });
             }
