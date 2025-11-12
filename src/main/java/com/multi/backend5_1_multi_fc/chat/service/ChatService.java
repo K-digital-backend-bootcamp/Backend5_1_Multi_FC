@@ -3,17 +3,15 @@ package com.multi.backend5_1_multi_fc.chat.service;
 import com.multi.backend5_1_multi_fc.chat.dao.ChatMessageDao;
 import com.multi.backend5_1_multi_fc.chat.dao.ChatParticipantDao;
 import com.multi.backend5_1_multi_fc.chat.dao.ChatRoomDao;
-import com.multi.backend5_1_multi_fc.chat.dto.ChatMessageDto;
-import com.multi.backend5_1_multi_fc.chat.dto.ChatParticipantDto;
-import com.multi.backend5_1_multi_fc.chat.dto.ChatRoomDto;
-import com.multi.backend5_1_multi_fc.chat.dto.ChatRoomWithParticipantDto;
+import com.multi.backend5_1_multi_fc.chat.dto.*;
 import com.multi.backend5_1_multi_fc.notification.service.NotificationService;
 import com.multi.backend5_1_multi_fc.user.dao.UserDao;
 import com.multi.backend5_1_multi_fc.user.dto.UserDto;
 import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,9 +22,10 @@ public class ChatService {
     private final ChatMessageDao chatMessageDao;
     private  final ChatParticipantDao chatParticipantDao;
     private final UserDao userDao;
-    private final RabbitTemplate rabbitTemplate;
     private final NotificationService notificationService;
+    private final SimpMessagingTemplate messagingTemplate;
 
+    // 사용자의 채팅방 목록 조회 (타입별) - 동적으로 방 생성된 상태
     public List<ChatRoomWithParticipantDto> getUserChatRoomsByType(Long userId, String roomType){
         List<ChatRoomDto> rooms = chatRoomDao.findChatRoomsByUserIdAndType(userId, roomType);
 
@@ -36,6 +35,7 @@ public class ChatService {
             result.setRoomType(room.getRoomType());
             result.setMemberCount(room.getMemberCount());
 
+            //1대1 채팅방 시 상대방 닉네임으로 표시
             if("1대1".equals(room.getRoomType())){
                 String dynamicRoomName = generateOneToOneRoomName(room.getRoomId(), userId);
                 result.setRoomName(dynamicRoomName);
@@ -61,13 +61,7 @@ public class ChatService {
             return opponentUser.getNickname() + "님과의 채팅";
         }
 
-        return "1대 1 채팅";
-    }
-
-
-    //채팅방 생성 (그룹 채팅용)
-    public void createChatRoom(ChatRoomDto chatRoomDto){
-        chatRoomDao.insertChatRoom(chatRoomDto);
+        return "1대1 채팅";
     }
 
     //채팅방 조회
@@ -109,6 +103,43 @@ public class ChatService {
         return newRoom;
     }
 
+    //채팅방 생성 (그룹 채팅용)
+    public ChatRoomDto createGroupChatRoom(Long creatorId, CreateGroupChatRequest request){
+        Long currentLastRoom = chatRoomDao.getLastRoomId();
+        ChatRoomDto newRoom = ChatRoomDto.builder()
+                .roomId(currentLastRoom + 1)
+                .roomType(request.getRoomType())
+                .roomName(request.getRoomName())
+                .memberCount(request.getInvitedUserIds().size() + 1)
+                .build();
+
+        chatRoomDao.insertChatRoom(newRoom);
+
+        chatParticipantDao.insertParticipant(ChatParticipantDto.builder()
+                .roomId(newRoom.getRoomId())
+                .userId(creatorId)
+                .build()
+        );
+
+        for(Long userId: request.getInvitedUserIds()){
+            chatParticipantDao.insertParticipant(ChatParticipantDto.builder()
+                    .roomId(newRoom.getRoomId())
+                    .userId(userId)
+                    .build()
+            );
+
+            notificationService.createAndSendNotification(
+                    userId,
+                    request.getRoomName() + "채팅방에 초대되었습니다.",
+                    "채팅",
+                    newRoom.getRoomId()
+            );
+        }
+        return newRoom;
+    }
+
+
+
 
 
     //채팅 메세지 저장 + MQ publish
@@ -117,7 +148,7 @@ public class ChatService {
         chatMessageDao.insertMessage(messageDto);
 
         //RabbitMQ로 publish
-        rabbitTemplate.convertAndSend("chat.exchange", "room." + messageDto.getRoomId(), messageDto);
+        messagingTemplate.convertAndSend("/topic/chatroom/" + messageDto.getRoomId(), messageDto);
 
         ChatRoomDto chatRoom = chatRoomDao.findChatRoomById(messageDto.getRoomId());
 
@@ -142,7 +173,12 @@ public class ChatService {
     }
 
     //채팅방 메세지 목록 조회
-    public List<ChatMessageDto> getMessagesByRoomId(Long roomId){
+    public List<ChatMessageDto> getMessagesByRoomId(Long userId, Long roomId) throws AccessDeniedException {
+        ChatParticipantDto participant = chatParticipantDao.findByUserIdAndRoomId(userId, roomId);
+        if(participant == null){
+            throw new AccessDeniedException("채팅방에 접근 권한이 없습니다.");
+        }
+
         return chatMessageDao.findMessagesByRoomId(roomId);
     }
 
@@ -153,6 +189,10 @@ public class ChatService {
 
     //채팅방 참가자 추가
     public void addParticipant(ChatParticipantDto participant){
+        ChatParticipantDto existingParticipant = chatParticipantDao.findByUserIdAndRoomId(participant.getUserId(), participant.getRoomId());
+        if(existingParticipant != null){
+            throw new IllegalStateException("이미 해당 채팅방에 참여 중입니다.");
+        }
         chatParticipantDao.insertParticipant(participant);
 
         //초대받은 사용자에게 알림
@@ -165,8 +205,25 @@ public class ChatService {
         );
     }
 
-    //채팅방 참가자 퇴장
+    //채팅방 강퇴기능 ( 실현 시킬지는 미지수 )
     public void removeParticipant(Long roomId, Long chatPartId){
         chatParticipantDao.deleteParticipant(roomId,chatPartId);
+    }
+
+    //채팅방 자발적으로 나가기
+    public void leaveChatRoom(Long userId, Long roomId){
+        ChatParticipantDto participant = chatParticipantDao.findByUserIdAndRoomId(userId,roomId);
+        if(participant == null){
+            throw new IllegalStateException("해당 채팅방의 참가자가 아닙니다.");
+        }
+        chatParticipantDao.deleteByUserIdAndRoomId(userId,roomId);
+
+        ChatRoomDto chatRoom = chatRoomDao.findChatRoomById(roomId);
+        int newMemberCount = chatRoom.getMemberCount() - 1;
+        chatRoomDao.updateMemberCount(roomId, newMemberCount);
+
+        if(newMemberCount == 0){
+            chatRoomDao.deleteChatRoom(roomId);
+        }
     }
 }
