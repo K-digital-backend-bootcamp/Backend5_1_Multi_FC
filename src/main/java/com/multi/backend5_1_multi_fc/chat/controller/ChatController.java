@@ -3,12 +3,15 @@ package com.multi.backend5_1_multi_fc.chat.controller;
 import com.multi.backend5_1_multi_fc.chat.dto.ChatMessageDto;
 import com.multi.backend5_1_multi_fc.chat.dto.ChatParticipantDto;
 import com.multi.backend5_1_multi_fc.chat.dto.ChatRoomDto;
+import com.multi.backend5_1_multi_fc.chat.dto.ChatRoomWithParticipantDto;
 import com.multi.backend5_1_multi_fc.chat.service.ChatService;
+import com.multi.backend5_1_multi_fc.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,10 +21,25 @@ import java.util.List;
 public class ChatController {
     private final ChatService chatService;
 
-    //1. 채팅방 생성
-    @PostMapping("/makechat")
+    @PostMapping("/chatroom/onetoone")
+    public ChatRoomDto createOneToOneChatRoom(
+            @RequestParam("targetUserId") Long targetUserId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return chatService.createOrGetOneToOneChatRoom(userDetails.getUserId(), targetUserId);
+    }
+
+    //1. 그룹 채팅방 생성
+    @PostMapping("/chatroom/group")
     public void createChatRoom(@RequestBody ChatRoomDto chatRoomDto){
         chatService.createChatRoom(chatRoomDto);
+    }
+
+    //사용자의 채팅방 목록 조회 (타입별) - 동적 이름 포함
+    @GetMapping("/chatroom")
+    public List<ChatRoomWithParticipantDto> getChatRooms(
+            @RequestParam("type") String roomType,
+            @AuthenticationPrincipal CustomUserDetails userDetails){
+        return chatService.getUserChatRoomsByType(userDetails.getUserId(), roomType);
     }
 
     //2. 채팅방 단일 조회 (방의 정보를 응답받는 형태 - 방 제목, 멤버 )
@@ -49,6 +67,7 @@ public class ChatController {
         chatService.addParticipant(participant);
     }
 
+    //채팅 전송 기능
     @MessageMapping("/chatroom/{roomId}/send")
     public void sendMessage(@DestinationVariable Long roomId, @Payload ChatMessageDto messageDto, SimpMessageHeaderAccessor headerAccessor){
         messageDto.setRoomId(roomId);

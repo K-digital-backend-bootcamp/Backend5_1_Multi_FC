@@ -29,6 +29,8 @@ public class UserDao {
         );
     }
 
+
+
     // 아이디 중복 체크
     public int countByUsername(String username) {
         String sql = "SELECT COUNT(*) FROM User WHERE username = ?";

@@ -9,10 +9,22 @@
         <result property="memberCount" column="member_count" />
     </resultMap>
 
-    <select id="findChatRoomsByType" parameterType="string" resultMap="ChatRoomResultMap">
-        select *
-        from Chat_Room
-        where room_type= #{roomType}
+    <select id="findChatRoomsByUserIdAndType" parameterType="string" resultMap="ChatRoomResultMap">
+        select cr.*
+        from Chat_Room join Chat_participant cp on cr.chat_room_id = cp.chat_room_id
+        where cp.user_id = #{userId} and cr.room_type= #{roomType}
+        order by cr.updated_at desc
+    </select>
+
+    <select id="findOneToOneChatRoom" resultMap="ChatRoomResultMap">
+        select cr.*
+        from Chat_room cr
+        where cr.room_type = '1대1' in (
+            select cp1.chat_room_id
+            from Chat_participant cp1 join Chat_participant cp2 on cp1.chat_room_id = cp2.chat_room_id
+            where cp1.user_id = #{userId1} and cp2.user_id = #{userId2}
+        )
+            limit 1
     </select>
 
     <select id="findChatRoomById" parameterType="long" resultMap="ChatRoomResultMap">
@@ -31,6 +43,11 @@
         set member_count=#{memberCount}, updated_at = now()
         where  chat_room_id = #{roomId}
     </update>
+
+    <select id="getLastRoomId" resultType="long">
+        select max(chat_room_id)
+        from Chat_Room
+    </select>
 
     <delete id="deleteChatRoom" parameterType="long">
         delete
