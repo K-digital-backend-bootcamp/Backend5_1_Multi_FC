@@ -1,4 +1,4 @@
-package com.multi.backend5_1_multi_fc.chat.controller;
+package com.multi.backend5_1_multi_fc.Friend.controller;
 
-public class ChatController {
+public class FriendController {
 }

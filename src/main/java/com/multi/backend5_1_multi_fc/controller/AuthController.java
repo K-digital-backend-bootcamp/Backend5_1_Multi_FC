@@ -116,10 +116,6 @@ public class AuthController {
     // 4. 구장, 일정, 마이페이지, 알림 (VIEW)
     // ===========================================
 
-    @GetMapping("/friends")
-    public String friendsPage() {
-        return "friends"; // templates/friends.html
-    }
 
     // ⭐⭐ 추가: 팀 생성 및 관리 페이지 ⭐⭐
     @GetMapping("/team/create")
@@ -139,12 +135,14 @@ public class AuthController {
         return "fields"; // 구장 검색 (fields.html)
     }
 
+
     // 구장 상세 페이지 매핑 (ID 기반)
     @GetMapping("/stadium/detail")
     public String stadiumDetailPage(@RequestParam("id") Long id, Model model) {
         model.addAttribute("stadiumId", id);
         return "stadium-detail"; // templates/stadium-detail.html
     }
+
 
     @GetMapping("/mypage")
     public String myPage() {
@@ -159,11 +157,6 @@ public class AuthController {
     @GetMapping("/schedule")
     public String schedulePage() {
         return "schedule"; // 일정 목록 (schedule.html)
-    }
-
-    @GetMapping("/schedule/add")
-    public String addSchedulePage() {
-        return "schedule-add"; // 새 일정 추가 (schedule-add.html)
     }
 
     @GetMapping("/schedule/detail/{id}")
