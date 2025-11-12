@@ -35,9 +35,6 @@
             transition: all 0.3s ease-in-out;
             min-width: 0;
         }
-        .chat-main.sidebar-open {
-            margin-right: 280px;
-        }
         .chat-header {
             padding: 15px 20px;
             border-bottom: 1px solid #eee;
@@ -747,6 +744,17 @@
     const navLoginLink = document.querySelector('#main-menu a[href="/login"]');
     const navLogoutLink = document.querySelector('#main-menu ul li:last-child');
 
+    // ⭐⭐ [수정] DOMContentLoaded 이전에 헤더 닉네임 로딩 함수 정의 및 실행 (최우선 실행) ⭐⭐
+    (function loadHeaderNickname() {
+        const usernameSpan = document.getElementById('user-menu-username');
+        if (usernameSpan) {
+            // 'userNickname' 키의 값을 가져와서 설정합니다.
+            usernameSpan.textContent = localStorage.getItem('userNickname') || '사용자';
+        }
+    })();
+    // ⭐⭐ [수정 끝] ⭐⭐
+
+
     if (menuToggle) {
         menuToggle.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -778,12 +786,10 @@
             inlineProfileDetail &&
             (inlineProfileDetail.contains(event.target) || event.target.closest('.participant-item'));
 
-        // 🔹 "새 채팅 시작" 버튼인지 확인
         const isNewChatButton = event.target.closest('#new-chat-btn');
 
         // 모달 관련
-        const isClickInsideNewChatModal =
-            newChatModal.contains(event.target) || isNewChatButton;
+        const isClickInsideNewChatModal = newChatModal.contains(event.target) || isNewChatButton;
         const isClickInsideProfileModal = profileModal.contains(event.target);
         const isClickInsideInviteModal = inviteModal.contains(event.target);
 
@@ -814,11 +820,9 @@
         }
 
         // 5. 사이드바 닫기 (채팅 영역을 클릭했을 때)
-        const isClickInsideSidebar =
-            participantSidebar.contains(event.target) ||
-            event.target.closest('button[onclick="openParticipantList()"]');
-        const isClickInsideChatContent =
-            chatContentArea.contains(event.target) && !isClickInsideInlineProfile;
+        const participantSidebar = document.getElementById('participant-sidebar');
+        const isClickInsideSidebar = participantSidebar.contains(event.target) || event.target.closest('button[onclick="openParticipantList()"]');
+        const isClickInsideChatContent = chatContentArea.contains(event.target) && !isClickInsideInlineProfile;
 
         if (participantSidebar.classList.contains('open') && isClickInsideChatContent && !isClickInsideSidebar) {
             openParticipantList(false);
@@ -826,9 +830,11 @@
     });
     // --- [수정된] 메뉴 및 프로필 토글 로직 끝 ---
 
+
     let stompClient = null;
     let currentRoomId = null;
-    let myUsername = 'MyUser123';
+    // ⭐ [수정] myUsername을 userNickname으로 설정
+    let myUsername = localStorage.getItem('userNickname') || 'MyUser123';
     const chatContainer = document.getElementById('chat-messages-container');
     const inputArea = document.getElementById('message-input');
     const roomTitleElement = document.getElementById('room-title');
@@ -861,6 +867,7 @@
 
     const MOCK_ROOMS = {
         'group': [
+            // [수정] 참여자 목록에서 MyUser123 (방장)을 MyUser123 닉네임 + (방장) 형태로 유지
             { id: 1, name: '⚽ 11/05 수원 풋살 (10명)', lastMessage: 'UserA: 네, 거기서 봬요!', participants: ['MyUser123 (방장)', 'UserA', 'UserB', 'UserC', 'UserD'], maxParticipants: 10, createdAt: '2025-10-28', unreadCount: 5 },
             { id: 2, name: '📌 팀원 모집 - 캡틴손', lastMessage: '좋아요, 포지션은 DF 가능합니다.', participants: ['MyUser123', '캡틴손', '구원투수'], maxParticipants: 12, createdAt: '2025-11-02', unreadCount: 0 }
         ],
@@ -935,7 +942,8 @@
         'UserA': { nickname: 'UserA', position: 'FW', location: '서울 강남구', profilePic: '/images/mock_user_a.png' },
         'UserB': { nickname: 'UserB', position: 'MF', location: '서울 서초구', profilePic: '/images/mock_user_b.png' },
         '심판장 (운영진)': { nickname: '운영자', position: 'GK', location: '전국', profilePic: '/images/mock_admin.png' },
-        'MyUser123': { nickname: '나', position: 'DF', location: '서울 중구', profilePic: '/images/default-profile.png' },
+        // ⭐ [수정] MyUser123 프로필 키에 로컬 닉네임 강제 설정
+        'MyUser123': { nickname: localStorage.getItem('userNickname') || '나', position: 'DF', location: '서울 중구', profilePic: '/images/default-profile.png' },
         '캡틴손': { nickname: '캡틴손', position: 'MF', location: '수원 영통구', profilePic: '/images/mock_captain.png' },
         '구원투수': { nickname: '구원투수', position: 'DF', location: '성남 분당구', profilePic: '/images/mock_closer.png' },
         '풋살매니아': { nickname: '풋살매니아', position: 'ALA', location: '인천', profilePic: '/images/default-profile.png' },
@@ -1283,6 +1291,11 @@
 
             let displayName = participant.replace(/\s\(.*\)/g, '');
 
+            // ⭐ [수정] Host/나일 경우 닉네임으로 덮어쓰기
+            if (displayName === 'MyUser123' && (participant.includes('(방장)') || participant.includes(myUsername))) {
+                displayName = myUsername; // '리얼유저'
+            }
+
             item.onclick = () => openInlineProfileDetail(displayName);
 
             item.innerHTML = `
@@ -1307,7 +1320,13 @@
             return;
         }
 
-        const profile = MOCK_PROFILES[username] ||
+        let profileKey = username;
+        // ⭐ [수정] 내 닉네임이 MyUser123 닉네임과 같다면, MOCK_PROFILES 키를 MyUser123로 설정
+        if (username === myUsername) {
+            profileKey = 'MyUser123';
+        }
+
+        const profile = MOCK_PROFILES[profileKey] ||
             { nickname: username, position: '미등록', location: '미등록', profilePic: '/images/default-profile.png' };
 
         inlineProfileDetail.dataset.username = username;
@@ -1641,8 +1660,10 @@
     });
 
     document.addEventListener('DOMContentLoaded', () => {
-        if (profileChatBtn) {
-            profileChatBtn.addEventListener('click', function() {
+        // ⭐ [수정] 1:1 채팅하기 버튼 기능 구현
+        const profileChatBtnElement = document.getElementById('profile-chat-btn');
+        if (profileChatBtnElement) {
+            profileChatBtnElement.addEventListener('click', function() {
                 const username = inlineProfileDetail.dataset.username;
                 openInlineProfileDetail(false);
                 openNewChatModal(true, username);
@@ -1679,6 +1700,17 @@
         updateNewChatForm('one-on-one');
         openInlineProfileDetail(false);
 
+        // ⭐⭐⭐ [추가] 채팅 생성 버튼 기능 재부착 ⭐⭐⭐
+        const newChatBtn = document.getElementById('new-chat-btn');
+        if (newChatBtn) {
+            newChatBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // 외부 클릭 닫기 이벤트와 충돌 방지
+                openNewChatModal(true);
+            });
+        }
+        // ⭐⭐⭐ [추가 끝] ⭐⭐⭐
+
+
         // ✅ 경기 상세에서 넘어온 그룹 채팅 생성 요청 처리
         const matchChatRaw = localStorage.getItem('match_chat_request');
         if (matchChatRaw) {
@@ -1708,7 +1740,8 @@
         const accessToken = localStorage.getItem('accessToken');
         if (accessToken) {
             profileMenuToggle.style.display = 'flex';
-            usernameSpan.textContent = localStorage.getItem('username') || '사용자';
+            // ⭐ [수정] 닉네임 로딩 userNickname 키 사용
+            usernameSpan.textContent = localStorage.getItem('userNickname') || '사용자';
         }
 
         updateGlobalBadge();
@@ -1729,5 +1762,3 @@
         });
     }
 </script>
-</body>
-</html>

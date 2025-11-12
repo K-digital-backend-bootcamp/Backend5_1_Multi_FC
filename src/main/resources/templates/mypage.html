@@ -1021,6 +1021,7 @@
     let currentDate = new Date();
     currentDate.setDate(1);
 
+    // 초기 더미, 실제로는 loadSchedulesFromStorage에서 덮어씀
     let MOCK_SCHEDULES = [
         { id: 1, year: 2025, month: 10, day: 5, time: "09:00", type: 'match', title: '09:00 경기 일정', detail: "장소: 강남 풋살장, 레벨: 중급, 인원: 10명" },
         { id: 2, year: 2025, month: 10, day: 5, time: "13:00", type: 'personal', title: '13:00 개인 약속', detail: "축구화 세척 및 개인 연습 일정" },
@@ -1028,43 +1029,27 @@
         { id: 4, year: 2025, month: 11, day: 10, time: "18:00", type: 'personal', title: '친구와 풋살', detail: "잠실 풋살장" }
     ];
 
+    // ✅ 수정된 버전: 이제 personalSchedules만 사용
     function loadSchedulesFromStorage() {
-        const matchData = JSON.parse(localStorage.getItem("match_schedules")) || [];
         const personalData = JSON.parse(localStorage.getItem("personalSchedules")) || [];
 
-        const matchSchedules = matchData.map(m => {
-            const dateObj = new Date(m.date || "2025-11-01T00:00:00");
+        const schedules = personalData.map(p => {
+            const dateObj = new Date(p.date || "2025-11-01T00:00:00");
+
             return {
-                id: m.id,
+                id: p.id,
                 year: dateObj.getFullYear(),
-                month: dateObj.getMonth(),
+                month: dateObj.getMonth(), // 0부터 시작
                 day: dateObj.getDate(),
-                time: (m.time || m.startTime || "").split("~")[0].trim(),
-                type: "match",
-                title: m.title || m.location || "경기 일정",
-                detail: m.location || "구장 미정",
-                matchId: m.id
+                time: (p.time || "").split("~")[0].trim(),
+                type: p.type || 'personal', // match / personal 둘 다 처리
+                title: p.title || (p.type === 'match' ? "경기 일정" : "개인 일정"),
+                detail: p.detail || "",
+                matchId: p.matchId ?? null
             };
         });
 
-        const personalSchedules = personalData
-            .filter(p => p.type === 'personal')
-            .map(p => {
-                const dateObj = new Date(p.date || "2025-11-01T00:00:00");
-                return {
-                    id: p.id,
-                    year: dateObj.getFullYear(),
-                    month: dateObj.getMonth(),
-                    day: dateObj.getDate(),
-                    time: (p.time || "").split("~")[0].trim(),
-                    type: "personal",
-                    title: p.title || "개인 일정",
-                    detail: p.detail || "",
-                    matchId: null
-                };
-            });
-
-        MOCK_SCHEDULES = [...matchSchedules, ...personalSchedules];
+        MOCK_SCHEDULES = schedules;
     }
 
     function openDaySchedule(day, event) {

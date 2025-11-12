@@ -1,3 +1,5 @@
+stadium-detail.html
+
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -453,7 +455,6 @@
             <li><a href="/fields" class="active"><i class="fas fa-search"></i> 구장검색</a></li>
             <li><a href="/community"><i class="fas fa-users"></i> 커뮤니티</a></li>
             <li id="nav-chat-link-li"><a href="/chat" id="nav-chat-link"><i class="fas fa-comments"></i> 실시간채팅</a></li>
-            <li><a href="/schedule"><i class="fas fa-calendar-alt"></i> 일정</a></li>
         </ul>
     </nav>
 </header>
@@ -876,6 +877,7 @@
     }
 
     // 경기 생성 제출 로직
+    // 경기 생성 제출 로직
     function submitMatchForm() {
         const stadiumId = new URLSearchParams(window.location.search).get('id') || '1';
         const stadiumNameInput = document.getElementById('stadiumName');
@@ -927,21 +929,7 @@
         localMatchSchedules.unshift(newMatchData);
         localStorage.setItem('match_schedules', JSON.stringify(localMatchSchedules));
 
-        // 개인 일정에도 추가
-        const newCalendarEvent = {
-            id: NEW_MATCH_ID,
-            title: `${stadiumNameInput.value} 경기`,
-            date: matchDate,
-            time: `${startTime} ~ ${endTime}`,
-            type: "match",
-            matchId: NEW_MATCH_ID,
-            location: stadiumNameInput.value
-        };
-        let personalSchedules = JSON.parse(localStorage.getItem('personalSchedules')) || [];
-        personalSchedules.push(newCalendarEvent);
-        localStorage.setItem('personalSchedules', JSON.stringify(personalSchedules));
-
-        localStorage.setItem('calendarUpdated', 'true');
+        // ❌ 여기 있던 personalSchedules 추가 코드는 전부 삭제!
 
         alert(`'${newMatchData.location}' 경기가 성공적으로 개설되었습니다!`);
         openMatchModal(false);
@@ -954,6 +942,7 @@
             renderMatchList(stadiumId, matchDateFilterInput.value);
         }
     }
+
 
     // ✅ 검색 페이지와 공유할 더미 구장 데이터
     const MOCK_STADIUMS = [
@@ -1048,9 +1037,13 @@
             document.getElementById('profile-menu-toggle').style.display = 'block';
         }
 
+        // stadium-detail.html 스크립트의 DOMContentLoaded 외부 (혹은 내부)
+// ...
         const btnCreateMatch = document.getElementById('btn-create-match');
-        const DEFAULT_USER = "로그인 사용자";
+// ❗❗❗ 이 부분의 DEFAULT_USER 정의를 수정합니다 ❗❗❗
+        const DEFAULT_USER = localStorage.getItem('userNickname') || "로그인 사용자";
         const hostNameInput = document.getElementById('hostName');
+// ...
         const stadiumNameInput = document.getElementById('stadiumName');
         const hiddenStadiumIdInput = document.getElementById('stadiumId');
         const matchDateInput = document.getElementById('matchDate');
@@ -1085,7 +1078,8 @@
         }
 
         function initMatchModalFields() {
-            hostNameInput.value = DEFAULT_USER;
+            // ⭐ 이 부분이 수정되어야 합니다. ⭐
+            hostNameInput.value = DEFAULT_USER; // 이제 '리얼유저' 값이 들어갑니다.
 
             const fullNameText = document.getElementById('stadium-name').textContent;
             const pureName = fullNameText.split('(ID')[0].trim();

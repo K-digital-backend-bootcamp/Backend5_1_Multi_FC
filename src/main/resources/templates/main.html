@@ -1,3 +1,5 @@
+main.html
+
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -342,7 +344,7 @@
             font-weight: 900;
         }
         .quick-menu .logo a {
-            color: #ffffff; /* ✅ 진한 검정으로 변경함 */
+            color: #000; /* ✅ 진한 검정으로 변경함 */
             text-decoration: none;
         }
         .quick-menu .header-icons {
@@ -928,6 +930,15 @@
     </div>
 </footer>
 <script>
+    // ⭐⭐ [핵심 수정] DOMContentLoaded 이전에 헤더 닉네임 로딩 함수 정의 및 실행 ⭐⭐
+    (function loadHeaderNickname() {
+        const usernameSpan = document.getElementById('user-menu-username');
+        if (usernameSpan) {
+            // 'userNickname' 키의 값을 가져와서 설정합니다.
+            usernameSpan.textContent = localStorage.getItem('userNickname') || '사용자';
+        }
+    })();
+    // ⭐⭐ [수정 끝] ⭐⭐
     // --- (★공통★) 메뉴 토글 및 로그아웃 로직 (기존 코드 그대로 유지함) ---
     const menuToggle = document.getElementById('menu-toggle');
     const mainMenu = document.getElementById('main-menu');

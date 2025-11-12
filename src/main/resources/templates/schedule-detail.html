@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="'경기 상세 (ID: ' + ${matchId} + ') - Multi FC'">Multi FC - 일정 상세</title>
+    <title th:text="'경기 상세 (ID: ' + ${matchId} + ') - MULTI FC'">Multi FC - 일정 상세</title>
 
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
@@ -189,7 +189,7 @@
 <body>
 
 <header class="quick-menu">
-    <div class="logo"><a href="/">Multi FC</a></div>
+    <div class="logo"><a href="/">MULTI FC</a></div>
     <div class="header-icons">
         <button id="profile-menu-toggle" class="profile-icon" style="position: relative; display: none;">
             <i class="fas fa-user-circle"></i>
@@ -356,6 +356,14 @@
         });
     }
 
+    // ✅ 헤더 닉네임 로드 (userNickname이 있으면 헤더에 뿌려줌)
+    (function loadHeaderNickname() {
+        const usernameSpan = document.getElementById('user-menu-username');
+        if (usernameSpan) {
+            usernameSpan.textContent = localStorage.getItem('userNickname') || '사용자';
+        }
+    })();
+
     function getMatchId() {
         const hidden = document.getElementById('match-id-hidden');
         return (hidden && hidden.value) ||
@@ -436,22 +444,60 @@
     // --- 참여자/호스트 더미 데이터 ---
     const MAX_PLAYERS = 10;
 
-    const MOCK_PARTICIPANTS = [
-        { id: 101, username: 'captain_son', nickname: '캡틴손', position: 'ALA', role: 'Host' },
-        { id: 999, username: 'my_user_id', nickname: 'MyUser123', position: 'ALA', role: 'Player' },
-        { id: 102, username: 'closer_kim', nickname: '구원투수', position: 'FIXO', role: 'Player' },
-        { id: 103, username: 'shootdori', nickname: '슛돌이', position: 'PIVO', role: 'Player' },
-        { id: 104, username: 'captain_park', nickname: '캡틴박', position: 'ALA', role: 'Player' },
-        { id: 105, username: 'futsal_mania', nickname: '풋살 매니아', position: 'ALA', role: 'Player' },
-        { id: 106, username: 'keeper_p', nickname: '골키퍼p', position: 'GOLEIRO', role: 'Player' },
-        { id: 107, username: 'keeper_k', nickname: '골키퍼K', position: 'GOLEIRO', role: 'Player' },
-        { id: 108, username: 'pass_master', nickname: '패스마스터', position: 'FIXO', role: 'Player' },
-        { id: 109, username: 'power_shot', nickname: '파워슛', position: 'PIVO', role: 'Player' }
+    // ✅ 현재 로그인 사용자 정보 (localStorage에서 가져오기)
+    const CURRENT_USER_ID = 999; // 프론트 데모용 고정 ID
+    const CURRENT_USERNAME = localStorage.getItem('username') || 'my_user_id';
+    const CURRENT_NICKNAME = localStorage.getItem('userNickname') || '사용자';
+
+    // ✅ 매치별 주최자 닉네임 매핑 (목록 MOCK_MATCHES와 동일하게 맞추기)
+    const MOCK_MATCH_HOSTS = [
+        { matchId: 1, nickname: '캡틴손' },
+        { matchId: 2, nickname: '운영진' },
+        { matchId: 3, nickname: '구원투수' },
+        { matchId: 4, nickname: '테스터' },
     ];
 
-    const CURRENT_USER_ID = 999;
-    let isParticipating = false;
-    let isHost = false;
+    const MOCK_PARTICIPANTS = [
+        // ✅ 여기 호스트를 "현재 로그인 사용자"로 설정
+        {
+            id: CURRENT_USER_ID,
+            username: CURRENT_USERNAME,
+            nickname: CURRENT_NICKNAME,
+            position: 'ALA',
+            role: 'Host'
+        },
+        { id: 101, username: 'captain_son',  nickname: '캡틴손',      position: 'ALA',      role: 'Player' },
+        { id: 102, username: 'closer_kim',   nickname: '구원투수',    position: 'FIXO',     role: 'Player' },
+        { id: 103, username: 'shootdori',    nickname: '슛돌이',      position: 'PIVO',     role: 'Player' },
+        { id: 104, username: 'captain_park', nickname: '캡틴박',      position: 'ALA',      role: 'Player' },
+        { id: 105, username: 'futsal_mania', nickname: '풋살 매니아', position: 'ALA',      role: 'Player' },
+        { id: 106, username: 'keeper_p',     nickname: '골키퍼p',     position: 'GOLEIRO',  role: 'Player' },
+        { id: 107, username: 'keeper_k',     nickname: '골키퍼K',     position: 'GOLEIRO',  role: 'Player' },
+        { id: 108, username: 'pass_master',  nickname: '패스마스터',  position: 'FIXO',     role: 'Player' },
+        { id: 109, username: 'power_shot',   nickname: '파워슛',      position: 'PIVO',     role: 'Player' }
+    ];
+
+    // ✅ 현재 매치 ID에 해당하는 Host 닉네임 가져오기
+    function getHostNicknameForCurrentMatch() {
+        const matchId = getMatchId();
+        if (!matchId) return null;
+
+        // 1) 로컬스토리지 match_schedules 안에서 nickname / host.nickname 우선 사용
+        try {
+            const matches = JSON.parse(localStorage.getItem('match_schedules') || '[]');
+            const found = matches.find(m => String(m.id) === String(matchId));
+            if (found) {
+                if (found.nickname) return found.nickname;
+                if (found.host && found.host.nickname) return found.host.nickname;
+            }
+        } catch (e) {
+            console.error('match_schedules 파싱 오류:', e);
+        }
+
+        // 2) 없으면 목업 매핑에서 찾기
+        const staticHost = MOCK_MATCH_HOSTS.find(h => String(h.matchId) === String(matchId));
+        return staticHost ? staticHost.nickname : null;
+    }
 
     // ✅ 참여 여부를 로컬스토리지에 저장/조회
     function getParticipationState() {
@@ -478,21 +524,34 @@
     let currentParticipants = [];
 
     function buildInitialParticipants() {
-        // 기본: 나를 뺀 더미 참가자들
-        currentParticipants = MOCK_PARTICIPANTS.filter(p => p.id !== CURRENT_USER_ID);
+        // ✅ 이 매치의 주최자 닉네임
+        const hostNickname = getHostNicknameForCurrentMatch();
 
-        if (getParticipationState()) {
-            const meFromMock = MOCK_PARTICIPANTS.find(p => p.id === CURRENT_USER_ID) || {
-                id: CURRENT_USER_ID,
-                username: 'my_user_id',
-                nickname: '나의닉네임',
-                position: 'ALA',
-                role: 'Player'
-            };
-            currentParticipants.push(meFromMock);
-            isParticipating = true;
+        // 기본: MOCK_PARTICIPANTS를 복사하면서 Host의 nickname만 현재 매치에 맞게 덮어쓰기
+        const baseList = MOCK_PARTICIPANTS.map(p => {
+            if (p.role === 'Host' && hostNickname) {
+                return { ...p, nickname: hostNickname };
+            }
+            return { ...p };
+        });
+
+        // 🔍 현재 로그인 유저 정보
+        const myMock = baseList.find(p => p.id === CURRENT_USER_ID);
+        const iAmHost = !!myMock && myMock.role === 'Host';
+
+        // ✅ 호스트는 리스트에서 제거하지 않음
+        if (iAmHost) {
+            currentParticipants = baseList;
+            isParticipating = true;   // 호스트는 자동 참여 상태
         } else {
-            isParticipating = false;
+            currentParticipants = baseList.filter(p => p.id !== CURRENT_USER_ID);
+
+            if (getParticipationState()) {
+                if (myMock) currentParticipants.push(myMock);
+                isParticipating = true;
+            } else {
+                isParticipating = false;
+            }
         }
     }
 
@@ -511,15 +570,11 @@
 
         const me = participants.find(u => u.id === CURRENT_USER_ID);
         isParticipating = !!me;
-        isHost = !!me && me.role === 'Host'; // 대부분 false (Host는 101)
+        isHost = !!me && me.role === 'Host';
 
         const deleteBtn = document.getElementById('delete-match-btn');
         if (deleteBtn) {
-            if (isHost) {
-                deleteBtn.style.display = 'inline-block';
-            } else {
-                deleteBtn.style.display = 'none';
-            }
+            deleteBtn.style.display = isHost ? 'inline-block' : 'none';
         }
 
         const hostUser = participants.find(u => u.role === 'Host');
@@ -765,38 +820,66 @@
         renderParticipantList();
     }
 
+    // ✅ 경기 삭제: 매치 + 일정 + 참여정보 + 채팅방 모두 제거
     function handleDeleteMatch() {
         if (!isHost) {
             alert("주최자만 경기를 제거할 수 있습니다.");
             return;
         }
 
-        if (!confirm("⚠️ 이 경기를 완전히 삭제하시겠습니까?\n(매치 목록 / 캘린더에서도 사라집니다.)")) {
+        if (!confirm("⚠️ 이 경기를 완전히 삭제하시겠습니까?\n(매치 목록 / 캘린더 / 채팅방에서도 사라집니다.)")) {
             return;
         }
 
         const matchId = getMatchId();
 
         if (matchId) {
+            // 1) match_schedules 에서 경기 삭제
             let matches = JSON.parse(localStorage.getItem("match_schedules")) || [];
             matches = matches.filter(m => String(m.id) !== String(matchId));
             localStorage.setItem("match_schedules", JSON.stringify(matches));
 
+            // 2) personalSchedules 에서 이 매치 일정 삭제
             let schedules = JSON.parse(localStorage.getItem("personalSchedules")) || [];
             schedules = schedules.filter(
                 s => !s.matchId || String(s.matchId) !== String(matchId)
             );
             localStorage.setItem("personalSchedules", JSON.stringify(schedules));
 
-            // 참여 여부도 함께 제거
+            // 3) 참여 여부 정보 삭제
             const map = JSON.parse(localStorage.getItem('match_participation') || '{}');
             delete map[matchId];
             localStorage.setItem('match_participation', JSON.stringify(map));
 
+            // 4) 이 매치에서 만들어진 채팅방도 삭제
+            try {
+                // (1) 혹시 남아있을 수 있는 생성 요청(clean)
+                localStorage.removeItem('match_chat_request');
+
+                // (2) chat_rooms_v1 에서 fromMatchId가 이 경기인 방 제거
+                const roomStr = localStorage.getItem('chat_rooms_v1');
+                if (roomStr) {
+                    const roomsObj = JSON.parse(roomStr);
+
+                    ['group', 'one-on-one'].forEach(type => {
+                        if (Array.isArray(roomsObj[type])) {
+                            roomsObj[type] = roomsObj[type].filter(
+                                r => String(r.fromMatchId) !== String(matchId)
+                            );
+                        }
+                    });
+
+                    localStorage.setItem('chat_rooms_v1', JSON.stringify(roomsObj));
+                }
+            } catch (e) {
+                console.error("채팅방 삭제 중 에러:", e);
+            }
+
+            // 캘린더 새로고침 플래그
             localStorage.setItem("calendarUpdated", "true");
         }
 
-        alert("✅ 경기가 삭제되었습니다.");
+        alert("✅ 경기가 삭제되었고, 관련 채팅방도 정리되었습니다.");
 
         if (window.history.length > 1) {
             window.history.back();
@@ -804,6 +887,7 @@
             window.location.href = "/schedule";
         }
     }
+
 
     function handleCloseMatch() {
         if (!isHost) return;
@@ -833,6 +917,7 @@
 
             const matchIdValue = getMatchId();
 
+            // 1) match_schedules 상태를 closed로
             if (matchIdValue) {
                 let matches = JSON.parse(localStorage.getItem("match_schedules")) || [];
                 matches.forEach(m => {
@@ -843,13 +928,68 @@
                 localStorage.setItem("match_schedules", JSON.stringify(matches));
             }
 
-            const locationText = document.getElementById('detail-location')?.textContent || '경기';
-            const datetimeText = document.getElementById('detail-datetime')?.textContent || '';
+            // 2) 마감 시, 현재 사용자(호스트) 마이페이지 캘린더에 일정 추가
+            if (matchIdValue) {
+                try {
+                    let schedules = JSON.parse(localStorage.getItem("personalSchedules")) || [];
+                    const already = schedules.some(
+                        s => s.matchId && String(s.matchId) === String(matchIdValue)
+                    );
+
+                    if (!already) {
+                        const matches = JSON.parse(localStorage.getItem("match_schedules")) || [];
+                        const match = matches.find(m => String(m.id) === String(matchIdValue));
+
+                        let dateStr    = match?.date || null;
+                        let startTime  = match?.startTime || (match?.time ? match.time.split("~")[0].trim() : "");
+                        let endTime    = match?.endTime   || (match?.time && match.time.includes("~") ? match.time.split("~")[1].trim() : "");
+                        const locationFromMatch = match?.location;
+
+                        const locationTextEl = document.getElementById('detail-location');
+                        const datetimeTextEl = document.getElementById('detail-datetime');
+
+                        const locationText = locationFromMatch || (locationTextEl ? locationTextEl.textContent : "경기");
+                        const datetimeText = datetimeTextEl ? datetimeTextEl.textContent : "";
+
+                        if (!dateStr) {
+                            const dateMatch = datetimeText.match(/(\d{4}-\d{2}-\d{2})/);
+                            if (dateMatch) dateStr = dateMatch[1];
+                            const timeMatch = datetimeText.match(/(\d{2}:\d{2})\s*~\s*(\d{2}:\d{2})/);
+                            if (timeMatch) {
+                                if (!startTime) startTime = timeMatch[1];
+                                if (!endTime)   endTime   = timeMatch[2];
+                            }
+                        }
+
+                        const scheduleObj = {
+                            id: Date.now(),
+                            type: 'match',
+                            title: locationText || "경기 일정",
+                            detail: locationText || "",
+                            matchId: matchIdValue,
+                            date: dateStr,
+                            time: (startTime && endTime)
+                                ? `${startTime} ~ ${endTime}`
+                                : (match?.time || "")
+                        };
+
+                        schedules.push(scheduleObj);
+                        localStorage.setItem("personalSchedules", JSON.stringify(schedules));
+                        localStorage.setItem("calendarUpdated", "true");
+                    }
+                } catch (e) {
+                    console.error("마감 시 캘린더 추가 중 오류:", e);
+                }
+            }
+
+            // 3) 채팅방 요청 & 이동
+            const locationText2 = document.getElementById('detail-location')?.textContent || '경기';
+            const datetimeText2 = document.getElementById('detail-datetime')?.textContent || '';
 
             const chatRoomRequest = {
                 fromMatchId: matchIdValue || null,
                 type: 'group',
-                title: `경기 채팅 - ${locationText} ${datetimeText}`,
+                title: `경기 채팅 - ${locationText2} ${datetimeText2}`,
                 participants: finalPlayers.map(p => p.nickname),
                 maxParticipants: MAX_PLAYERS
             };
@@ -862,11 +1002,14 @@
         }
     }
 
+
     document.addEventListener('DOMContentLoaded', async () => {
         const accessToken = localStorage.getItem('accessToken');
 
         if (accessToken) {
             document.getElementById('profile-menu-toggle').style.display = 'block';
+        }
+        if (accessToken) {
             if (navLoginLink) navLoginLink.parentElement.style.display = 'none';
             if (navLogoutLink) navLogoutLink.parentElement.style.display = 'list-item';
         } else {
@@ -903,7 +1046,6 @@
                     localStorage.setItem("calendarUpdated", "true");
 
                     alert("✅ 참여가 취소되었습니다.");
-                    // ❌ 더 이상 캘린더 페이지로 이동하지 않음
                 }
             });
         }
@@ -920,7 +1062,7 @@
 
         loadMatchDetailFromLocal();
 
-        // ✅ 로컬스토리지 기반으로 처음 참가자 상태 구성
+        // ✅ 로컬스토리지/목업 기반으로 처음 참가자 상태 구성 (여기서 Host 닉네임 매치별로 맞춰짐)
         buildInitialParticipants();
         renderParticipantList();
     });
