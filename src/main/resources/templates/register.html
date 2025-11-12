@@ -10,106 +10,38 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <style>
-        /* 주소 필드와 버튼을 한 줄에 정렬하기 위한 스타일 */
-        .input-group.address-group {
-            display: flex;
-            gap: 10px;
-            align-items: flex-end;
-        }
-        .input-group.address-group .input-wrapper {
-            flex-grow: 1;
-        }
-        .address-group button {
-            padding: 12px 15px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #fff;
-            background: #95a5a6;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background 0.3s;
-            white-space: nowrap;
-            min-width: 80px;
-        }
-        .address-group button:hover {
-            background: #7f8c8d;
-        }
+        .input-group.address-group { display: flex; gap: 10px; align-items: flex-end; }
+        .input-group.address-group .input-wrapper { flex-grow: 1; }
+        .address-group button { padding: 12px 15px; font-size: 14px; font-weight: 600; color: #fff; background: #95a5a6; border: none; border-radius: 10px; cursor: pointer; transition: background 0.3s; white-space: nowrap; min-width: 80px; }
+        .address-group button:hover { background: #7f8c8d; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); display: none; justify-content: center; align-items: center; z-index: 9999; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: #fff; max-width: 900px; width: 90%; max-height: 80vh; border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25); display: flex; flex-direction: column; overflow: hidden; }
+        .modal-header { padding: 16px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h1 { margin: 0; font-size: 20px; }
+        .modal-close-btn { background: none; border: none; font-size: 22px; cursor: pointer; }
+        .modal-body { padding: 16px 20px; overflow-y: auto; }
+        .modal-body h2 { margin-top: 24px; }
+        .modal-body .clause { background: #f4f4f4; border: 1px solid #ddd; padding: 15px; margin-top: 10px; }
+        .modal-footer { padding: 16px 20px; border-top: 1px solid #eee; text-align: center; }
+        .agree-btn { padding: 12px 24px; font-size: 16px; font-weight: 600; border: none; border-radius: 8px; background: #6c5ce7; color: #fff; cursor: pointer; }
+        .agree-btn:hover { background: #574bdb; }
+        .terms-link { color: #3498db; text-decoration: underline; cursor: pointer; }
 
-        /* ========= 모달 스타일 ========= */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: none; /* 기본은 숨김 */
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
+        .info-message {
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            margin-top: 5px !important;
+            display: none !important;
+            min-height: 0 !important;
         }
-        .modal {
-            background: #fff;
-            max-width: 900px;
-            width: 90%;
-            max-height: 80vh;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+        .info-message.success {
+            color: #2ecc71 !important;
+            display: block !important;
         }
-        .modal-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .modal-header h1 {
-            margin: 0;
-            font-size: 20px;
-        }
-        .modal-close-btn {
-            background: none;
-            border: none;
-            font-size: 22px;
-            cursor: pointer;
-        }
-        .modal-body {
-            padding: 16px 20px;
-            overflow-y: auto;
-        }
-        .modal-body h2 {
-            margin-top: 24px;
-        }
-        .modal-body .clause {
-            background: #f4f4f4;
-            border: 1px solid #ddd;
-            padding: 15px;
-            margin-top: 10px;
-        }
-        .modal-footer {
-            padding: 16px 20px;
-            border-top: 1px solid #eee;
-            text-align: center;
-        }
-        .agree-btn {
-            padding: 12px 24px;
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
-            border-radius: 8px;
-            background: #6c5ce7;
-            color: #fff;
-            cursor: pointer;
-        }
-        .agree-btn:hover {
-            background: #574bdb;
-        }
-
-        .terms-link {
-            color: #3498db;
-            text-decoration: underline;
-            cursor: pointer;
+        .info-message.error {
+            color: #e74c3c !important;
+            display: block !important;
         }
     </style>
 </head>
@@ -133,24 +65,24 @@
 
                 <p id="error-message" class="error-message" style="display:none;"></p>
 
-                <form id="register-form" enctype="multipart/form-data">
+                <form id="register-form">
 
                     <div class="input-group">
                         <label for="email">이메일 (Email)</label>
                         <input type="email" id="email" name="email" placeholder="비밀번호 찾기 등에 사용" required>
-                        <p id="email-message" class="info-message" style="display:none;"></p>
+                        <p id="email-message" class="info-message"></p>
                     </div>
 
                     <div class="input-group">
                         <label for="username">아이디 (User name)</label>
-                        <input type="text" id="username" name="username" placeholder="사용할 아이디" required>
-                        <p id="username-message" class="info-message" style="display:none;"></p>
+                        <input type="text" id="username" name="username" placeholder="5~20자 영문 소문자, 숫자, (_)만 사용" required>
+                        <p id="username-message" class="info-message"></p>
                     </div>
 
                     <div class="input-group">
                         <label for="nickname">닉네임</label>
-                        <input type="text" id="nickname" name="nickname" placeholder="사용할 닉네임" required>
-                        <p id="nickname-message" class="info-message" style="display:none;"></p>
+                        <input type="text" id="nickname" name="nickname" placeholder="2~16자 한글, 영문, 숫자" required>
+                        <p id="nickname-message" class="info-message"></p>
                     </div>
 
                     <div class="input-group">
@@ -159,6 +91,7 @@
                             <input type="password" id="password" name="password" placeholder="8자 이상, 영문/숫자/특수문자 조합" required pattern="^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$">
                             <i class="fas fa-eye-slash toggle-password" data-target="password"></i>
                         </div>
+                        <p id="password-message" class="info-message"></p>
                     </div>
 
                     <div class="input-group">
@@ -169,17 +102,18 @@
                         </div>
                     </div>
 
+
                     <div class="input-group" style="display: flex; align-items: center; gap: 20px; margin-top: 5px;">
                         <label style="margin: 0; min-width: 100px; font-weight: 700; font-size: 20px;">
                             성별 (Gender)
                         </label>
                         <div style="display: flex; align-items: center; gap: 35px;  margin-top: 7px;">
                             <label style="display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-size: 15px;">
-                                <input type="radio" name="gender" value="M" required style="accent-color: #6c5ce7; width: 18px; height: 18px;">
+                                <input type="radio" name="gender" value="남성" required style="accent-color: #6c5ce7; width: 18px; height: 18px;">
                                 남성 (M)
                             </label>
                             <label style="display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-size: 15px;">
-                                <input type="radio" name="gender" value="F" required style="accent-color: #e74c3c; width: 18px; height: 18px;">
+                                <input type="radio" name="gender" value="여성" required style="accent-color: #e74c3c; width: 18px; height: 18px;">
                                 여성 (F)
                             </label>
                         </div>
@@ -188,35 +122,39 @@
                     <div class="input-group">
                         <label for="position">선호 포지션</label>
                         <select id="position" name="position" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: #f7f7f7;">
-                            <option value="ALL">전체 (ALL)</option>
-                            <option value="FIXO">픽소 (FIXO)</option>
-                            <option value="ALA">아라 (ALA)</option>
-                            <option value="PIVO">피보 (PIVO)</option>
-                            <option value="GOLEIRO">골레이로 (GOLEIRO)</option>
+                            <option value="전체 (ALL)">전체 (ALL)</option>
+                            <option value="픽소 (FIXO)">픽소 (FIXO)</option>
+                            <option value="비보 (PIVO)">비보 (PIVO)</option>
+                            <option value="콜레이로(GOLEIRO)">콜레이로(GOLEIRO)</option>
                         </select>
                     </div>
 
+
                     <div class="input-group">
                         <label for="skill-level">나의 실력 레벨</label>
-                        <select id="skill-level" name="skillLevel" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: #f7f7f7;">
+                        <select id="skill-level" name="level" required style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: #f7f7f7;">
                             <option value="">실력을 선택하세요</option>
-                            <option value="beginner">초급</option>
-                            <option value="intermediate">중급</option>
-                            <option value="advanced">고급</option>
+                            <option value="초급">초급</option>
+                            <option value="중급">중급</option>
+                            <option value="고급">고급</option>
                         </select>
                     </div>
 
                     <div class="input-group address-group">
                         <div class="input-wrapper">
                             <label for="address">주소</label>
-                            <input type="text" id="address" name="address" placeholder="주소를 입력하세요" required readonly>
+                            <input type="text" id="address" name="address" placeholder="주소 검색 버튼을 눌러주세요" required readonly>
                         </div>
                         <button type="button" onclick="searchAddress()">주소 찾기</button>
                     </div>
 
                     <div class="input-group">
+                        <input type="text" id="address-detail" placeholder="상세 주소를 입력하세요 (예: 101동 1004호)">
+                    </div>
+
+                    <div class="input-group">
                         <label for="profile-pic">프로필 사진 (선택)</label>
-                        <input type="file" id="profile-pic" name="profilePic" accept="image/*">
+                        <input type="file" id="profile-pic" name="profile_image_file" accept="image/*">
                     </div>
 
                     <div class="terms-agreement">
@@ -227,7 +165,7 @@
                     </div>
 
                     <button type="submit" id="register-submit-btn" class="login-button" style="margin-top: 15px;" disabled>
-                        Create Account (아이디 닉네임 확인 필요)
+                        Create Account (모든 항목 확인 필요)
                     </button>
                 </form>
 
@@ -236,7 +174,6 @@
                 </div>
             </div>
         </div>
-
     </div>
 </main>
 
@@ -433,9 +370,10 @@
         </div>
     </div>
 </div>
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 
 <script>
-    // --- 비밀번호 보기 토글 ---
+    // 비밀번호 보기 토글
     document.querySelectorAll('.toggle-password').forEach(icon => {
         icon.addEventListener('click', function() {
             const input = this.parentElement.querySelector('input');
@@ -446,249 +384,233 @@
         });
     });
 
-    // --- 주소 찾기 (더미) ---
+    // Daum 우편번호 서비스 연동
     function searchAddress() {
-        alert("주소 검색 API를 통해 주소를 찾습니다. (예: Daum Postcode)");
-        document.getElementById('address').value = "서울특별시 강남구 테헤란로 123";
+        new daum.Postcode({
+            oncomplete: function(data) {
+                var addr = (data.userSelectedType === 'R') ? data.roadAddress : data.jibunAddress;
+                if(data.userSelectedType === 'R' && data.bname !== '' && /[동|로|가]$/g.test(data.bname)){
+                    addr += ' (' + data.bname + ')';
+                }
+                document.getElementById("address").value = addr;
+                document.getElementById("address-detail").focus(); // 상세 주소로 포커스
+            }
+        }).open();
     }
 
-    // --- 회원가입 로직 & 모달 로직 ---
+    // 회원가입 로직
     document.addEventListener('DOMContentLoaded', () => {
         const registerForm = document.getElementById('register-form');
-        const passwordInput = document.getElementById('password');
-        const confirmPasswordInput = document.getElementById('confirm-password');
         const errorMsg = document.getElementById('error-message');
         const registerSubmitBtn = document.getElementById('register-submit-btn');
 
+        // 입력 필드
         const emailInput = document.getElementById('email');
-        const emailMsg = document.getElementById('email-message');
-
         const usernameInput = document.getElementById('username');
         const nicknameInput = document.getElementById('nickname');
-
-        const usernameMsg = document.getElementById('username-message');
-        const nicknameMsg = document.getElementById('nickname-message');
-
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirm-password');
         const termsCheckbox = document.getElementById('terms-agree');
 
-        let isEmailValid = true;       // 이메일 유효 여부
-        let isUsernameValid = false;
-        let isNicknameValid = false;
+        // 피드백 메시지 필드
+        const emailMsg = document.getElementById('email-message');
+        const usernameMsg = document.getElementById('username-message');
+        const nicknameMsg = document.getElementById('nickname-message');
+        const passwordMsg = document.getElementById('password-message');
 
+        // 약관 모달 관련
+        const termsModalOverlay = document.getElementById('terms-modal-overlay');
+        const openTermsModal = document.getElementById('open-terms-modal');
+        const termsModalClose = document.getElementById('terms-modal-close');
+        const termsModalAgree = document.getElementById('terms-modal-agree');
+        const termsDateSpan = document.getElementById('terms-date');
+
+        // 유효성 상태
+        let validationStatus = {
+            email: false,
+            username: false,
+            nickname: false,
+            password: false,
+            terms: false
+        };
+
+        // 1. 버튼 상태 관리 함수
         function checkSubmitButtonState() {
-            registerSubmitBtn.disabled = !(isEmailValid && isUsernameValid && isNicknameValid);
-            registerSubmitBtn.textContent = registerSubmitBtn.disabled
-                ? "Create Account (중복 확인 필요)"
-                : "Create Account";
+            const allValid = Object.values(validationStatus).every(Boolean);
+            registerSubmitBtn.disabled = !allValid;
+            registerSubmitBtn.textContent = allValid ? 'Create Account' : '모든 항목을 확인해주세요';
         }
 
-        // 필드별 더미 중복 체크 함수
-        async function checkDuplicate(field, value) {
-            await new Promise(r => setTimeout(r, 400)); // 서버 호출 시뮬레이션
-
-            if (field === "email") {
-                return value.trim().toLowerCase() === "qwer@example.com";
-            }
-            return value.trim().toUpperCase() === "QWER";
-        }
-
-        function showErrorMessage(element, message) {
+        // 2. UI 피드백 함수
+        function showFeedback(element, message, isError) {
+            if (!element) return;
             element.textContent = message;
+            element.className = isError ? 'info-message error' : 'info-message success';
+            element.style.color = isError ? '#e74c3c' : '#2ecc71';
             element.style.display = "block";
-            element.style.color = "red";
-            element.style.fontSize = "13px";
-            element.style.marginTop = "5px";
+        }
+        function hideFeedback(element) {
+            if (element) element.style.display = "none";
         }
 
-        function hideMessage(element) {
-            element.style.display = "none";
+        // 3. API 중복 체크
+        let debounceTimer;
+        async function validateField(field, value, messageElement, apiUrl, regex, regexMsg) {
+            clearTimeout(debounceTimer);
+
+            // 1. 형식(Regex) 검사
+            if (!regex.test(value)) {
+                showFeedback(messageElement, regexMsg, true);
+                validationStatus[field] = false;
+                checkSubmitButtonState();
+                return;
+            }
+
+            // 2. 중복(API) 검사
+            debounceTimer = setTimeout(async () => {
+                try {
+                    const response = await fetch(`${apiUrl}?${field}=${encodeURIComponent(value)}`);
+                    const isTaken = await response.json();
+
+                    if (isTaken) {
+                        showFeedback(messageElement, '이미 사용 중입니다.', true);
+                        validationStatus[field] = false;
+                    } else {
+                        showFeedback(messageElement, '사용 가능합니다.', false);
+                        validationStatus[field] = true;
+                    }
+                } catch (e) {
+                    showFeedback(messageElement, '중복 확인 중 오류 발생.', true);
+                    validationStatus[field] = false;
+                }
+                checkSubmitButtonState();
+            }, 500);
         }
 
-        // --- 이메일 자동 중복 확인 ---
-        let emailTimer;
+        // 정규식 제약조건 및 API 연동
         emailInput.addEventListener('input', () => {
-            clearTimeout(emailTimer);
-            const value = emailInput.value.trim();
-            hideMessage(emailMsg);
-            isEmailValid = true;
-            checkSubmitButtonState();
-
-            if (!value) return;
-
-            emailTimer = setTimeout(async () => {
-                const isDuplicate = await checkDuplicate("email", value);
-                if (isDuplicate) {
-                    showErrorMessage(emailMsg, "이 이메일은 이미 사용 중입니다. 다른 이메일을 입력해 주세요.");
-                    isEmailValid = false;
-                } else {
-                    hideMessage(emailMsg);
-                    isEmailValid = true;
-                }
-                checkSubmitButtonState();
-            }, 500);
+            const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            validateField('email', emailInput.value, emailMsg, '/api/users/check-email', regex, '올바른 이메일 형식이 아닙니다.');
         });
-
-        // --- 아이디 자동 중복 확인 ---
-        let usernameTimer;
         usernameInput.addEventListener('input', () => {
-            clearTimeout(usernameTimer);
-            const value = usernameInput.value.trim();
-            hideMessage(usernameMsg);
-            isUsernameValid = false;
-            checkSubmitButtonState();
-
-            if (!value) return;
-
-            usernameTimer = setTimeout(async () => {
-                const isDuplicate = await checkDuplicate("username", value);
-                if (isDuplicate) {
-                    showErrorMessage(usernameMsg, "이 아이디는 이미 있습니다. 다른 아이디를 입력해 주세요.");
-                    isUsernameValid = false;
-                } else {
-                    hideMessage(usernameMsg);
-                    isUsernameValid = true;
-                }
-                checkSubmitButtonState();
-            }, 500);
+            const regex = /^[a-z0-9_]{5,20}$/;
+            validateField('username', usernameInput.value, usernameMsg, '/api/users/check-username', regex, '5~20자 영문 소문자, 숫자, (_)만 사용 가능합니다.');
         });
-
-        // --- 닉네임 자동 중복 확인 ---
-        let nicknameTimer;
         nicknameInput.addEventListener('input', () => {
-            clearTimeout(nicknameTimer);
-            const value = nicknameInput.value.trim();
-            hideMessage(nicknameMsg);
-            isNicknameValid = false;
-            checkSubmitButtonState();
-
-            if (!value) return;
-
-            nicknameTimer = setTimeout(async () => {
-                const isDuplicate = await checkDuplicate("nickname", value);
-                if (isDuplicate) {
-                    showErrorMessage(nicknameMsg, "이 닉네임은 이미 있습니다. 다른 닉네임을 입력해 주세요.");
-                    isNicknameValid = false;
-                } else {
-                    hideMessage(nicknameMsg);
-                    isNicknameValid = true;
-                }
-                checkSubmitButtonState();
-            }, 500);
+            const regex = /^[가-힣a-zA-Z0-9]{2,16}$/;
+            validateField('nickname', nicknameInput.value, nicknameMsg, '/api/users/check-nickname', regex, '2~16자 한글, 영문, 숫자만 사용 가능합니다.');
         });
 
-        // --- 회원가입 제출 ---
+        // 4. 비밀번호 조건 실시간 검사
+        passwordInput.addEventListener('input', () => {
+            const password = passwordInput.value;
+            const regex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+
+            if (regex.test(password)) {
+                showFeedback(passwordMsg, '안전한 비밀번호입니다.', false);
+                validationStatus.password = true;
+            } else {
+                showFeedback(passwordMsg, '8자 이상, 영문/숫자/특수문자 조합이 필요합니다.', true);
+                validationStatus.password = false;
+            }
+            checkSubmitButtonState();
+        });
+
+        // 5. 약관 모달 및 동의
+        if (termsDateSpan) {
+            const today = new Date();
+            termsDateSpan.textContent = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
+        }
+        openTermsModal.addEventListener('click', (e) => {
+            e.preventDefault();
+            termsModalOverlay.classList.add('show');
+        });
+        termsCheckbox.addEventListener('click', (e) => {
+            e.preventDefault();
+            termsModalOverlay.classList.add('show');
+        });
+        termsModalClose.addEventListener('click', () => {
+            termsModalOverlay.classList.remove('show');
+        });
+        termsModalOverlay.addEventListener('click', (e) => {
+            if (e.target === termsModalOverlay) {
+                termsModalOverlay.classList.remove('show');
+            }
+        });
+        termsModalAgree.addEventListener('click', () => {
+            termsCheckbox.checked = true;
+            validationStatus.terms = true;
+            checkSubmitButtonState();
+            termsModalOverlay.classList.remove('show');
+        });
+
+        // 6. 회원가입 제출
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             errorMsg.style.display = 'none';
 
-            if (!isEmailValid || !isUsernameValid || !isNicknameValid) {
-                errorMsg.textContent = '❌ 이메일, 아이디, 닉네임 중복 확인을 완료해주세요.';
+            // 최종 유효성 검사
+            if (!Object.values(validationStatus).every(Boolean)) {
+                errorMsg.textContent = '❌ 모든 항목을 올바르게 입력해주세요.';
                 errorMsg.style.display = 'block';
                 return;
             }
-
-            const password = passwordInput.value;
-            const confirmPassword = confirmPasswordInput.value;
-
-            if (password !== confirmPassword) {
+            if (passwordInput.value !== confirmPasswordInput.value) {
                 errorMsg.textContent = '❌ 비밀번호가 일치하지 않습니다.';
                 errorMsg.style.display = 'block';
                 return;
             }
 
-            const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
-            if (!passwordPattern.test(password)) {
-                errorMsg.textContent = '❌ 비밀번호는 8자 이상이며, 영문, 숫자, 특수문자를 포함해야 합니다.';
-                errorMsg.style.display = 'block';
-                return;
+            // FormData 객체 생성
+            const formData = new FormData();
+
+            // 텍스트 데이터 담기
+            formData.append('email', emailInput.value);
+            formData.append('username', usernameInput.value);
+            formData.append('nickname', nicknameInput.value);
+            formData.append('password', passwordInput.value);
+            formData.append('gender', document.querySelector('input[name="gender"]:checked').value);
+            formData.append('position', document.getElementById('position').value);
+            formData.append('level', document.getElementById('skill-level').value);
+
+            // 주소 합치기
+            const fullAddress = (document.getElementById('address').value + ' ' + document.getElementById('address-detail').value).trim();
+            formData.append('address', fullAddress);
+
+            // 파일 데이터 담기
+            const profileFile = document.getElementById('profile-pic').files[0];
+            if (profileFile) {
+                formData.append('profile_image_file', profileFile);
             }
 
-            if (!document.getElementById('address').value) {
-                errorMsg.textContent = '❌ 주소를 입력하거나 검색해 주세요.';
+            try {
+                registerSubmitBtn.textContent = '처리 중...';
+                registerSubmitBtn.disabled = true;
+
+                //  /api/users/signup 으로 전송
+                const response = await fetch('/api/users/signup', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    alert("🎉 회원가입 성공! 로그인 페이지로 이동합니다.");
+                    window.location.href = '/login';
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(errorText || '회원가입 실패');
+                }
+            } catch (error) {
+                errorMsg.textContent = '❌ ' + error.message;
                 errorMsg.style.display = 'block';
-                return;
+                registerSubmitBtn.textContent = 'Create Account';
+                registerSubmitBtn.disabled = false;
             }
-
-            const genderChecked = registerForm.querySelector('input[name="gender"]:checked');
-            if (!genderChecked) {
-                errorMsg.textContent = '❌ 성별을 선택해주세요.';
-                errorMsg.style.display = 'block';
-                return;
-            }
-
-            if (!document.getElementById('skill-level').value) {
-                errorMsg.textContent = '❌ 실력 레벨을 선택해 주세요.';
-                errorMsg.style.display = 'block';
-                return;
-            }
-
-            if (!termsCheckbox.checked) {
-                errorMsg.textContent = '❌ 이용약관에 동의해주세요.';
-                errorMsg.style.display = 'block';
-                return;
-            }
-
-            const formData = new FormData(registerForm);
-            registerSubmitBtn.textContent = '처리 중...';
-            registerSubmitBtn.disabled = true;
-
-            await new Promise(r => setTimeout(r, 1500));
-
-            registerSubmitBtn.textContent = 'Create Account';
-            alert("회원가입이 성공적으로 완료되었습니다! 로그인 페이지로 이동합니다.");
-            window.location.href = '/login';
         });
 
+        // 초기 버튼 상태 설정
         checkSubmitButtonState();
-
-        // ========= 모달 관련 로직 =========
-        const openTermsModal = document.getElementById('open-terms-modal');
-        const termsModalOverlay = document.getElementById('terms-modal-overlay');
-        const termsModalClose = document.getElementById('terms-modal-close');
-        const termsModalAgree = document.getElementById('terms-modal-agree');
-        const termsDateSpan = document.getElementById('terms-date');
-
-        // 오늘 날짜 세팅 (YYYY년 MM월 DD일)
-        if (termsDateSpan) {
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const day = String(today.getDate()).padStart(2, '0');
-            termsDateSpan.textContent = `${year}년 ${month}월 ${day}일`;
-        }
-
-        // "이용약관" 텍스트 클릭 시 모달 열기
-        openTermsModal.addEventListener('click', (e) => {
-            e.preventDefault();
-            termsModalOverlay.style.display = 'flex';
-        });
-
-        // 체크박스를 직접 클릭해서는 토글되지 않도록 막기 + 대신 모달 열기
-        termsCheckbox.addEventListener('click', (e) => {
-            e.preventDefault();
-            termsModalOverlay.style.display = 'flex';
-        });
-
-        // 모달 닫기 (X 버튼)
-        termsModalClose.addEventListener('click', () => {
-            termsModalOverlay.style.display = 'none';
-        });
-
-        // 모달 바깥 클릭 시 닫기
-        termsModalOverlay.addEventListener('click', (e) => {
-            if (e.target === termsModalOverlay) {
-                termsModalOverlay.style.display = 'none';
-            }
-        });
-
-        // 동의 버튼 클릭 시 체크박스 체크 + 모달 닫기
-        termsModalAgree.addEventListener('click', () => {
-            termsCheckbox.checked = true;
-            termsModalOverlay.style.display = 'none';
-        });
     });
-
 </script>
-
 </body>
 </html>
