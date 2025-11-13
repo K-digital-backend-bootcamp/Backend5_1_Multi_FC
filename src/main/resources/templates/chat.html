@@ -1,13 +1,90 @@
+chat.html
+
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="widtQh=device-width, initial-scale=1.0">
     <title>FUTSAL MATCH - 실시간 채팅</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
+    <style>
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10001;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 90%;
+            transform: translateY(-20px);
+            transition: transform 0.3s;
+            position: relative;
+        }
+        .modal-overlay.open .modal-content {
+            transform: translateY(0);
+        }
+        .modal-content h2 {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #6c5ce7;
+            padding-bottom: 10px;
+        }
+        .modal-content p {
+            font-size: 15px;
+            color: #555;
+            margin-bottom: 10px;
+        }
+        .modal-content strong {
+            color: #6c5ce7;
+            margin-left: 5px;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-actions button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        #new-chat-modal .modal-content input,
+        #new-chat-modal .modal-content select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            font-size: 15px;
+        }
+
+    </style>
 </head>
 <body>
 
@@ -151,8 +228,8 @@
         </div>
 
         <div class="modal-actions">
-            <button class="btn-cancel" onclick="openNewChatModal(false)">취소</button>
-            <button class="btn-create" onclick="createNewChat()">채팅 시작</button>
+            <button class="chat-btn-cancel" onclick="openNewChatModal(false)">취소</button>
+            <button class="chat-btn-create" onclick="createNewChat()">채팅 시작</button>
         </div>
     </div>
 </div>
@@ -169,7 +246,7 @@
             </p>
         </div>
         <div class="modal-actions" style="justify-content: center;">
-            <button class="btn-cancel" onclick="openProfileModal(false)">닫기</button>
+            <button class="chat-btn-cancel" onclick="openProfileModal(false)">닫기</button>
         </div>
     </div>
 </div>
@@ -187,8 +264,8 @@
                 <span id="selected-invite-count">0</span>명 선택됨
             </p>
             <div>
-                <button class="btn-cancel" onclick="openInviteModal(false)">취소</button>
-                <button class="btn-create" id="final-invite-btn" onclick="sendInvite()">초대하기</button>
+                <button class="chat-btn-cancel" onclick="openInviteModal(false)">취소</button>
+                <button class="chat-btn-create" id="final-invite-btn" onclick="sendInvite()">초대하기</button>
             </div>
         </div>
     </div>
@@ -249,13 +326,13 @@
             inlineProfileDetail &&
             (inlineProfileDetail.contains(event.target) || event.target.closest('.participant-item'));
 
-        const isNewChatButton = event.target.closest('#new-chat-btn');
+        const isNewChatButton =
+            event.target.closest('#new-chat-btn') ||
+            event.target.closest('#profile-chat-btn'); // ← 1:1 채팅하기 버튼 추가됨
 
         // 모달 관련
-        const isClickInsideNewChatModal = newChatModal.contains(event.target) || isNewChatButton;
-        const isClickInsideProfileModal = profileModal.contains(event.target);
-        const isClickInsideInviteModal = inviteModal.contains(event.target);
-
+        const isClickInsideNewChatModal =
+            newChatModal.contains(event.target) || isNewChatButton;
         // 1. 메인 메뉴 닫기
         if (!isClickInsideMenu && mainMenu.classList.contains('show')) {
             mainMenu.classList.remove('show');
