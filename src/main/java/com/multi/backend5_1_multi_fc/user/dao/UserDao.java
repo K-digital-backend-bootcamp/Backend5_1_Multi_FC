@@ -13,6 +13,7 @@ public class UserDao {
 
     // 회원가입 (INSERT)
     public void insertUser(UserDto user) {
+
         String sql = "INSERT INTO User (username, password, nickname, email, level, position, gender, address, profile_image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         jdbcTemplate.update(sql,
@@ -39,5 +40,11 @@ public class UserDao {
     public int countByEmail(String email) {
         String sql = "SELECT COUNT(*) FROM User WHERE email = ?";
         return jdbcTemplate.queryForObject(sql, Integer.class, email);
+    }
+
+    // 닉네임 중복 체크
+    public int countByNickname(String nickname) {
+        String sql = "SELECT COUNT(*) FROM User WHERE nickname = ?";
+        return jdbcTemplate.queryForObject(sql, Integer.class, nickname);
     }
 }

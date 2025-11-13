@@ -82,7 +82,7 @@
                         </div>
                     </div>
                     <div class="forgot-remember">
-                        <a href="/forgot-password" class="forgot-password">Forgot?</a>
+                        <a href="/forgot-password" class="forgot-password">Forgot password?</a>
                         <div class="remember-me">
                             <input type="checkbox" id="remember-me">
                             <label for="remember-me">Remember me</label>
@@ -116,13 +116,16 @@
     </div>
 </div>
 <script>
-    // --- (★공통★) 메뉴 토글 및 로그아웃 로직 (기존 유지) ---
+    // 이전에 있던 즉시 실행 함수를 DOMContentLoaded 이벤트 안으로 통합
+
+    // --- (★공통★) 메뉴 토글 및 로그아웃 로직 ---
     const menuToggle = document.getElementById('menu-toggle');
     const mainMenu = document.getElementById('main-menu');
     const profileMenuToggle = document.getElementById('profile-menu-toggle');
     const profileMenu = document.getElementById('profile-menu');
     const logoutButton = document.getElementById('logout-button');
     const navNotificationsLink = document.getElementById('nav-notifications-link');
+
     const navLoginLink = document.getElementById('nav-login-link');
     const navLogoutLink = document.getElementById('nav-logout-link');
 
@@ -132,63 +135,70 @@
             if (profileMenu) profileMenu.classList.remove('show');
         });
     }
+
     if (profileMenuToggle) {
         profileMenuToggle.addEventListener('click', () => {
             profileMenu.classList.toggle('show');
             if (mainMenu) mainMenu.classList.remove('show');
         });
     }
+
     document.addEventListener('click', (event) => {
-        const header = document.querySelector('header');
-        if (header && !header.contains(event.target)) {
+        const isClickInsideHeader = document.querySelector('header').contains(event.target);
+        if (!isClickInsideHeader) {
             mainMenu.classList.remove('show');
             if (profileMenu) profileMenu.classList.remove('show');
         }
     });
+
+    // 프로필 메뉴 내 로그아웃 버튼
     if (logoutButton) {
         logoutButton.addEventListener('click', (e) => {
             e.preventDefault();
             localStorage.removeItem('accessToken');
-            localStorage.removeItem('username');
+            localStorage.removeItem('hasReadReviews');
+            localStorage.removeItem('hasReadSchedules');
             window.location.href = '/login';
         });
     }
+    // 햄버거 메뉴의 로그아웃 버튼
     if (navLogoutLink) {
         navLogoutLink.addEventListener('click', (e) => {
             e.preventDefault();
             localStorage.removeItem('accessToken');
-            localStorage.removeItem('username');
+            localStorage.removeItem('hasReadReviews');
+            localStorage.removeItem('hasReadSchedules');
             window.location.href = '/login';
         });
     }
 
+    if (navNotificationsLink) {
+        navNotificationsLink.addEventListener('click', (e) => {
+            localStorage.setItem('hasReadReviews', 'true');
+            localStorage.setItem('hasReadSchedules', 'true');
+            window.location.href = '/notifications';
+        });
+    }
+    // --- (★공통★) 메뉴 토글 및 로그아웃 로직 끝 ---
 
-    // (★페이지별★) 로그인 상태 확인 (기존 유지)
+
     // (★페이지별★) 로그인 상태 확인 및 리다이렉션 및 메뉴 표시 제어
     document.addEventListener('DOMContentLoaded', () => {
-        // 1. 저장된 아이디(username)가 있는지 확인
-        const savedUsername = localStorage.getItem('saved_username');
-        const usernameInput = document.getElementById('username');
-        const rememberMeCheckbox = document.getElementById('remember-me');
-
-        if (savedUsername && usernameInput && rememberMeCheckbox) {
-            // 2. 아이디가 있으면, 입력창에 채우고 체크박스도 체크
-            usernameInput.value = savedUsername;
-            rememberMeCheckbox.checked = true;
-        }
-
         const accessToken = localStorage.getItem('accessToken');
+
         if (accessToken) {
             // 이미 로그인했으면 메인으로 이동
             window.location.href = '/';
         } else {
             // [비회원일 때]
-            // (생략)
+            if (profileMenuToggle) profileMenuToggle.style.display = 'none';
+            if (navLoginLink) navLoginLink.parentElement.style.display = 'list-item';
+            if (navLogoutLink) navLogoutLink.parentElement.style.display = 'none';
         }
     });
 
 
-    // 비밀번호 토글 로직
+    // --- (기존 코드) 비밀번호 토글 로직 유지 ---
     document.querySelectorAll('.toggle-password').forEach(icon => {
         icon.addEventListener('click', function() {
             const passwordInput = this.parentElement.querySelector('input[type="password"], input[type="text"]');
@@ -199,85 +209,57 @@
         });
     });
 
-    // 로그인 폼 제출
+    // --- (기존 코드) 로그인 폼 제출 로직 유지 ---
     const loginForm = document.getElementById('login-form');
     const errorMsg = document.getElementById('error-message');
-    const successModal = document.getElementById('login-success-modal');
-
     loginForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         errorMsg.style.display = 'none';
-
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value.trim();
-
         if (!username || !password) {
             errorMsg.textContent = '❌ 아이디와 비밀번호를 모두 입력해주세요.';
             errorMsg.style.display = 'block';
             return;
         }
-
         try {
-            const response = await fetch('/api/users/login', {
+            const response = await fetch('/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password }),
             });
-
             if (response.ok) {
-                // --- 로그인 성공
-                const data = await response.json(); // { "accessToken": "...", "user": {...} }
-
+                const data = await response.json();
                 if (data.accessToken) {
-
-                    // "Remember me" 체크박스 상태 확인
-                    const rememberMeCheckbox = document.getElementById('remember-me');
-                    if (rememberMeCheckbox.checked) {
-                        // 1. 체크됨: 아이디(username) 저장
-                        localStorage.setItem('saved_username', username);
-                    } else {
-                        // 2. 체크 안됨: 저장된 아이디 삭제
-                        localStorage.removeItem('saved_username');
-                    }
-
-
-                    // localStorage에 토큰과 닉네임 저장 (로그인 상태 유지)
                     localStorage.setItem('accessToken', data.accessToken);
-                    localStorage.setItem('username', data.user.nickname);
-
-                    // 성공 모달 띄우기
-                    successModal.style.display = 'flex';
-
-                    // [수정] 'modal' -> 'successModal'
+                    console.log('Login successful, token stored.');
+                    const modal = document.getElementById('login-success-modal');
+                    modal.style.display = 'flex';
                     document.getElementById('modal-confirm-btn').onclick = function() {
-                        successModal.style.display = 'none';
-                        window.location.href = '/'; // 메인 페이지로 이동
+                        modal.style.display = 'none';
+                        window.location.href = '/';
                     };
                 } else {
-                    throw new Error('로그인에 성공했으나 토큰을 받지 못했습니다.');
+                    errorMsg.textContent = '❌ 로그인 처리 중 오류가 발생했습니다. (토큰 없음)';
+                    errorMsg.style.display = 'block';
                 }
             } else {
-                // --- 로그인 실패 (버그 1 수정) ---
-                let errorMessage = '❌ 아이디 또는 비밀번호가 올바르지 않습니다.'; // 기본 메시지
+                let errorMessage = '❌ 아이디 또는 비밀번호가 올바르지 않습니다.';
                 try {
-                    // [수정] 응답 본문을 텍스트로 먼저 1번만 읽음
-                    const errorText = await response.text();
-
-                    if (errorText) {
-                        errorMessage = `❌ ${errorText}`;
+                    const errorData = await response.json();
+                    if (errorData && errorData.message) {
+                        errorMessage = `❌ ${errorData.message}`;
                     }
-                } catch (e) {
-                    console.error("에러 메시지 파싱 실패:", e);
-                }
+                } catch (jsonError) {}
                 errorMsg.textContent = errorMessage;
                 errorMsg.style.display = 'block';
             }
         } catch (error) {
-            console.error("로그인 요청 에러:", error);
-            errorMsg.textContent = '❌ 로그인 요청 중 오류가 발생했습니다. (서버 연결 확인)';
+            errorMsg.textContent = '❌ 로그인 요청 중 오류가 발생했습니다.';
             errorMsg.style.display = 'block';
         }
     });
+
 </script>
 
 </body>

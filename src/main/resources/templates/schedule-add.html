@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MULTI FC - 새 일정 추가</title>
+
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+<header class="quick-menu">
+    <div class="logo"><a href="/">Multi FC</a></div>
+    <div class="header-icons">
+        <button id="profile-menu-toggle" class="profile-icon" style="position: relative; display: block;">
+            <i class="fas fa-user-circle"></i>
+        </button>
+        <div id="profile-menu" class="user-menu">
+            <div class="user-info">
+                <strong><span id="user-menu-username">사용자</span>님</strong>
+                <p>환영합니다!</p>
+            </div>
+            <ul>
+                <li><a href="/mypage"><i class="fas fa-user"></i> 마이페이지</a></li>
+                <li><a href="/profile/edit"><i class="fas fa-user-edit"></i> 프로필 수정</a></li>
+                <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
+            </ul>
+        </div>
+        <button id="menu-toggle" class="menu-toggle-btn"><i class="fas fa-bars"></i></button>
+    </div>
+    <nav id="main-menu" class="main-nav">
+        <ul>
+            <li><a href="/"><i class="fas fa-home"></i> 메인 (Home)</a></li>
+            <li><a href="/fields"><i class="fas fa-search"></i> 구장검색</a></li>
+            <li><a href="/community"><i class="fas fa-users"></i> 커뮤니티</a></li>
+            <li><a href="/chat"><i class="fas fa-comments"></i> 실시간채팅</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main class="login-page-main">
+    <div class="main-wrapper">
+        <div class="login-section" style="padding-right: 70px;">
+            <div class="login-container">
+                <h1 class="title-login">새 일정 추가</h1>
+                <p style="margin-bottom: 25px; font-size: 15px; color: #555;">
+                    새로운 일정을 등록하세요.
+                </p>
+
+                <p id="schedule-success-message" class="info-message" style="display:none;"></p>
+                <p id="schedule-error-message" class="error-message" style="display:none;"></p>
+
+                <form id="schedule-form">
+
+                    <div class="input-group">
+                        <label for="schedule-name">일정명</label>
+                        <input type="text" id="schedule-name" name="scheduleName" placeholder="일정 제목 (예: 주말 풋살 매치)" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="schedule-date">날짜</label>
+                        <input type="date" id="schedule-date" name="date" required
+                               style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: #f7f7f7; font-family: inherit;">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="schedule-time">시간</label>
+                        <input type="time" id="schedule-time" name="time" required
+                               style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: #f7f7f7; font-family: inherit;">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="schedule-details">세부 내용</label>
+                        <textarea id="schedule-details" name="details" rows="5"
+                                  placeholder="경기 수준, 준비물, 특이사항 등을 입력하세요."
+                                  style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: #f7f7f7; font-family: inherit; resize: vertical;"></textarea>
+                    </div>
+
+                    <button type="submit" class="login-button" style="margin-top: 15px;">일정 등록하기</button>
+                </form>
+            </div>
+        </div>
+        <div class="background-image-section">
+        </div>
+    </div>
+</main>
+
+<script>
+    // (메뉴 토글 및 로그아웃 스크립트 - main.html과 동일)
+    const menuToggle = document.getElementById('menu-toggle');
+    const mainMenu = document.getElementById('main-menu');
+    const profileMenuToggle = document.getElementById('profile-menu-toggle');
+    const profileMenu = document.getElementById('profile-menu');
+    menuToggle.addEventListener('click', () => {
+        mainMenu.classList.toggle('show');
+        profileMenu.classList.remove('show');
+    });
+    profileMenuToggle.addEventListener('click', () => {
+        profileMenu.classList.toggle('show');
+        mainMenu.classList.remove('show');
+    });
+    document.addEventListener('click', (event) => {
+        const isClickInsideMainMenu = mainMenu.contains(event.target);
+        const isClickInsideProfileMenu = profileMenu.contains(event.target);
+        const isMenuToggle = menuToggle.contains(event.target);
+        const isProfileToggle = profileMenuToggle.contains(event.target);
+        if (!isClickInsideMainMenu && !isMenuToggle) { mainMenu.classList.remove('show'); }
+        if (!isClickInsideProfileMenu && !isProfileToggle) { profileMenu.classList.remove('show'); }
+    });
+    const logoutButton = document.getElementById('logout-button');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('accessToken');
+            window.location.href = '/login';
+        });
+    }
+
+    // (페이지 접근 제어 - 비회원 차단)
+    (function() {
+        const accessToken = localStorage.getItem('accessToken');
+        if (!accessToken) {
+            alert("로그인이 필요한 페이지입니다. 로그인 페이지로 이동합니다.");
+            window.location.href = '/login';
+        } else {
+            profileMenuToggle.style.display = 'block';
+        }
+    })();
+
+    // (★추가★) 새 일정 폼 제출 (더미)
+    const scheduleForm = document.getElementById('schedule-form');
+    const successMsg = document.getElementById('schedule-success-message');
+    const errorMsg = document.getElementById('schedule-error-message');
+
+    scheduleForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        successMsg.style.display = 'none';
+        errorMsg.style.display = 'none';
+
+        const formData = new FormData(scheduleForm);
+
+        // 필드가 '경기 날짜/시간/장소'에서 '일정명/날짜/시간/장소'로 변경되었으므로, 서버 전송 필드도 scheduleName으로 변경됩니다.
+
+        try {
+            // (더미) 서버에 제출하는 척
+            await new Promise(r => setTimeout(r, 500));
+
+            // (더미) 성공 응답
+            successMsg.textContent = '✅ 새 일정이 등록되었습니다. 마이페이지로 이동합니다.';
+            successMsg.style.display = 'block';
+
+            // 2초 후 마이페이지(캘린더)로 이동
+            setTimeout(() => {
+                window.location.href = '/mypage'; // (★) 캘린더가 있는 마이페이지로
+            }, 2000);
+
+        } catch (error) {
+            errorMsg.textContent = '❌ 일정 등록 중 오류가 발생했습니다.';
+            errorMsg.style.display = 'block';
+        }
+    });
+</script>
+
+</body>
+</html>

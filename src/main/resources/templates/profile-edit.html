@@ -48,7 +48,6 @@
         <div class="main-section">
             <div class="login-container">
 
-                <!-- 비밀번호 재확인 영역 -->
                 <div id="password-confirmation-wrapper">
                     <h1 class="title-login">보안 확인</h1>
                     <p style="margin-bottom: 20px; font-size: 15px; color: #555;">회원 정보를 안전하게 보호하기 위해<br>비밀번호를 다시 한 번 입력해주세요.</p>
@@ -66,7 +65,6 @@
                     </form>
                 </div>
 
-                <!-- 실제 내 정보 수정 영역 -->
                 <div id="profile-edit-wrapper" style="display:none;">
                     <h1 class="title-login">내 정보 수정</h1>
 
@@ -76,17 +74,6 @@
 
                     <form id="profile-update-form" enctype="multipart/form-data">
 
-                        <!-- 🔹 이메일 수정 추가 -->
-                        <div class="input-group">
-                            <label for="email">이메일</label>
-                            <input type="email"
-                                   id="email"
-                                   name="email"
-                                   placeholder="example@multi.com"
-                                   required>
-                        </div>
-
-                        <!-- 닉네임 + 중복 확인 버튼 -->
                         <div class="input-group with-button">
                             <div class="input-wrapper">
                                 <label for="nickname">닉네임</label>
@@ -95,7 +82,6 @@
                             <button type="button" id="check-nickname-btn" class="check-duplicate-btn">중복 확인</button>
                         </div>
 
-                        <!-- 포지션 설정 -->
                         <div class="input-group">
                             <label for="position">포지션 설정</label>
                             <select id="position" name="position" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: #f7f7f7;">
@@ -106,26 +92,10 @@
                                 <option value="GOLEIRO">골레이로 (GOLEIRO)</option>
                             </select>
                         </div>
-
-                        <!-- 🔹 실력 레벨 수정 추가 -->
-                        <div class="input-group">
-                            <label for="skill-level">나의 실력 레벨</label>
-                            <select id="skill-level" name="skillLevel" required
-                                    style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: #f7f7f7;">
-                                <option value="">실력을 선택하세요</option>
-                                <option value="beginner">초급</option>
-                                <option value="intermediate">중급</option>
-                                <option value="advanced">고급</option>
-                            </select>
-                        </div>
-
-                        <!-- 활동 장소 -->
                         <div class="input-group">
                             <label for="location">활동 장소 설정</label>
                             <input type="text" id="location" name="location" placeholder="예: 서울시 강남구" required>
                         </div>
-
-                        <!-- 프로필 사진 -->
                         <div class="input-group">
                             <label>프로필 사진 수정</label>
                             <img id="profile-preview" th:src="@{/images/default-profile.png}" alt="프로필 미리보기" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; border: 1px solid #ddd;">
@@ -273,6 +243,7 @@
         } catch (error) { console.error("일정 요청 중 오류 발생:", error); }
     }
 
+
     // --- (★페이지별★) 로직 실행 ---
     document.addEventListener('DOMContentLoaded', async () => {
         const accessToken = localStorage.getItem('accessToken');
@@ -398,58 +369,39 @@
         }
     });
 
-    // --- 닉네임 / 프로필 수정 로직 ---
+    // --- 닉네임 중복 확인 로직 ---
     const nicknameInput = document.getElementById('nickname');
     const checkNicknameBtn = document.getElementById('check-nickname-btn');
     const nicknameMsg = document.getElementById('nickname-message');
     const profileSubmitBtn = document.getElementById('profile-submit-btn');
     const profileErrorMsg = document.getElementById('profile-error-message');
-    const profileForm = document.getElementById('profile-update-form');
-    const profileSuccessMsg = document.getElementById('profile-success-message');
-
-    // 🔹 새로 추가된 요소: 이메일, 실력 레벨
-    const emailInput = document.getElementById('email');
-    const skillLevelSelect = document.getElementById('skill-level');
 
     let isNicknameChecked = true;
     let originalNickname = "";
 
-    // 🔹 내 정보 불러오기 (더미 → 나중에 실제 API로 교체)
     async function fetchMyEditInfo() {
         await new Promise(r => setTimeout(r, 100));
         const myInfo = {
-            email: "real.user@example.com",
             nickname: "리얼유저",
-            position: "FIXO",      // 풋살 포지션
+            position: "FIXO", // (★) 풋살 포지션 더미 데이터
             location: "서울시 서초구",
-            skillLevel: "intermediate", // beginner / intermediate / advanced
             profilePicUrl: null
         };
 
-        // 폼에 데이터 채우기
-        emailInput.value = myInfo.email;
+        // 폼에 데이터 채우기 및 초기화
         nicknameInput.value = myInfo.nickname;
         document.getElementById('position').value = myInfo.position;
         document.getElementById('location').value = myInfo.location;
-
-        if (myInfo.skillLevel) {
-            skillLevelSelect.value = myInfo.skillLevel;
-        } else {
-            skillLevelSelect.value = "";
-        }
-
         if (myInfo.profilePicUrl) {
             profilePreview.src = myInfo.profilePicUrl;
         }
 
         originalNickname = myInfo.nickname;
         isNicknameChecked = true;
-
         profileSubmitBtn.disabled = false;
         profileSubmitBtn.textContent = '정보 저장';
     }
 
-    // 닉네임 입력 시 상태 변경
     nicknameInput.addEventListener('input', () => {
         nicknameMsg.style.display = 'none';
         if (nicknameInput.value === originalNickname) {
@@ -467,7 +419,6 @@
         }
     });
 
-    // 닉네임 중복 확인 버튼 클릭
     checkNicknameBtn.addEventListener('click', async () => {
         profileErrorMsg.style.display = 'none';
         const nickname = nicknameInput.value.trim();
@@ -479,7 +430,7 @@
         }
         try {
             await new Promise(resolve => setTimeout(resolve, 500));
-            const isDuplicate = (nickname === 'futsal'); // 더미
+            const isDuplicate = (nickname === 'futsal');
             if (isDuplicate) {
                 nicknameMsg.textContent = '❌ 이미 사용 중인 닉네임입니다.';
                 nicknameMsg.className = 'error-message';
@@ -502,6 +453,9 @@
     });
 
     // --- 프로필 정보 수정 폼 제출 ---
+    const profileForm = document.getElementById('profile-update-form');
+    const profileSuccessMsg = document.getElementById('profile-success-message');
+
     profileForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         profileSuccessMsg.style.display = 'none';
@@ -512,7 +466,6 @@
             profileErrorMsg.style.display = 'block';
             return;
         }
-
         const formData = new FormData(profileForm);
         try {
             const response = await fetch('/profile/update', {
@@ -538,7 +491,7 @@
         }
     });
 
-    // --- 비밀번호 변경 폼 로직 ---
+    // --- 비밀번호 변경 폼 로직 (동일) ---
     const passwordForm = document.getElementById('password-change-form');
     const passwordSuccessMsg = document.getElementById('password-success-message');
     const passwordErrorMsg = document.getElementById('password-error-message');
@@ -547,11 +500,9 @@
         e.preventDefault();
         passwordSuccessMsg.style.display = 'none';
         passwordErrorMsg.style.display = 'none';
-
         const newPassword = document.getElementById('new-password').value;
         const confirmPassword = document.getElementById('confirm-password').value;
         const currentPassword = document.getElementById('current-password').value;
-
         if (newPassword !== confirmPassword) {
             passwordErrorMsg.textContent = '❌ 새 비밀번호가 일치하지 않습니다.';
             passwordErrorMsg.style.display = 'block';

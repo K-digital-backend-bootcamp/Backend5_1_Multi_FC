@@ -24,6 +24,14 @@ repositories {
     mavenCentral()
 }
 
+processResources{
+    filesMatching('application.properties'){
+        expand(
+                dbPassword: project.hasProperty('dbPassword') ? project.getProperty('dbPassword') : ''
+        )
+    }
+}
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-amqp'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
@@ -34,6 +42,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.springframework.amqp:spring-rabbit-stream'
     implementation 'org.springframework.session:spring-session-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'com.mysql:mysql-connector-j'
@@ -42,6 +51,10 @@ dependencies {
     testImplementation 'org.springframework.amqp:spring-rabbit-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    //S3
+    implementation platform('software.amazon.awssdk:bom:2.20.43')
+    implementation 'software.amazon.awssdk:s3'
 }
 
 tasks.named('test') {

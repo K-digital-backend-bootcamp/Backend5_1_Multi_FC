@@ -331,7 +331,7 @@
             card.className = 'field-card';
             card.dataset.fieldId = field.id;
 
-
+            const amenities = field.etcInfo.split(',').map(tag => `<span class="amenities-tag">${tag.trim()}</span>`).join('');
 
             card.innerHTML = ` <h3>${field.name}</h3> `;
 
