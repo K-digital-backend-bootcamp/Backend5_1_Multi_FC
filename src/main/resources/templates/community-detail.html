@@ -17,7 +17,7 @@ community-detail.html
 <header class="quick-menu">
     <div class="logo"><a href="/">Multi FC</a></div>
     <div class="header-icons">
-        <button id="profile-menu-toggle" class="profile-icon" style="position: relative; display: none;">
+        <button id="profile-menu-toggle" class="profile-icon" style="position: relative;">
             <i class="fas fa-user-circle"></i>
             <span id="notification-badge" class="notification-badge"></span>
         </button>
@@ -45,7 +45,7 @@ community-detail.html
 </header>
 
 <main class="community-main">
-    <div class="detail-board-container">
+    <div class="board-container">
 
         <div class="detail-header">
             <h1 id="post-title"></h1>
@@ -103,7 +103,8 @@ community-detail.html
     let ALL_AVAILABLE_POSTS = []; // 통합된 모든 게시글 목록
 
     const CURRENT_USER_ID = 999; // 현재 로그인된 사용자 ID 가정
-    const CURRENT_USER_WRITER_NAME = '로그인 사용자';
+    // ⭐⭐⭐ [수정] 로그인 사용자 닉네임을 로컬 스토리지에서 가져오도록 변경 ⭐⭐⭐
+    const CURRENT_USER_WRITER_NAME = localStorage.getItem('userNickname') || '로그인 사용자';
 
     /**
      * 로컬 스토리지와 MOCK 데이터를 통합하여 모든 게시글을 반환합니다.
@@ -165,6 +166,32 @@ community-detail.html
         const profileMenuToggle = document.getElementById('profile-menu-toggle');
         const profileMenu = document.getElementById('profile-menu');
 
+        // ⭐⭐ 알림 배지 관련 전역 변수 및 함수 (Mock) ⭐⭐
+        const badge = document.getElementById('notification-badge');
+        let hasReviewNotif = false;
+        let hasScheduleNotif = false;
+
+        function updateGlobalBadge() {
+            if (badge) {
+                badge.style.display = (hasReviewNotif || hasScheduleNotif) ? 'block' : 'none';
+            }
+        }
+        async function checkPendingReviews() {
+            if (localStorage.getItem('hasReadReviews') === 'true') {
+                hasReviewNotif = false;
+                return;
+            }
+            const mockReviews = { "count": 1 };
+            if (mockReviews.count > 0) {
+                hasReviewNotif = true;
+            }
+        }
+        async function checkUpcomingSchedules() {
+            hasScheduleNotif = localStorage.getItem('hasReadSchedules') !== 'true';
+        }
+        // ⭐⭐ 알림 배지 관련 전역 변수 및 함수 끝 ⭐⭐
+
+
         if (menuToggle) {
             menuToggle.addEventListener('click', (event) => {
                 event.stopPropagation();
@@ -180,6 +207,21 @@ community-detail.html
             });
         }
         // ... (나머지 공통 로직 유지) ...
+
+        // ⭐⭐ 헤더 닉네임 로드 및 알림 배지 업데이트 ⭐⭐
+        const userMenuName = document.getElementById('user-menu-username');
+        const accessToken = localStorage.getItem('accessToken');
+
+        if (accessToken) {
+            if (profileMenuToggle) profileMenuToggle.style.display = 'flex';
+            if (userMenuName) userMenuName.textContent = CURRENT_USER_WRITER_NAME;
+
+            (async () => {
+                await checkPendingReviews();
+                await checkUpcomingSchedules();
+                updateGlobalBadge();
+            })();
+        }
 
 
         // ⭐⭐ URL에서 postId를 가져와 loadPostDetail 함수에 전달 ⭐⭐
@@ -242,11 +284,8 @@ community-detail.html
 
     // ⭐⭐ 대댓글 폼 제거 함수 (유지) ⭐⭐
     function removeReplyForm(targetCommentId) {
-        const parentComment = document.querySelector(`.comment-item[data-comment-id="${targetCommentId}"]`);
-        const form = parentComment ? parentComment.nextElementSibling : null;
-
-        // 부모 댓글의 다음 요소가 폼 컨테이너라면 제거
-        if (form && form.classList.contains('reply-form-container')) {
+        const form = document.querySelector(`.reply-form-container[data-parent-id="${targetCommentId}"]`);
+        if (form) {
             form.remove();
         }
     }
@@ -268,6 +307,7 @@ community-detail.html
             const isMyComment = String(comment.writerId) === String(CURRENT_USER_ID); // ID 비교
             const isReply = comment.parentCommentId !== null;
 
+            // ⭐ [수정] 현재 로그인 사용자는 수정/삭제 권한만 가지고, 답글 버튼은 모든 댓글에 표시
             let actions = `<button onclick="handleReply(${comment.id}, '${comment.writer}', event)" class="reply">답글</button>`;
 
             if (isMyComment) {
@@ -317,7 +357,7 @@ community-detail.html
         });
     }
 
-    // ⭐⭐ 댓글 작성 로직 (유지) ⭐⭐
+    // ⭐⭐ 댓글 작성 로직 (수정) ⭐⭐
     function submitComment() {
         const commentInput = document.getElementById('comment-input');
         const content = commentInput.value.trim();
@@ -329,7 +369,7 @@ community-detail.html
 
         const newComment = {
             id: Date.now(),
-            writer: CURRENT_USER_WRITER_NAME,
+            writer: CURRENT_USER_WRITER_NAME, // ⭐ 로그인 사용자 닉네임 사용
             writerId: CURRENT_USER_ID, // ID 저장
             date: new Date().toISOString().slice(0, 10),
             content: content,
@@ -349,9 +389,11 @@ community-detail.html
     }
 
 
-    // ⭐⭐ 댓글 CRUD Mock 함수 구현 (유지) ⭐⭐
+    // ⭐⭐ 댓글 CRUD Mock 함수 구현 (수정) ⭐⭐
     function handleCommentEdit(commentId, currentContent) {
-        const newContent = prompt(`댓글 ${commentId}번 수정:`, currentContent);
+        // ⭐⭐⭐ [수정] 프롬프트 메시지에서 ID 제거 ⭐⭐⭐
+        const newContent = prompt(`댓글 수정:`, currentContent);
+
         if (newContent && newContent.trim().length > 0) {
             const commentToUpdate = window.POST_DATA.comments.find(c => c.id === commentId);
             if (commentToUpdate) {
@@ -416,7 +458,7 @@ community-detail.html
         }
     }
 
-    // ⭐⭐ 대댓글 제출 (Mock) (유지) ⭐⭐
+    // ⭐⭐ 대댓글 제출 (Mock) (수정) ⭐⭐
     function submitReply(parentCommentId, writerName) {
         const replyInput = document.getElementById(`reply-input-${parentCommentId}`);
         const content = replyInput.value.trim();
@@ -428,7 +470,7 @@ community-detail.html
 
         const newComment = {
             id: Date.now(),
-            writer: CURRENT_USER_WRITER_NAME,
+            writer: CURRENT_USER_WRITER_NAME, // ⭐ 로그인 사용자 닉네임 사용
             writerId: CURRENT_USER_ID,
             date: new Date().toISOString().slice(0, 10),
             content: content,
@@ -438,8 +480,13 @@ community-detail.html
         if (window.POST_DATA) {
             if (!window.POST_DATA.comments) window.POST_DATA.comments = [];
             window.POST_DATA.comments.push(newComment);
+
+            // 폼 제거
             removeReplyForm(parentCommentId);
-            loadPostDetail(window.POST_DATA.postId);
+
+            // 👉 댓글만 새로 렌더링
+            renderComments(window.POST_DATA.comments);
+
             alert(`[답글 등록 완료] ${writerName}님에게 답글이 등록되었습니다.`);
         }
     }
@@ -462,5 +509,3 @@ community-detail.html
         location.href = `/community/write?edit=${window.POST_DATA.postId}`;
     }
 </script>
-</body>
-</html>
