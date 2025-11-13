@@ -2,8 +2,12 @@ package com.multi.backend5_1_multi_fc.user.dao;
 
 import com.multi.backend5_1_multi_fc.user.dto.UserDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.EmptyResultDataAccessException; // [추가]
+import org.springframework.jdbc.core.BeanPropertyRowMapper; // [추가]
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+
+// import java.util.List; // (Moon님 코드에 없으므로 삭제)
 
 @Repository
 @RequiredArgsConstructor
@@ -25,11 +29,9 @@ public class UserDao {
                 user.getPosition(),
                 user.getGender(),
                 user.getAddress(),
-                user.getProfileImage()
+                user.getProfileImage() // [수정] user.getProfile_image() -> user.getProfileImage()
         );
     }
-
-
 
     // 아이디 중복 체크
     public int countByUsername(String username) {
@@ -50,57 +52,19 @@ public class UserDao {
         return jdbcTemplate.queryForObject(sql, Integer.class, nickname);
     }
 
-    // user_id로 사용자 조회
-    public UserDto findByUserId(Long userId) {
-        String sql = "SELECT * FROM User WHERE user_id = ?";
-
-        return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
-            UserDto user = new UserDto();
-            user.setUserId(rs.getLong("user_id"));
-            user.setUsername(rs.getString("username"));
-            user.setPassword(rs.getString("password"));
-            user.setNickname(rs.getString("nickname"));
-            user.setProfileImage(rs.getString("profile_image"));
-            user.setAddress(rs.getString("address"));
-            user.setEmail(rs.getString("email"));
-            user.setLevel(rs.getString("level"));
-            user.setPosition(rs.getString("position"));
-            user.setGender(rs.getString("gender"));
-            user.setLoginFailCount(rs.getInt("login_fail_count"));
-            user.setLockedUntil(rs.getTimestamp("locked_until"));
-            user.setCreatedAt(rs.getTimestamp("created_at"));
-            user.setUpdatedAt(rs.getTimestamp("updated_at"));
-            user.setResetCode(rs.getString("reset_code"));
-            user.setResetCodeExpires(rs.getTimestamp("reset_code_expires"));
-            user.setLastCheckedCommentId(rs.getLong("last_checked_comment_id"));
-            return user;
-        }, userId);
-    }
-
-    // username으로 사용자 조회
-    public UserDto findByUsername(String username) {
+    // --- [로그인 기능용 추가] ---
+    // UserService의 login 메서드가 호출하는 핵심 메서드입니다.
+    public UserDto findUserByUsername(String username) {
         String sql = "SELECT * FROM User WHERE username = ?";
-
-        return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
-            UserDto user = new UserDto();
-            user.setUserId(rs.getLong("user_id"));
-            user.setUsername(rs.getString("username"));
-            user.setPassword(rs.getString("password"));
-            user.setNickname(rs.getString("nickname"));
-            user.setProfileImage(rs.getString("profile_image"));
-            user.setAddress(rs.getString("address"));
-            user.setEmail(rs.getString("email"));
-            user.setLevel(rs.getString("level"));
-            user.setPosition(rs.getString("position"));
-            user.setGender(rs.getString("gender"));
-            user.setLoginFailCount(rs.getInt("login_fail_count"));
-            user.setLockedUntil(rs.getTimestamp("locked_until"));
-            user.setCreatedAt(rs.getTimestamp("created_at"));
-            user.setUpdatedAt(rs.getTimestamp("updated_at"));
-            user.setResetCode(rs.getString("reset_code"));
-            user.setResetCodeExpires(rs.getTimestamp("reset_code_expires"));
-            user.setLastCheckedCommentId(rs.getLong("last_checked_comment_id"));
-            return user;
-        }, username);
+        try {
+            // queryForObject는 결과가 1개일 때 사용합니다.
+            // BeanPropertyRowMapper가 DB의 snake_case(user_id)를 DTO의 camelCase(userId)로 자동 변환해줍니다.
+            return jdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(UserDto.class), username);
+        } catch (EmptyResultDataAccessException e) {
+            // 일치하는 유저가 없으면 null을 반환합니다.
+            return null;
+        }
     }
+
+    // (findUsersByIds 메서드는 Moon님 코드에 없으므로 제외)
 }

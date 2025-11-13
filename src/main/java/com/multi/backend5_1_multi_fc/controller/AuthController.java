@@ -88,22 +88,6 @@ public class AuthController {
         return ResponseEntity.ok().body(Map.of("message", "비밀번호가 성공적으로 변경되었습니다."));
     }
 
-    @PostMapping("/profile/confirm-password")
-    public ResponseEntity<?> handlePasswordConfirm(
-            @RequestBody Map<String, String> request
-    ) {
-        String password = request.get("currentPassword");
-        // 더미 비밀번호 확인 로직
-        boolean passwordMatches = password.equals("1234");
-
-        if (passwordMatches) {
-            return ResponseEntity.ok().body(Map.of("success", true));
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "비밀번호가 일치하지 않습니다."));
-        }
-    }
-
-
     // 4. 구장, 일정, 마이페이지, 알림 (VIEW)
     @GetMapping("/friends")
     public String friendsPage() {

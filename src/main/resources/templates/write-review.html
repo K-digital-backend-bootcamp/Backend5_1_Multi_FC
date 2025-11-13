@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MULTI FC - 경기 후기 작성</title>
 
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
@@ -13,7 +12,6 @@
 <body>
 
 <header class="quick-menu">
-    <div class="logo"><a href="/">MULTI FC</a></div>
     <div class="header-icons">
         <button id="profile-menu-toggle" class="profile-icon" style="position: relative; display: none;"> <i class="fas fa-user-circle"></i>
             <span id="notification-badge" class="notification-badge"></span>
@@ -43,44 +41,23 @@
 </header>
 <main class="login-page-main">
     <div class="main-wrapper">
-        <div class="login-section">
-            <div class="login-container">
 
-                <h1 class="title-login">경기 후기 작성</h1>
-                <p style="margin-bottom: 25px; font-size: 15px; color: #555; line-height: 1.5;">
-                    경기는 어떠셨나요? ⚽ 경기 소감과 구장 피드백을 자유롭게 남겨주세요.
-                </p>
+            <p id="review-success-message" class="info-message" style="display:none;"></p>
+            <p id="review-error-message" class="error-message" style="display:none;"></p>
 
-                <p id="review-success-message" class="info-message" style="display:none;"></p>
-                <p id="review-error-message" class="error-message" style="display:none;"></p>
+            <form id="review-form">
+                <div class="input-group">
+                    <input type="hidden" id="match-id" name="matchId" value="12345">
+                </div>
 
-                <form id="review-form">
-                    <div class="input-group">
-                        <label>후기 작성 대상 경기</label>
-                        <input type="text" id="match-info" value="2025-10-30 (목) 19:00 - 서울 강남 풋살장" disabled
-                               style="background: #eee; cursor: not-allowed; width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; ">
-                        <input type="hidden" id="match-id" name="matchId" value="12345">
                     </div>
-
-                    <div class="input-group" style="margin-top: 30px;">
-                        <label for="review-content">경기 한줄평을 작성해 주세요.</label>
-                        <textarea id="review-content" name="content" rows="5"
-                                  placeholder="경기 소감이나 구장 피드백 등을 남겨주세요."
-                                  required
-                                  style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: #f7f7f7; font-family: inherit; resize: vertical;"></textarea>
-                    </div>
-
-                    <button type="submit" class="login-button" style="margin-top: 25px;">후기 등록</button>
-                </form>
-            </div>
-        </div>
-        <div class="background-image-section">
+                </div>
+                </div>
         </div>
     </div>
 </main>
 
 <script>
-    // --- (★공통★) 메뉴 토글 로직 (생략) ---
     const menuToggle = document.getElementById('menu-toggle');
     const mainMenu = document.getElementById('main-menu');
     const profileMenuToggle = document.getElementById('profile-menu-toggle');
@@ -91,20 +68,15 @@
     if (menuToggle) {
         menuToggle.addEventListener('click', () => {
             mainMenu.classList.toggle('show');
-            profileMenu.classList.remove('show');
         });
     }
     if (profileMenuToggle) {
         profileMenuToggle.addEventListener('click', () => {
-            profileMenu.classList.toggle('show');
-            mainMenu.classList.remove('show');
         });
     }
     document.addEventListener('click', (event) => {
         if (!mainMenu.contains(event.target) && !menuToggle.contains(event.target) &&
-            !profileMenu.contains(event.target) && !profileMenuToggle.contains(event.target)) {
             mainMenu.classList.remove('show');
-            profileMenu.classList.remove('show');
         }
     });
     if (logoutButton) {
@@ -119,44 +91,19 @@
     if (navNotificationsLink) {
         navNotificationsLink.addEventListener('click', (e) => {
             e.preventDefault();
-            localStorage.setItem('hasReadReviews', 'true');
-            localStorage.setItem('hasReadSchedules', 'true');
             window.location.href = '/notifications';
         });
     }
 
-    // --- (★공통★) 알림 배지 로드 및 인증 상태 확인 로직 (생략) ---
-    const badge = document.getElementById('notification-badge');
 
-    function updateGlobalBadge() {
-        const hasReviewNotif = localStorage.getItem('hasReadReviews') !== 'true';
-        const hasScheduleNotif = false;
-        if (hasReviewNotif || hasScheduleNotif) {
-            if (badge) badge.style.display = 'block';
-        } else {
-            if (badge) badge.style.display = 'none';
-        }
-    }
 
     document.addEventListener('DOMContentLoaded', async () => {
         const accessToken = localStorage.getItem('accessToken');
-        const navLoginLink = document.getElementById('nav-login-link');
-        const navLogoutLink = document.querySelector('#main-menu ul li:last-child');
 
-        if (accessToken) {
-            if (navLoginLink) navLoginLink.parentElement.style.display = 'none';
-            if (navLogoutLink) navLogoutLink.style.display = 'list-item';
-            updateGlobalBadge();
-        } else {
             alert("로그인이 필요한 페이지입니다. 로그인 페이지로 이동합니다.");
             window.location.href = '/login';
         }
     });
-
-    // --- (★페이지별★) 후기 등록 로직 ---
-    const reviewForm = document.getElementById('review-form');
-    const successMsg = document.getElementById('review-success-message');
-    const errorMsg = document.getElementById('review-error-message');
 
     reviewForm.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -170,22 +117,15 @@
             return;
         }
 
-        const formData = new FormData();
-        formData.append('matchId', document.getElementById('match-id').value);
-        formData.append('content', content);
 
         try {
-            // ⭐ 실제로는 fetch('/reviews/submit', { method: 'POST', body: formData }) 호출 ⭐
             await new Promise(r => setTimeout(r, 1500));
 
-            // 후기 작성 성공 처리
             localStorage.setItem('hasReadReviews', 'true');
 
-            successMsg.textContent = '✅ 후기가 성공적으로 등록되었습니다. 메인 페이지로 이동합니다.';
             successMsg.style.display = 'block';
 
             setTimeout(() => {
-                window.location.href = '/';
             }, 2000);
 
         } catch (error) {
