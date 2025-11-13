@@ -105,16 +105,8 @@ public class AuthController {
 
 
     // 4. 구장, 일정, 마이페이지, 알림 (VIEW)
-    @GetMapping("/team/create")
-    public String teamCreatePage() {
-        return "team-create"; // templates/team-create.html
-    }
 
-    @GetMapping("/team/manage")
-    public String teamManagePage(@RequestParam("id") Long id, Model model) {
-        model.addAttribute("teamId", id);
-        return "team-manage"; // templates/team-manage.html
-    }
+
 
 
     @GetMapping("/fields")
