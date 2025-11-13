@@ -63,10 +63,20 @@ public class ChatController {
 
     //7. 채팅방 참가자 추가
     @PostMapping("/chatroom/{id}/invite")
-    public void inviteParticipant(@PathVariable("id") Long roomId, @RequestBody ChatParticipantDto participant){
-        participant.setRoomId(roomId);
-        chatService.addParticipant(participant);
+    public void inviteParticipants(@PathVariable("id") Long roomId, @RequestBody List<Long> invitedUserIds){
+
+        for(Long userId: invitedUserIds){
+            chatService.addParticipant(createParticipantDto(roomId, userId));
+        }
     }
+
+    private ChatParticipantDto createParticipantDto(Long roomId, Long userId) {
+        return ChatParticipantDto.builder()
+                .roomId(roomId)
+                .userId(userId)
+                .build();
+    }
+
 
     //8. 채팅방 나가기
     @DeleteMapping("/chatroom/{id}/leave")

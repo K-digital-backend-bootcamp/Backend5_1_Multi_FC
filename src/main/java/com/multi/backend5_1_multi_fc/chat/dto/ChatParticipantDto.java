@@ -12,6 +12,7 @@ public class ChatParticipantDto {
     private Long chatPartId;
     private Long roomId;
     private Long userId;
+    private String roleBadge;
     private String nickname;
     private String profileImg;
     private LocalDateTime joinedAt;
