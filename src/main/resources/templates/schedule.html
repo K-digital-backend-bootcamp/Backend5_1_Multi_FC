@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MULTI FC - 일정 검색</title>
+
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        .schedule-search-main {
+            padding: 100px 40px 40px 40px;
+            background-color: #f7f7f7;
+            min-height: 100vh;
+        }
+        .search-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .search-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #6c5ce7;
+            padding-bottom: 10px;
+        }
+        .filter-section {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        .filter-section input,
+        .filter-section select,
+        .filter-section button {
+            padding: 12px 15px;
+            font-size: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: #f9f9f9;
+            font-family: inherit;
+        }
+        .filter-section input[type="date"] {
+            flex-grow: 1;
+            min-width: 200px;
+        }
+        .filter-section button {
+            background-color: #6c5ce7;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+        .match-list-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .match-item-card {
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-left: 5px solid #6c5ce7;
+        }
+        .match-item-card.closed {
+            border-left-color: #aaa;
+        }
+        .match-item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        }
+        .match-item-header {
+            padding: 15px 20px;
+            background: #fdfdfd;
+            border-bottom: 1px solid #eee;
+        }
+        .match-item-header .date {
+            font-size: 18px;
+            font-weight: 700;
+            color: #6c5ce7;
+        }
+        .match-item-card.closed .match-item-header .date {
+            color: #555;
+        }
+        .match-item-body {
+            padding: 20px;
+        }
+        .match-item-body .location,
+        .match-item-body .status {
+            display: flex;
+            align-items: center;
+            font-size: 15px;
+            color: #555;
+            margin-bottom: 12px;
+        }
+        .match-item-body .location i,
+        .match-item-body .status i {
+            margin-right: 10px;
+            color: #6c5ce7;
+            width: 16px;
+        }
+        .match-item-body p i.fa-crown {
+            color: #f39c12;
+        }
+        .match-item-card.closed .match-item-body .location i,
+        .match-item-card.closed .match-item-body .status i {
+            color: #aaa;
+        }
+        .match-item-body .status {
+            margin-bottom: 20px;
+        }
+        .status-badge {
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 5px;
+            color: white;
+            margin-right: 8px;
+        }
+        .status-badge.open {
+            background-color: #28a745;
+        }
+        .status-badge.closed {
+            background-color: #888;
+        }
+        .details-button {
+            display: block;
+            width: 100%;
+            text-align: center;
+            padding: 10px;
+            text-decoration: none;
+            background-color: #6c5ce7;
+            color: white;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+        .details-button:hover {
+            background-color: #8e44ad;
+        }
+        .details-button.disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+        .details-button.disabled:hover {
+            background: #aaa;
+        }
+    </style>
+</head>
+<body>
+
+<header class="quick-menu">
+    <div class="logo"><a href="/">Multi FC</a></div>
+    <div class="header-icons">
+        <button id="profile-menu-toggle" class="profile-icon" style="position: relative; display: none;">
+            <i class="fas fa-user-circle"></i>
+            <span id="notification-badge" class="notification-badge"></span>
+        </button>
+        <div id="profile-menu" class="user-menu">
+            <div class="user-info">
+                <strong><span id="user-menu-username">사용자</span>님</strong>
+                <p>환영합니다!</p>
+            </div>
+            <ul>
+                <li><a href="/notifications" id="nav-notifications-link"><i class="fas fa-bell"></i> 알림 목록</a></li>
+                <li><a href="/mypage"><i class="fas fa-user"></i> 마이페이지</a></li>
+                <li><a href="/profile/edit"><i class="fas fa-user-edit"></i> 프로필 수정</a></li>
+                <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
+            </ul>
+        </div>
+        <button id="menu-toggle" class="menu-toggle-btn"><i class="fas fa-bars"></i></button>
+    </div>
+    <nav id="main-menu" class="main-nav">
+        <ul>
+            <li><a href="/"><i class="fas fa-home"></i> 메인 (Home)</a></li>
+            <li><a href="/fields"><i class="fas fa-search"></i> 구장검색</a></li>
+            <li><a href="/community"><i class="fas fa-users"></i> 커뮤니티</a></li>
+            <li id="nav-chat-link-li"><a href="/chat" id="nav-chat-link"><i class="fas fa-comments"></i> 실시간채팅</a></li>
+            <li><a href="/login" id="nav-login-link"><i class="fas fa-sign-in-alt"></i> 로그인</a></li>
+            <li style="display:none;"><a href="#" id="nav-logout-link"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main class="schedule-search-main">
+    <div class="search-container">
+        <h1 class="search-title">📅 경기일정 검색</h1>
+
+        <div class="filter-section">
+            <input type="date" id="filter-date">
+
+            <select id="filter-region">
+                <option value="전체지역">전체지역</option>
+            </select>
+
+            <select id="filter-status">
+                <option value="">상태 (전체)</option>
+                <option value="open">모집중</option>
+                <option value="closed">모집완료</option>
+            </select>
+
+            <button id="search-btn">검색</button>
+        </div>
+
+        <div class="match-list-container" id="match-list-container"></div>
+        <p id="no-results-message"
+           style="color: #666; text-align: center; margin-top: 30px; display: none;">
+            검색 결과가 없습니다.
+        </p>
+    </div>
+</main>
+
+<script>
+    // ===================== 공통 메뉴 / 로그인 처리 =====================
+    const menuToggle = document.getElementById('menu-toggle');
+    const mainMenu = document.getElementById('main-menu');
+    const profileMenuToggle = document.getElementById('profile-menu-toggle');
+    const profileMenu = document.getElementById('profile-menu');
+    const logoutButton = document.getElementById('logout-button');
+    const navNotificationsLink = document.getElementById('nav-notifications-link');
+    const navChatLinkElement = document.getElementById('nav-chat-link-li');
+    const navLoginLink = document.getElementById('nav-login-link');
+    const navLogoutLink = document.getElementById('nav-logout-link');
+
+    if (menuToggle) {
+        menuToggle.addEventListener('click', () => {
+            mainMenu.classList.toggle('show');
+            profileMenu.classList.remove('show');
+        });
+    }
+    if (profileMenuToggle) {
+        profileMenuToggle.addEventListener('click', () => {
+            profileMenu.classList.toggle('show');
+            mainMenu.classList.remove('show');
+        });
+    }
+    document.addEventListener('click', (event) => {
+        if (!mainMenu.contains(event.target) && !menuToggle.contains(event.target) &&
+            !profileMenu.contains(event.target) && !profileMenuToggle.contains(event.target)) {
+            mainMenu.classList.remove('show');
+            profileMenu.classList.remove('show');
+        }
+    });
+    if (logoutButton) {
+        logoutButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('hasReadReviews');
+            localStorage.removeItem('hasReadSchedules');
+            window.location.href = '/login';
+        });
+    }
+    if (navNotificationsLink) {
+        navNotificationsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.setItem('hasReadReviews', 'true');
+            localStorage.setItem('hasReadSchedules', 'true');
+            window.location.href = '/notifications';
+        });
+    }
+    if (navLogoutLink) {
+        navLogoutLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('hasReadReviews');
+            localStorage.removeItem('hasReadSchedules');
+            window.location.href = '/login';
+        });
+    }
+
+    // ===================== 경기 목록 렌더링 =====================
+
+    // localStorage.match_schedules 에서 경기 목록 가져오기
+    function loadMatches() {
+        try {
+            const raw = localStorage.getItem('match_schedules');
+            if (!raw) return [];
+            const arr = JSON.parse(raw);
+
+            // 기본 구조 정리 (필요한 값이 없을 때 대비)
+            return arr.map(m => ({
+                id: m.id,
+                date: m.date || '',
+                startTime: m.startTime || (m.time ? m.time.split('~')[0].trim() : ''),
+                endTime: m.endTime || (m.time && m.time.includes('~') ? m.time.split('~')[1].trim() : ''),
+                location: m.location || '',
+                status: m.status || 'open',       // open / closed
+                // host 닉네임: nickname > host.nickname > 알 수 없음
+                hostNickname: m.nickname ||
+                    (m.host && m.host.nickname) ||
+                    '알 수 없음',
+                region: m.region || ''            // 지역 필터용(없으면 빈 문자열)
+            }));
+        } catch (e) {
+            console.error('match_schedules 파싱 오류:', e);
+            return [];
+        }
+    }
+
+    // 카드 렌더링
+    function renderMatches(matches) {
+        const container = document.getElementById('match-list-container');
+        const noResultsMsg = document.getElementById('no-results-message');
+
+        container.innerHTML = '';
+
+        if (!matches.length) {
+            noResultsMsg.style.display = 'block';
+            return;
+        } else {
+            noResultsMsg.style.display = 'none';
+        }
+
+        matches.forEach(match => {
+            const card = document.createElement('div');
+            card.classList.add('match-item-card');
+            if (match.status === 'closed') {
+                card.classList.add('closed');
+            }
+
+            const statusText = match.status === 'closed' ? '모집완료' : '모집중';
+
+            const dateTimeText = match.date
+                ? (match.startTime ? `${match.date} ${match.startTime}` : match.date)
+                : (match.startTime || '');
+
+            card.innerHTML = `
+                <div class="match-item-header">
+                    <div class="date">${dateTimeText}</div>
+                </div>
+                <div class="match-item-body">
+                    <p class="status">
+                        <i class="fas fa-crown"></i>
+                        <span>주최자: ${match.hostNickname}</span>
+                    </p>
+                    <p class="location">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>${match.location || '장소 미정'}</span>
+                    </p>
+                    <p class="status">
+                        <i class="fas fa-users"></i>
+                        <span class="status-badge ${match.status === 'closed' ? 'closed' : 'open'}">
+                            ${statusText}
+                        </span>
+                    </p>
+                    <a class="details-button" href="/schedule/detail/${match.id}">
+                        상세보기
+                    </a>
+                </div>
+            `;
+
+            container.appendChild(card);
+        });
+    }
+
+    // 필터 적용
+    function applyFilters(allMatches) {
+        const dateInput = document.getElementById('filter-date');
+        const regionSelect = document.getElementById('filter-region');
+        const statusSelect = document.getElementById('filter-status');
+
+        const selectedDate = dateInput.value;          // YYYY-MM-DD
+        const selectedRegion = regionSelect.value;     // "전체지역" or region
+        const selectedStatus = statusSelect.value;     // "" / "open" / "closed"
+
+        let filtered = allMatches.slice();
+
+        if (selectedDate) {
+            filtered = filtered.filter(m => m.date === selectedDate);
+        }
+
+        if (selectedRegion && selectedRegion !== '전체지역') {
+            filtered = filtered.filter(m => m.region === selectedRegion);
+        }
+
+        if (selectedStatus) {
+            filtered = filtered.filter(m => (m.status || 'open') === selectedStatus);
+        }
+
+        renderMatches(filtered);
+    }
+
+    // 지역 select 옵션 채우기 (match_schedules 안에 region 값이 있는 경우)
+    function fillRegionOptions(allMatches) {
+        const regionSelect = document.getElementById('filter-region');
+        // 기존 "전체지역" 제외하고 모두 제거
+        while (regionSelect.options.length > 1) {
+            regionSelect.remove(1);
+        }
+
+        const regions = Array.from(
+            new Set(
+                allMatches
+                    .map(m => m.region)
+                    .filter(r => r && r.trim().length > 0)
+            )
+        );
+
+        regions.forEach(region => {
+            const opt = document.createElement('option');
+            opt.value = region;
+            opt.textContent = region;
+            regionSelect.appendChild(opt);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const accessToken = localStorage.getItem('accessToken');
+
+        // 로그인 상태에 따른 메뉴 표시
+        if (accessToken) {
+            document.getElementById('profile-menu-toggle').style.display = 'block';
+            if (navLoginLink) navLoginLink.parentElement.style.display = 'none';
+            if (navLogoutLink) navLogoutLink.parentElement.style.display = 'list-item';
+        } else {
+            if (navLoginLink) navLoginLink.parentElement.style.display = 'list-item';
+            if (navLogoutLink) navLogoutLink.parentElement.style.display = 'none';
+        }
+
+        // 채팅 메뉴: 비회원 접근 막기
+        if (navChatLinkElement) {
+            const chatLinkAnchor = navChatLinkElement.querySelector('a');
+            if (chatLinkAnchor && !accessToken) {
+                chatLinkAnchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    alert("❌ 실시간 채팅은 회원만 이용할 수 있습니다.");
+                    window.location.href = '/login';
+                });
+            }
+        }
+
+        // 날짜 입력 기본값: 오늘로 설정 (필요 없으면 주석 처리)
+        const dateInput = document.getElementById('filter-date');
+        if (dateInput && !dateInput.value) {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            dateInput.value = `${yyyy}-${mm}-${dd}`;
+        }
+
+        const allMatches = loadMatches();
+        fillRegionOptions(allMatches);
+
+        // 초기에도 한 번 필터 적용해서 카드 렌더링
+        applyFilters(allMatches);
+
+        // 검색 버튼 클릭 시 필터 적용
+        const searchBtn = document.getElementById('search-btn');
+        if (searchBtn) {
+            searchBtn.addEventListener('click', () => {
+                applyFilters(allMatches);
+            });
+        }
+    });
+</script>
+
+</body>
+</html>
+

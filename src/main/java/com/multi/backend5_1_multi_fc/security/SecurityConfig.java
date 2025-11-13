@@ -8,7 +8,6 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.config.Customizer;
 
 @Configuration
 @EnableWebSecurity
@@ -22,12 +21,21 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                // 1. CSRF(Cross-Site Request Forgery) POST/PUT 요청이 차단
                 .csrf(AbstractHttpConfigurer::disable)
+
+                // 2. Spring Security가 기본으로 제공하는 로그인 폼을 비활성화
+                .formLogin(AbstractHttpConfigurer::disable)
+
+                // 3. HTTP Basic 인증(브라우저 팝업 인증)을 비활성화
+                .httpBasic(AbstractHttpConfigurer::disable)
+
+                // 4. 모든 HTTP 요청에 대해 인증 없이 접근을 허용
+                // 주의 (개발 완료 후에는 .requestMatchers("/api/...).permitAll()" 등으로 변경 해야 함)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/users/signup", "/", "/login").permitAll()
-                        .anyRequest().authenticated()
-                )
-                .httpBasic(Customizer.withDefaults());
+                        .anyRequest().permitAll()
+                );
+
         return http.build();
     }
 }
