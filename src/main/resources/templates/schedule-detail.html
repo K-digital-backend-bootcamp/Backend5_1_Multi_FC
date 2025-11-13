@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="'경기 상세 (ID: ' + ${matchId} + ') - MULTI FC'">Multi FC - 일정 상세</title>
+    <title th:text="'경기 상세 (ID: ' + ${matchId} + ') - MULTI FC'">MULTI FC - 일정 상세</title>
 
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
@@ -32,30 +32,7 @@
             padding-bottom: 10px;
         }
 
-        .search-title-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-        }
-
-        .delete-match-btn {
-            padding: 8px 14px;
-            font-size: 14px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            background-color: #6c5ce7;
-            color: #fff;
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .delete-match-btn:hover {
-            background-color: #c0392b;
-        }
-
+        /* (★) 상세 페이지 전용 스타일 */
         .detail-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -63,7 +40,7 @@
         }
         @media (min-width: 768px) {
             .detail-grid {
-                grid-template-columns: 1fr 350px;
+                grid-template-columns: 1fr 350px; /* 넓은 화면에서 2열 */
             }
         }
 
@@ -104,26 +81,12 @@
             padding-bottom: 10px;
             margin-bottom: 15px;
         }
-
-        .participant-section {
-            margin-top: 10px;
-        }
-        .host-participant-list {
-            margin: 0;
-            padding: 0 0 8px 0;
-            border-bottom: 1px dashed #eee;
-        }
-
-        .participant-scroll {
-            max-height: 320px;
-            overflow-y: auto;
-            padding-top: 8px;
-        }
-
         .participant-list {
             list-style: none;
             padding: 0;
+            margin: 10px 0 20px 0;
         }
+        /* ⭐⭐ 참여자 목록 상세 스타일 (ERD 반영) ⭐⭐ */
         .participant-list li {
             padding: 8px 0;
             color: #555;
@@ -138,15 +101,6 @@
             justify-content: space-between;
             align-items: center;
             font-weight: 600;
-            gap: 8px;
-        }
-        .participant-list .user-main {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .participant-list .user-main input[type="checkbox"] {
-            cursor: pointer;
         }
         .participant-list .user-info .role-badge {
             font-size: 12px;
@@ -161,28 +115,14 @@
             color: #999;
             margin-top: 3px;
         }
+        /* ⭐⭐ 참여자 목록 상세 스타일 끝 ⭐⭐ */
 
         .join-button {
             width: 100%;
             padding: 14px;
         }
         .btn-cancel {
-            background-color: #e74c3c;
-        }
-
-        #host-select-hint {
-            font-size: 12px;
-            color: #999;
-            margin-top: 8px;
-        }
-
-        #close-match-btn {
-            background-color: #ccc !important;
-            cursor: not-allowed;
-        }
-        #close-match-btn.enabled:not(:disabled) {
-            background-color: #6c5ce7 !important;
-            cursor: pointer;
+            background-color: #e74c3c; /* 취소는 빨간색 */
         }
     </style>
 </head>
@@ -223,14 +163,7 @@
 
 <main class="schedule-search-main">
     <div class="search-container">
-
-        <div class="search-title-bar">
-            <h1 class="search-title" th:text="'경기 상세 정보 (ID: ' + ${matchId} + ')'">📅 일정 상세</h1>
-            <button id="delete-match-btn" class="delete-match-btn" style="display:none;">
-                경기 제거
-            </button>
-        </div>
-
+        <h1 class="search-title" th:text="'경기 상세 정보 (ID: ' + ${matchId} + ')'">📅 일정 상세</h1>
         <input type="hidden" id="match-id-hidden" th:value="${matchId}">
 
         <div class="detail-grid">
@@ -241,11 +174,11 @@
                 <h3>경기 정보</h3>
                 <div class="detail-info-item">
                     <i class="fas fa-calendar-alt"></i>
-                    <span id="detail-datetime"></span>
+                    <span id="detail-datetime">2025-11-01 (토) 19:00</span>
                 </div>
                 <div class="detail-info-item">
                     <i class="fas fa-map-marker-alt"></i>
-                    <span id="detail-location"></span>
+                    <span id="detail-location">서울 강남 풋살장</span>
                 </div>
                 <div class="detail-info-item">
                     <i class="fas fa-users"></i>
@@ -264,30 +197,12 @@
             <div class="detail-right-column">
                 <div class="status-card">
                     <h3>참여 현황</h3>
-                    <!-- 숫자 안 보이게 -->
-                    <strong style="display:none;"><span id="current-players">4</span> / <span id="max-players">10</span> 명</strong>
+                    <strong><span id="current-players">4</span> / <span id="max-players">10</span> 명</strong>
+                    <ul class="participant-list" id="participant-list">
+                    </ul>
 
-                    <div class="participant-section">
-                        <ul class="participant-list host-participant-list" id="host-participant-list"></ul>
-                        <div class="participant-scroll">
-                            <ul class="participant-list" id="participant-list"></ul>
-                        </div>
-                    </div>
-
-                    <!-- 일반 참가자용 버튼 -->
                     <button id="join-match-btn" class="login-button join-button" style="display:none;" onclick="handleJoin()">참여하기</button>
-                    <button id="cancel-match-btn" class="login-button join-button btn-cancel" style="display:none;">참여 취소</button>
-
-                    <!-- 호스트용 마감 버튼 -->
-                    <button id="close-match-btn"
-                            class="schedule-button join-button"
-                            style="display:none; margin-top:8px;"
-                            disabled>
-                        마감하기
-                    </button>
-                    <p id="host-select-hint" style="display:none;">
-                        주최자를 제외하고 최대 9명을 체크하면(주최자 포함 10명) 마감 버튼이 활성화됩니다.
-                    </p>
+                    <button id="cancel-match-btn" class="login-button join-button btn-cancel" style="display:none;" onclick="handleCancel()">참여 취소</button>
 
                     <p id="login-prompt-msg" style="display:none; text-align: center; margin-top: 15px; font-size: 14px;">
                         참여하려면 <a href="/login" style="color: #6c5ce7; font-weight: 600;">로그인</a>이 필요합니다.
@@ -299,7 +214,7 @@
 </main>
 
 <script>
-    // --- 공통 메뉴 토글 ---
+    // --- (★공통★) 메뉴 토글 로직 (유지) ---
     const menuToggle = document.getElementById('menu-toggle');
     const mainMenu = document.getElementById('main-menu');
     const profileMenuToggle = document.getElementById('profile-menu-toggle');
@@ -355,668 +270,133 @@
             window.location.href = '/login';
         });
     }
+    // --- (★공통★) 메뉴 토글 로직 끝 ---
 
-    // ✅ 헤더 닉네임 로드 (userNickname이 있으면 헤더에 뿌려줌)
-    (function loadHeaderNickname() {
-        const usernameSpan = document.getElementById('user-menu-username');
-        if (usernameSpan) {
-            usernameSpan.textContent = localStorage.getItem('userNickname') || '사용자';
-        }
-    })();
 
-    function getMatchId() {
-        const hidden = document.getElementById('match-id-hidden');
-        return (hidden && hidden.value) ||
-            new URLSearchParams(window.location.search).get("id") ||
-            new URLSearchParams(window.location.search).get("matchId") ||
-            window.location.pathname.split("/").pop();
-    }
-
-    function isMatchClosed() {
-        const matchId = getMatchId();
-        if (!matchId) return false;
-        const matches = JSON.parse(localStorage.getItem("match_schedules")) || [];
-        const found = matches.find(m => String(m.id) === String(matchId));
-        return !!(found && found.status === "closed");
-    }
-
-    function loadMatchDetailFromLocal() {
-        const matchId = getMatchId();
-        if (!matchId) return;
-
-        const matches = JSON.parse(localStorage.getItem('match_schedules')) || [];
-        const match = matches.find(m => String(m.id) === String(matchId));
-        if (!match) return;
-
-        const datetimeSpan = document.getElementById('detail-datetime');
-        const locationSpan = document.getElementById('detail-location');
-
-        if (datetimeSpan && match.date && match.startTime && match.endTime) {
-            try {
-                const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-                const d = new Date(match.date);
-                const yoil = isNaN(d) ? '' : dayNames[d.getDay()];
-                if (yoil) {
-                    datetimeSpan.textContent = `${match.date} (${yoil}) ${match.startTime} ~ ${match.endTime}`;
-                } else {
-                    datetimeSpan.textContent = `${match.date} ${match.startTime} ~ ${match.endTime}`;
-                }
-            } catch (e) {
-                datetimeSpan.textContent = `${match.date} ${match.startTime} ~ ${match.endTime}`;
-            }
-        }
-
-        if (locationSpan && match.location) {
-            locationSpan.textContent = match.location;
-        }
-    }
-
-    function applyClosedUIIfNeeded() {
-        if (!isMatchClosed()) return;
-
-        const closeBtn = document.getElementById('close-match-btn');
-        const joinBtn = document.getElementById('join-match-btn');
-        const cancelBtn = document.getElementById('cancel-match-btn');
-
-        if (closeBtn) {
-            closeBtn.style.display = 'block';
-            closeBtn.disabled = true;
-            closeBtn.classList.remove('enabled');
-            closeBtn.textContent = '마감 완료';
-        }
-
-        document.querySelectorAll('.player-select-checkbox').forEach(cb => {
-            cb.disabled = true;
-        });
-
-        if (joinBtn) {
-            joinBtn.disabled = true;
-            joinBtn.textContent = '마감된 경기입니다';
-        }
-        if (cancelBtn) {
-            cancelBtn.disabled = true;
-        }
-
-        const hostHint = document.getElementById('host-select-hint');
-        if (hostHint) hostHint.style.display = 'none';
-    }
-
-    // --- 참여자/호스트 더미 데이터 ---
-    const MAX_PLAYERS = 10;
-
-    // ✅ 현재 로그인 사용자 정보 (localStorage에서 가져오기)
-    const CURRENT_USER_ID = 999; // 프론트 데모용 고정 ID
-    const CURRENT_USERNAME = localStorage.getItem('username') || 'my_user_id';
-    const CURRENT_NICKNAME = localStorage.getItem('userNickname') || '사용자';
-
-    // ✅ 매치별 주최자 닉네임 매핑 (목록 MOCK_MATCHES와 동일하게 맞추기)
-    const MOCK_MATCH_HOSTS = [
-        { matchId: 1, nickname: '캡틴손' },
-        { matchId: 2, nickname: '운영진' },
-        { matchId: 3, nickname: '구원투수' },
-        { matchId: 4, nickname: '테스터' },
-    ];
-
+    // ⭐⭐ 매너 점수 제거: 더미 참여자 데이터 수정 ⭐⭐
+    // mannerScore 필드 제거
     const MOCK_PARTICIPANTS = [
-        // ✅ 여기 호스트를 "현재 로그인 사용자"로 설정
-        {
-            id: CURRENT_USER_ID,
-            username: CURRENT_USERNAME,
-            nickname: CURRENT_NICKNAME,
-            position: 'ALA',
-            role: 'Host'
-        },
-        { id: 101, username: 'captain_son',  nickname: '캡틴손',      position: 'ALA',      role: 'Player' },
-        { id: 102, username: 'closer_kim',   nickname: '구원투수',    position: 'FIXO',     role: 'Player' },
-        { id: 103, username: 'shootdori',    nickname: '슛돌이',      position: 'PIVO',     role: 'Player' },
-        { id: 104, username: 'captain_park', nickname: '캡틴박',      position: 'ALA',      role: 'Player' },
-        { id: 105, username: 'futsal_mania', nickname: '풋살 매니아', position: 'ALA',      role: 'Player' },
-        { id: 106, username: 'keeper_p',     nickname: '골키퍼p',     position: 'GOLEIRO',  role: 'Player' },
-        { id: 107, username: 'keeper_k',     nickname: '골키퍼K',     position: 'GOLEIRO',  role: 'Player' },
-        { id: 108, username: 'pass_master',  nickname: '패스마스터',  position: 'FIXO',     role: 'Player' },
-        { id: 109, username: 'power_shot',   nickname: '파워슛',      position: 'PIVO',     role: 'Player' }
+        { id: 101, username: 'captain_son', nickname: '캡틴손', position: 'MF', role: 'Host' },
+        { id: 102, username: 'closer_kim', nickname: '구원투수', position: 'DF', role: 'Player' },
+        { id: 103, username: 'shootdori', nickname: '슛돌이', position: 'FW', role: 'Player' },
+        { id: 104, username: 'keeper_k', nickname: '골키퍼K', position: 'GK', role: 'Player' },
+        // 현재 사용자 (참여 상태 시뮬레이션)
+        { id: 999, username: 'my_user_id', nickname: '나의닉네임', position: 'ALA', role: 'Player' }
     ];
 
-    // ✅ 현재 매치 ID에 해당하는 Host 닉네임 가져오기
-    function getHostNicknameForCurrentMatch() {
-        const matchId = getMatchId();
-        if (!matchId) return null;
+    const CURRENT_USER_ID = 999;
+    let isParticipating = false;
 
-        // 1) 로컬스토리지 match_schedules 안에서 nickname / host.nickname 우선 사용
-        try {
-            const matches = JSON.parse(localStorage.getItem('match_schedules') || '[]');
-            const found = matches.find(m => String(m.id) === String(matchId));
-            if (found) {
-                if (found.nickname) return found.nickname;
-                if (found.host && found.host.nickname) return found.host.nickname;
-            }
-        } catch (e) {
-            console.error('match_schedules 파싱 오류:', e);
-        }
-
-        // 2) 없으면 목업 매핑에서 찾기
-        const staticHost = MOCK_MATCH_HOSTS.find(h => String(h.matchId) === String(matchId));
-        return staticHost ? staticHost.nickname : null;
-    }
-
-    // ✅ 참여 여부를 로컬스토리지에 저장/조회
-    function getParticipationState() {
-        const matchId = getMatchId();
-        if (!matchId) return false;
-        const map = JSON.parse(localStorage.getItem('match_participation') || '{}');
-        return !!map[matchId];
-    }
-
-    function setParticipationState(joined) {
-        const matchId = getMatchId();
-        if (!matchId) return;
-        const key = 'match_participation';
-        const map = JSON.parse(localStorage.getItem(key) || '{}');
-        if (joined) {
-            map[matchId] = true;
-        } else {
-            delete map[matchId];
-        }
-        localStorage.setItem(key, JSON.stringify(map));
-    }
-
-    // 실제 화면에 사용할 현재 참가자 목록
-    let currentParticipants = [];
-
-    function buildInitialParticipants() {
-        // ✅ 이 매치의 주최자 닉네임
-        const hostNickname = getHostNicknameForCurrentMatch();
-
-        // 기본: MOCK_PARTICIPANTS를 복사하면서 Host의 nickname만 현재 매치에 맞게 덮어쓰기
-        const baseList = MOCK_PARTICIPANTS.map(p => {
-            if (p.role === 'Host' && hostNickname) {
-                return { ...p, nickname: hostNickname };
-            }
-            return { ...p };
-        });
-
-        // 🔍 현재 로그인 유저 정보
-        const myMock = baseList.find(p => p.id === CURRENT_USER_ID);
-        const iAmHost = !!myMock && myMock.role === 'Host';
-
-        // ✅ 호스트는 리스트에서 제거하지 않음
-        if (iAmHost) {
-            currentParticipants = baseList;
-            isParticipating = true;   // 호스트는 자동 참여 상태
-        } else {
-            currentParticipants = baseList.filter(p => p.id !== CURRENT_USER_ID);
-
-            if (getParticipationState()) {
-                if (myMock) currentParticipants.push(myMock);
-                isParticipating = true;
-            } else {
-                isParticipating = false;
-            }
-        }
-    }
-
-    const selectedPlayerIds = new Set();
-
-    function renderParticipantList() {
-        const participants = currentParticipants;
-
+    // ⭐⭐ 매너 점수 제거: 참여자 목록 렌더링 함수 수정 ⭐⭐
+    function renderParticipantList(participants) {
         const listEl = document.getElementById('participant-list');
-        const hostListEl = document.getElementById('host-participant-list');
         const currentPlayersEl = document.getElementById('current-players');
         const maxPlayersEl = document.getElementById('max-players');
-
-        hostListEl.innerHTML = '';
         listEl.innerHTML = '';
 
-        const me = participants.find(u => u.id === CURRENT_USER_ID);
-        isParticipating = !!me;
-        isHost = !!me && me.role === 'Host';
+        // 현재 사용자 참여 상태 초기화 및 확인
+        isParticipating = participants.some(user => user.id === CURRENT_USER_ID);
 
-        const deleteBtn = document.getElementById('delete-match-btn');
-        if (deleteBtn) {
-            deleteBtn.style.display = isHost ? 'inline-block' : 'none';
-        }
-
-        const hostUser = participants.find(u => u.role === 'Host');
-        const otherUsers = participants.filter(u => u.role !== 'Host');
-
-        function createParticipantItem(user) {
+        participants.forEach(user => {
             const listItem = document.createElement('li');
+            const roleBadge = user.role === 'Host' ? `<span class="role-badge">주최자</span>` : '';
 
-            const roleBadge = user.role === 'Host'
-                ? `<span class="role-badge">주최자</span>`
-                : '';
-
-            const nicknameDisplay = user.id === CURRENT_USER_ID
-                ? `${user.nickname} (나)`
-                : `${user.nickname}`;
-
+            const nicknameDisplay = user.id === CURRENT_USER_ID ? `${user.nickname} (나)` : `${user.nickname}`;
             const userIdDisplay = user.username ? ` (${user.username})` : '';
-
-            let checkboxHtml = '';
-            if (isHost && user.role !== 'Host') {
-                checkboxHtml = `
-                    <input type="checkbox"
-                           class="player-select-checkbox"
-                           data-user-id="${user.id}"
-                           ${selectedPlayerIds.has(user.id) ? 'checked' : ''}>
-                `;
-            }
 
             listItem.innerHTML = `
                 <div class="user-info">
-                    <div class="user-main">
-                        ${checkboxHtml}
-                        <span>${nicknameDisplay}${userIdDisplay}</span>
-                    </div>
+                    <span>${nicknameDisplay}${userIdDisplay}</span>
                     ${roleBadge}
                 </div>
                 <div class="detail-info">
                     포지션: ${user.position}
-                </div>
+                    </div>
             `;
-
-            return listItem;
-        }
-
-        if (hostUser) {
-            hostListEl.appendChild(createParticipantItem(hostUser));
-        }
-
-        otherUsers.forEach(user => {
-            listEl.appendChild(createParticipantItem(user));
+            listEl.appendChild(listItem);
         });
 
+        // 인원 수 업데이트
         currentPlayersEl.textContent = participants.length;
-        maxPlayersEl.textContent = MAX_PLAYERS.toString();
-
-        const checkboxes = document.querySelectorAll('.player-select-checkbox');
-        checkboxes.forEach(cb => {
-            cb.addEventListener('change', (e) => {
-                const uid = parseInt(e.target.dataset.userId, 10);
-                if (e.target.checked) {
-                    selectedPlayerIds.add(uid);
-                } else {
-                    selectedPlayerIds.delete(uid);
-                }
-                updateCloseButtonState();
-            });
-        });
+        maxPlayersEl.textContent = '10'; // 더미 최대 인원
 
         updateJoinButtonState();
-        updateCloseButtonState();
-        applyClosedUIIfNeeded();
     }
 
+    // ⭐⭐ 버튼 상태 업데이트 함수 (이전 로직 유지) ⭐⭐
     function updateJoinButtonState() {
         const joinBtn = document.getElementById('join-match-btn');
         const cancelBtn = document.getElementById('cancel-match-btn');
         const loginPrompt = document.getElementById('login-prompt-msg');
-        const closeBtn = document.getElementById('close-match-btn');
-        const hostHint = document.getElementById('host-select-hint');
 
         const isLoggedIn = localStorage.getItem('accessToken') !== null;
 
         if (!isLoggedIn) {
             joinBtn.style.display = 'none';
             cancelBtn.style.display = 'none';
-            closeBtn.style.display = 'none';
-            hostHint.style.display = 'none';
             loginPrompt.style.display = 'block';
             return;
         }
 
         loginPrompt.style.display = 'none';
 
-        if (isHost) {
-            joinBtn.style.display = 'none';
-            cancelBtn.style.display = 'none';
-            closeBtn.style.display = 'block';
-            hostHint.style.display = 'block';
-        } else {
-            closeBtn.style.display = 'none';
-            hostHint.style.display = 'none';
-
-            if (isParticipating) {
-                joinBtn.style.display = 'none';
-                cancelBtn.style.display = 'block';
-            } else {
-                joinBtn.style.display = 'block';
-                cancelBtn.style.display = 'none';
-            }
-        }
-    }
-
-    function updateCloseButtonState() {
-        const closeBtn = document.getElementById('close-match-btn');
-        const hostHint = document.getElementById('host-select-hint');
-        if (!closeBtn) return;
-
-        if (isMatchClosed()) {
-            applyClosedUIIfNeeded();
-            return;
-        }
-
-        if (!isHost) {
-            closeBtn.style.display = 'none';
-            if (hostHint) hostHint.style.display = 'none';
-            return;
-        }
-
-        const selectedCount = selectedPlayerIds.size;
-        const totalSelectedIncludingHost = selectedCount + 1;
-
-        closeBtn.style.display = 'block';
-        if (hostHint) hostHint.style.display = 'block';
-
-        if (totalSelectedIncludingHost >= MAX_PLAYERS) {
-            closeBtn.disabled = false;
-            closeBtn.classList.add('enabled');
-            closeBtn.textContent = `마감하기 (선발 완료: ${totalSelectedIncludingHost}/${MAX_PLAYERS})`;
-        } else {
-            closeBtn.disabled = true;
-            closeBtn.classList.remove('enabled');
-            closeBtn.textContent = `마감하기 (현재 선발: ${totalSelectedIncludingHost}/${MAX_PLAYERS})`;
-        }
-    }
-
-    // ✅ 참여하기: 나 추가 + 참여 여부 저장 + 캘린더에 경기 일정 추가
-    function handleJoin() {
-        if (isMatchClosed()) {
-            alert("이미 마감된 경기입니다.");
-            applyClosedUIIfNeeded();
-            return;
-        }
-
         if (isParticipating) {
-            alert("이미 이 경기에 참여 중입니다.");
-            return;
-        }
-
-        if (confirm("정말로 이 경기에 참여하시겠습니까?")) {
-            alert("참여 요청이 완료되었습니다. (시뮬레이션)");
-            isParticipating = true;
-            setParticipationState(true); // ✅ 참여 여부 저장
-
-            const meFromMock = MOCK_PARTICIPANTS.find(p => p.id === CURRENT_USER_ID) || {
-                id: CURRENT_USER_ID,
-                username: 'my_user_id',
-                nickname: '나의닉네임',
-                position: 'ALA',
-                role: 'Player'
-            };
-
-            currentParticipants = currentParticipants.filter(p => p.id !== CURRENT_USER_ID);
-            currentParticipants.push(meFromMock);
-
-            renderParticipantList();
-
-            // ✅ 캘린더(personalSchedules)에 이 경기 일정 추가
-            const matchIdFromUrl = getMatchId();
-            if (matchIdFromUrl) {
-                let schedules = JSON.parse(localStorage.getItem("personalSchedules")) || [];
-
-                // 이미 동일 matchId 일정이 있으면 중복 추가 방지
-                const already = schedules.some(
-                    s => s.matchId && String(s.matchId) === String(matchIdFromUrl)
-                );
-                if (!already) {
-                    const matches = JSON.parse(localStorage.getItem("match_schedules")) || [];
-                    const match = matches.find(m => String(m.id) === String(matchIdFromUrl));
-
-                    let dateStr = match?.date || null;
-                    let startTime = match?.startTime || (match?.time ? match.time.split("~")[0].trim() : "");
-                    let endTime = match?.endTime || (match?.time && match.time.includes("~") ? match.time.split("~")[1].trim() : "");
-                    const locationText = match?.location || (document.getElementById('detail-location')?.textContent || "경기");
-
-                    if (!dateStr) {
-                        const dtText = document.getElementById('detail-datetime')?.textContent || "";
-                        const dateMatch = dtText.match(/(\d{4}-\d{2}-\d{2})/);
-                        if (dateMatch) dateStr = dateMatch[1];
-                        const timeMatch = dtText.match(/(\d{2}:\d{2})\s*~\s*(\d{2}:\d{2})/);
-                        if (timeMatch) {
-                            if (!startTime) startTime = timeMatch[1];
-                            if (!endTime) endTime = timeMatch[2];
-                        }
-                    }
-
-                    const scheduleObj = {
-                        id: Date.now(),
-                        type: 'match',
-                        title: locationText || "경기 일정",
-                        detail: locationText || "",
-                        matchId: matchIdFromUrl,
-                        date: dateStr,
-                        time: (startTime && endTime)
-                            ? `${startTime} ~ ${endTime}`
-                            : (match?.time || "")
-                    };
-
-                    schedules.push(scheduleObj);
-                    localStorage.setItem("personalSchedules", JSON.stringify(schedules));
-                    localStorage.setItem("calendarUpdated", "true");
-                }
-            }
-        }
-    }
-
-    // ✅ 참여 취소: 나 제거 + 참여 여부 해제
-    function handleCancel() {
-        if (isMatchClosed()) {
-            alert("이미 마감된 경기입니다. 참여 취소가 불가능합니다.");
-            applyClosedUIIfNeeded();
-            return;
-        }
-
-        if (!isParticipating) {
-            alert("이미 이 경기에 참여하고 있지 않습니다.");
-            return;
-        }
-
-        isParticipating = false;
-        setParticipationState(false); // ✅ 참여 여부 해제
-
-        currentParticipants = currentParticipants.filter(p => p.id !== CURRENT_USER_ID);
-        renderParticipantList();
-    }
-
-    // ✅ 경기 삭제: 매치 + 일정 + 참여정보 + 채팅방 모두 제거
-    function handleDeleteMatch() {
-        if (!isHost) {
-            alert("주최자만 경기를 제거할 수 있습니다.");
-            return;
-        }
-
-        if (!confirm("⚠️ 이 경기를 완전히 삭제하시겠습니까?\n(매치 목록 / 캘린더 / 채팅방에서도 사라집니다.)")) {
-            return;
-        }
-
-        const matchId = getMatchId();
-
-        if (matchId) {
-            // 1) match_schedules 에서 경기 삭제
-            let matches = JSON.parse(localStorage.getItem("match_schedules")) || [];
-            matches = matches.filter(m => String(m.id) !== String(matchId));
-            localStorage.setItem("match_schedules", JSON.stringify(matches));
-
-            // 2) personalSchedules 에서 이 매치 일정 삭제
-            let schedules = JSON.parse(localStorage.getItem("personalSchedules")) || [];
-            schedules = schedules.filter(
-                s => !s.matchId || String(s.matchId) !== String(matchId)
-            );
-            localStorage.setItem("personalSchedules", JSON.stringify(schedules));
-
-            // 3) 참여 여부 정보 삭제
-            const map = JSON.parse(localStorage.getItem('match_participation') || '{}');
-            delete map[matchId];
-            localStorage.setItem('match_participation', JSON.stringify(map));
-
-            // 4) 이 매치에서 만들어진 채팅방도 삭제
-            try {
-                // (1) 혹시 남아있을 수 있는 생성 요청(clean)
-                localStorage.removeItem('match_chat_request');
-
-                // (2) chat_rooms_v1 에서 fromMatchId가 이 경기인 방 제거
-                const roomStr = localStorage.getItem('chat_rooms_v1');
-                if (roomStr) {
-                    const roomsObj = JSON.parse(roomStr);
-
-                    ['group', 'one-on-one'].forEach(type => {
-                        if (Array.isArray(roomsObj[type])) {
-                            roomsObj[type] = roomsObj[type].filter(
-                                r => String(r.fromMatchId) !== String(matchId)
-                            );
-                        }
-                    });
-
-                    localStorage.setItem('chat_rooms_v1', JSON.stringify(roomsObj));
-                }
-            } catch (e) {
-                console.error("채팅방 삭제 중 에러:", e);
-            }
-
-            // 캘린더 새로고침 플래그
-            localStorage.setItem("calendarUpdated", "true");
-        }
-
-        alert("✅ 경기가 삭제되었고, 관련 채팅방도 정리되었습니다.");
-
-        if (window.history.length > 1) {
-            window.history.back();
+            joinBtn.style.display = 'none';
+            cancelBtn.style.display = 'block';
         } else {
-            window.location.href = "/schedule";
+            joinBtn.style.display = 'block';
+            cancelBtn.style.display = 'none';
+        }
+    }
+
+    // ⭐⭐ 매치 참가 로직 (API 호출 시뮬레이션) ⭐⭐
+    function handleJoin() {
+        if (confirm("정말로 이 경기에 참여하시겠습니까?")) {
+            // ⭐ 백엔드 API 호출: POST /api/match/join/{matchId}
+            alert("참여 요청이 완료되었습니다. (시뮬레이션)");
+            // 성공 시 UI 업데이트 (mannerScore 필드 없음)
+            isParticipating = true;
+            const newUser = { id: CURRENT_USER_ID, username: 'my_user_id', nickname: '나의닉네임', position: 'ALA', role: 'Player' };
+            MOCK_PARTICIPANTS.push(newUser);
+            renderParticipantList(MOCK_PARTICIPANTS);
+        }
+    }
+
+    // ⭐⭐ 매치 참가 취소 로직 (API 호출 시뮬레이션) ⭐⭐
+    function handleCancel() {
+        if (confirm("정말로 참여를 취소하시겠습니까?")) {
+            // ⭐ 백엔드 API 호출: DELETE /api/match/cancel/{matchId}
+            alert("참여 취소 요청이 완료되었습니다. (시뮬레이션)");
+            // 성공 시 UI 업데이트
+            isParticipating = false;
+            // 현재 사용자를 목록에서 제거
+            const updatedParticipants = MOCK_PARTICIPANTS.filter(p => p.id !== CURRENT_USER_ID);
+            renderParticipantList(updatedParticipants);
         }
     }
 
 
-    function handleCloseMatch() {
-        if (!isHost) return;
-
-        if (isMatchClosed()) {
-            alert('이미 마감된 경기입니다.');
-            applyClosedUIIfNeeded();
-            return;
-        }
-
-        const selectedCount = selectedPlayerIds.size;
-        const totalSelectedIncludingHost = selectedCount + 1;
-
-        if (totalSelectedIncludingHost < MAX_PLAYERS) {
-            alert(`아직 선발 인원이 부족합니다. (현재 ${totalSelectedIncludingHost}/${MAX_PLAYERS})`);
-            return;
-        }
-
-        const finalPlayers = currentParticipants
-            .filter(p => p.role === 'Host' || selectedPlayerIds.has(p.id));
-
-        const selectedNamesForConfirm = finalPlayers
-            .map(p => p.nickname + (p.role === 'Host' ? ' (주최자)' : ''))
-            .join(', ');
-
-        if (confirm(`다음 인원으로 경기를 마감하시겠습니까?\n\n${selectedNamesForConfirm}`)) {
-
-            const matchIdValue = getMatchId();
-
-            // 1) match_schedules 상태를 closed로
-            if (matchIdValue) {
-                let matches = JSON.parse(localStorage.getItem("match_schedules")) || [];
-                matches.forEach(m => {
-                    if (String(m.id) === String(matchIdValue)) {
-                        m.status = "closed";
-                    }
-                });
-                localStorage.setItem("match_schedules", JSON.stringify(matches));
-            }
-
-            // 2) 마감 시, 현재 사용자(호스트) 마이페이지 캘린더에 일정 추가
-            if (matchIdValue) {
-                try {
-                    let schedules = JSON.parse(localStorage.getItem("personalSchedules")) || [];
-                    const already = schedules.some(
-                        s => s.matchId && String(s.matchId) === String(matchIdValue)
-                    );
-
-                    if (!already) {
-                        const matches = JSON.parse(localStorage.getItem("match_schedules")) || [];
-                        const match = matches.find(m => String(m.id) === String(matchIdValue));
-
-                        let dateStr    = match?.date || null;
-                        let startTime  = match?.startTime || (match?.time ? match.time.split("~")[0].trim() : "");
-                        let endTime    = match?.endTime   || (match?.time && match.time.includes("~") ? match.time.split("~")[1].trim() : "");
-                        const locationFromMatch = match?.location;
-
-                        const locationTextEl = document.getElementById('detail-location');
-                        const datetimeTextEl = document.getElementById('detail-datetime');
-
-                        const locationText = locationFromMatch || (locationTextEl ? locationTextEl.textContent : "경기");
-                        const datetimeText = datetimeTextEl ? datetimeTextEl.textContent : "";
-
-                        if (!dateStr) {
-                            const dateMatch = datetimeText.match(/(\d{4}-\d{2}-\d{2})/);
-                            if (dateMatch) dateStr = dateMatch[1];
-                            const timeMatch = datetimeText.match(/(\d{2}:\d{2})\s*~\s*(\d{2}:\d{2})/);
-                            if (timeMatch) {
-                                if (!startTime) startTime = timeMatch[1];
-                                if (!endTime)   endTime   = timeMatch[2];
-                            }
-                        }
-
-                        const scheduleObj = {
-                            id: Date.now(),
-                            type: 'match',
-                            title: locationText || "경기 일정",
-                            detail: locationText || "",
-                            matchId: matchIdValue,
-                            date: dateStr,
-                            time: (startTime && endTime)
-                                ? `${startTime} ~ ${endTime}`
-                                : (match?.time || "")
-                        };
-
-                        schedules.push(scheduleObj);
-                        localStorage.setItem("personalSchedules", JSON.stringify(schedules));
-                        localStorage.setItem("calendarUpdated", "true");
-                    }
-                } catch (e) {
-                    console.error("마감 시 캘린더 추가 중 오류:", e);
-                }
-            }
-
-            // 3) 채팅방 요청 & 이동
-            const locationText2 = document.getElementById('detail-location')?.textContent || '경기';
-            const datetimeText2 = document.getElementById('detail-datetime')?.textContent || '';
-
-            const chatRoomRequest = {
-                fromMatchId: matchIdValue || null,
-                type: 'group',
-                title: `경기 채팅 - ${locationText2} ${datetimeText2}`,
-                participants: finalPlayers.map(p => p.nickname),
-                maxParticipants: MAX_PLAYERS
-            };
-
-            localStorage.setItem('match_chat_request', JSON.stringify(chatRoomRequest));
-
-            alert('✅ 경기 인원이 확정되었고 마감 처리되었습니다.\n이제 경기 채팅방으로 이동합니다.');
-
-            window.location.href = "/chat";
-        }
-    }
-
-
+    // --- (★페이지별★) 로직 실행 ---
     document.addEventListener('DOMContentLoaded', async () => {
         const accessToken = localStorage.getItem('accessToken');
+        const matchId = document.querySelector('#match-id-hidden').value; // 숨겨진 필드에서 ID 가져오기
 
+        // 공통 알림 및 인증 로직 실행
         if (accessToken) {
             document.getElementById('profile-menu-toggle').style.display = 'block';
-        }
-        if (accessToken) {
+
+            // 로그인/로그아웃 메뉴 상태 설정
             if (navLoginLink) navLoginLink.parentElement.style.display = 'none';
             if (navLogoutLink) navLogoutLink.parentElement.style.display = 'list-item';
+
+            // ... (알림 체크 및 배지 업데이트) ...
         } else {
+            // 비회원 상태일 경우 메뉴 설정
             if (navLoginLink) navLoginLink.parentElement.style.display = 'list-item';
             if (navLogoutLink) navLogoutLink.parentElement.style.display = 'none';
         }
 
+        // ⭐⭐ 보강: 메뉴바의 채팅 링크 클릭 방지 (회원만 허용) ⭐⭐
         if (navChatLinkElement) {
             const chatLinkAnchor = navChatLinkElement.querySelector('a');
             if (chatLinkAnchor && !accessToken) {
@@ -1028,47 +408,9 @@
             }
         }
 
-        const cancelButton = document.getElementById("cancel-match-btn");
-        if (cancelButton) {
-            cancelButton.addEventListener("click", () => {
-                if (confirm("⚠️ 정말로 이 경기 참여를 취소하시겠습니까?")) {
-                    const matchIdFromUrl = getMatchId();
-
-                    handleCancel(); // 화면에서 나 제거 + 참여 상태 해제
-
-                    // ✅ personalSchedules 에서 이 경기 일정 삭제
-                    let schedules = JSON.parse(localStorage.getItem("personalSchedules")) || [];
-                    schedules = schedules.filter(
-                        (s) => !s.matchId || String(s.matchId) !== String(matchIdFromUrl)
-                    );
-                    localStorage.setItem("personalSchedules", JSON.stringify(schedules));
-
-                    localStorage.setItem("calendarUpdated", "true");
-
-                    alert("✅ 참여가 취소되었습니다.");
-                }
-            });
-        }
-
-        const closeMatchBtn = document.getElementById('close-match-btn');
-        if (closeMatchBtn) {
-            closeMatchBtn.addEventListener('click', handleCloseMatch);
-        }
-
-        const deleteMatchBtn = document.getElementById('delete-match-btn');
-        if (deleteMatchBtn) {
-            deleteMatchBtn.addEventListener('click', handleDeleteMatch);
-        }
-
-        loadMatchDetailFromLocal();
-
-        // ✅ 로컬스토리지/목업 기반으로 처음 참가자 상태 구성 (여기서 Host 닉네임 매치별로 맞춰짐)
-        buildInitialParticipants();
-        renderParticipantList();
+        // 더미 데이터 초기 렌더링
+        renderParticipantList(MOCK_PARTICIPANTS);
     });
 </script>
-
-
-
 </body>
 </html>
