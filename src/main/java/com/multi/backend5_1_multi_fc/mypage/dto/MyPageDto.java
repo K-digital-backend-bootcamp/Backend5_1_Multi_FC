@@ -34,7 +34,7 @@ public class MyPageDto {
         private String level;
         private String position;
         private String gender;
-        private String profileImage; // URL 또는 파일명
+        private String profileImage; // URL
     }
 
     //비밀번호 변경 요청

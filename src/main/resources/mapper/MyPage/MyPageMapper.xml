@@ -69,7 +69,6 @@
             address = #{request.address},
             level = #{request.level},
             position = #{request.position},
-            gender = #{request.gender},
             profile_image = #{request.profileImage},
             updated_at = NOW()
         WHERE user_id = #{userId}
