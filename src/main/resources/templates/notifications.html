@@ -8,7 +8,6 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
 </head>
 
 <body>
@@ -45,10 +44,10 @@
     </nav>
 </header>
 
-<main class="notification-page-main">
-    <div class="notification-wrapper">
-        <div class="notification-container">
-            <h1 class="title-notification">알림 목록</h1>
+<main class="notifications-page-main">
+    <div class="notification-main-wrapper">
+        <div class="notifications-container">
+            <h1 class="title-notifications">알림 목록</h1>
             <div class="notification-list" id="notification-list-container"></div>
         </div>
     </div>
@@ -99,7 +98,7 @@
             logoutButton.addEventListener('click', (e) => {
                 e.preventDefault();
                 localStorage.removeItem('accessToken');
-                window.location.href = '/notification';
+                window.location.href = '/login';
             });
         }
 
