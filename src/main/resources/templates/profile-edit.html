@@ -571,6 +571,7 @@
     //         profileErrorMsg.textContent = '❌ 닉네임 중복 확인을 완료해주세요.';
     //         profileErrorMsg.style.display = 'block';
     //         return;
+    //         return;
     //     }
     //
     //     const formData = new FormData(profileForm);
@@ -643,6 +644,12 @@
             if (response.ok) {
                 profileSuccessMsg.textContent = '✅ ' + (data.message || '프로필이 성공적으로 수정되었습니다.');
                 profileSuccessMsg.style.display = 'block';
+
+                // 🔽 1~1.5초 뒤 마이페이지로 이동
+                setTimeout(() => {
+                    window.location.href = "/mypage";
+                }, 100);
+
                 originalNickname = nicknameInput.value;
                 checkNicknameBtn.disabled = true;
             } else {
@@ -676,8 +683,8 @@
             return;
         }
         try {
-            const response = await fetch('/profile/change-password', {
-                method: 'POST',
+            const response = await fetch('/api/mypage/password', {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + localStorage.getItem('accessToken')
@@ -692,7 +699,12 @@
                 passwordSuccessMsg.textContent = '✅ ' + data.message;
                 passwordSuccessMsg.style.display = 'block';
                 passwordForm.reset();
-            } else {
+
+                // 🔽 1초 후 마이페이지 이동
+                setTimeout(() => {
+                    window.location.href = "/mypage";
+                }, 100);
+            }else {
                 passwordErrorMsg.textContent = '❌ ' + data.message;
                 passwordErrorMsg.style.display = 'block';
             }
