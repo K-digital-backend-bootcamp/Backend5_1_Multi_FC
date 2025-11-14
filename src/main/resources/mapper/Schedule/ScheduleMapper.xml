@@ -46,6 +46,16 @@
           AND schedule_type = '개인 일정'
     </delete>
 
+    <!-- 특정 기간 전체 일정 (캘린더 월 단위) -->
+    <select id="findAllBetween" parameterType="map" resultMap="DayItemMap">
+        SELECT schedule_id, title, schedule_type, schedule_date, schedule_time
+        FROM Schedule
+        WHERE user_id = #{userId}
+          AND schedule_date BETWEEN #{startDate} AND #{endDate}
+        ORDER BY schedule_date ASC, schedule_time ASC, schedule_id ASC
+    </select>
+
+
     <!-- 달력 한칸에 날짜별 가장 빠른 2개 -->
     <select id="findTop2ByDate" parameterType="map" resultMap="DayItemMap">
         SELECT schedule_id, title, schedule_type, schedule_date, schedule_time
@@ -71,7 +81,7 @@
         FROM Schedule
         WHERE user_id = #{userId}
           AND (
-            (schedule_date = #{today} AND schedule_time IS NULL OR schedule_time >= #{nowTime})
+            (schedule_date = #{today} AND (schedule_time IS NULL OR schedule_time >= #{nowTime}))
                 OR
             (schedule_date BETWEEN #{tomorrow} AND #{sixDaysLater})
             )
