@@ -31,20 +31,6 @@ public class AuthController {
     public String registerPage() { return "register"; }
 
 
-    // 2. 인증 및 계정 관리 API (POST)
-    @PostMapping("/login")
-    public ResponseEntity<?> handleLogin(@RequestBody Map<String, String> loginRequest) {
-        String username = loginRequest.get("username");
-        String password = loginRequest.get("password");
-        // 더미 인증 로직
-        boolean isAuthenticated = username.equals("admin") && password.equals("1234");
-        if (isAuthenticated) {
-            String accessToken = "dummy-access-token-" + System.currentTimeMillis();
-            return ResponseEntity.ok().body(Map.of("accessToken", accessToken));
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "아이디 또는 비밀번호가 올바르지 않습니다."));
-        }
-    }
 
     @PostMapping("/register")
     public ResponseEntity<?> handleRegistration(

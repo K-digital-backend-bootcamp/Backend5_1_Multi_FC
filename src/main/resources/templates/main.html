@@ -312,6 +312,7 @@
         logoutButton.addEventListener('click', (e) => {
             e.preventDefault();
             localStorage.removeItem('accessToken');
+            localStorage.removeItem('username'); //
             localStorage.removeItem('hasReadReviews');
             localStorage.removeItem('hasReadSchedules');
             window.location.href = '/login';
@@ -394,6 +395,7 @@
     // --- (★페이지별★) 로직 실행 ---
     document.addEventListener('DOMContentLoaded', async () => {
         const accessToken = localStorage.getItem('accessToken');
+        const loggedInUsername = localStorage.getItem('username'); //
         const mainLoginLink = document.getElementById('main-login-link');
         const heroSection = document.querySelector('.hero-section');
         const memberContentArea = document.getElementById('member-content-area');
@@ -482,6 +484,11 @@
             if (profileMenuToggle) profileMenuToggle.style.display = 'block';
             if (navLoginLink) navLoginLink.parentElement.style.display = 'none';
             if (navLogoutLink) navLogoutLink.parentElement.style.display = 'list-item';
+
+            const userMenuUsername = document.getElementById('user-menu-username');
+            if (userMenuUsername) {
+                userMenuUsername.textContent = loggedInUsername; // 헤더 닉네임 변경
+            }
 
             // Hero 섹션 하단의 로그인 유도 텍스트 숨김
             if (mainLoginLink) mainLoginLink.style.display = 'none';
