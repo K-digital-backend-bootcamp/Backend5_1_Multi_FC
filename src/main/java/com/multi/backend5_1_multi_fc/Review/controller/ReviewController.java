@@ -1,4 +1,4 @@
-package com.multi.backend5_1_multi_fc.review.controller;
+package com.multi.backend5_1_multi_fc.Review.controller;
 
 public class ReviewController {
 }

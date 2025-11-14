@@ -1,7 +1,7 @@
-package com.multi.backend5_1_multi_fc.user.service;
+package com.multi.backend5_1_multi_fc.User.service;
 
-import com.multi.backend5_1_multi_fc.user.dao.UserDao;
-import com.multi.backend5_1_multi_fc.user.dto.UserDto;
+import com.multi.backend5_1_multi_fc.User.dao.UserDao;
+import com.multi.backend5_1_multi_fc.User.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -75,9 +75,4 @@ public class UserService {
     public boolean isNicknameTaken(String nickname) {
         return userDao.countByNickname(nickname) > 0;
     }
-
-    public UserDto getUserByUsername(String username) {
-        return userDao.findUserByUsername(username);
-    }
-
 }

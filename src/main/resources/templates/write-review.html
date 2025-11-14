@@ -9,7 +9,141 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
+    <style>
+        /* ⭐ 폼 중앙 정렬 및 배경 제거/단순화 ⭐ */
+        .login-page-main {
+            padding: 100px 20px 40px 20px; /* 상단 패딩 유지, 좌우 패딩 줄임 */
+            min-height: 100vh;
+            display: flex;
+            justify-content: center; /* 폼을 중앙으로 */
+            align-items: flex-start; /* 상단 시작점 정렬 */
+            background-image: none; /* 배경 이미지 제거 */
+            background-color: #f7f7f7;
+            position: relative;
+            z-index: 1;
+        }
 
+        .login-page-main::before {
+            content: none; /* 오버레이 제거 */
+        }
+
+        .main-wrapper {
+            display: block; /* Flex 속성 제거 */
+            width: 100%;
+            max-width: 650px; /* 폼 컨테이너 최대 너비 설정 */
+            margin: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            background: white; /* 메인 컨테이너 배경 흰색 */
+        }
+
+        .review-form-container { /* login-container 대신 사용 */
+            background: white;
+            padding: 40px;
+            width: 100%;
+        }
+
+        .title-review {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+            text-align: left;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 16px;
+            font-weight: 700;
+            color: #34495e;
+            margin-bottom: 8px;
+        }
+
+        /* 경기 정보 필드 스타일 (이미지처럼 회색 배경) */
+        #match-info {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f0f0f0 !important; /* 이미지처럼 회색 배경 */
+            cursor: default;
+        }
+
+        /* 한줄평 필드 */
+        .input-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            min-height: 120px;
+            resize: vertical;
+            box-sizing: border-box;
+            background-color: #f9f9f9;
+        }
+
+        /* ⭐⭐ 별점 시스템 스타일 (Font Awesome 대체) ⭐⭐ */
+        .star-rating {
+            display: flex;
+            align-items: center;
+            direction: rtl; /* 별점 순서 반대로 */
+            font-size: 50px; /* ⭐ 50px로 최종 확대 ⭐ */
+        }
+        .star-rating input[type="radio"] {
+            display: none;
+        }
+        .star-rating label {
+            color: #ddd; /* 기본 별 색상 */
+            cursor: pointer;
+            transition: color 0.2s;
+            padding: 0 5px; /* 별 사이 간격 */
+        }
+        .star-rating label:before {
+            content: '★'; /* 별표 유니코드 문자 */
+        }
+        .star-rating label:hover,
+        .star-rating label:hover ~ label,
+        .star-rating input[type="radio"]:checked ~ label {
+            color: #f39c12; /* 선택/호버 시 별 색상 (주황) */
+        }
+
+        /* ⭐⭐ 후기 등록 버튼 스타일 (이미지처럼 회색/검정 계열) ⭐⭐ */
+        .submit-button { /* 기존 login-button 오버라이드 */
+            padding: 12px 25px;
+            background-color: #555; /* 회색 버튼 */
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            float: right; /* 오른쪽 정렬 */
+            margin-top: 20px;
+            transition: background-color 0.2s;
+        }
+        .submit-button:hover {
+            background-color: #333;
+        }
+        .form-actions::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .background-image-section {
+            display: none; /* 제거 */
+        }
+
+    </style>
 </head>
 <body>
 
@@ -43,8 +177,8 @@
         </ul>
     </nav>
 </header>
-<main class="review-page-main">
-    <div class="review-main-wrapper">
+<main class="login-page-main">
+    <div class="main-wrapper">
         <div class="review-form-container">
             <h1 class="title-review">경기 후기 작성</h1>
 
@@ -53,7 +187,7 @@
 
             <form id="review-form">
 
-                <div class="review-input-group">
+                <div class="input-group">
                     <label>경기 정보</label>
                     <input type="text" id="match-info" value="2025-08-00 (목) 19:00 구장명" disabled>
 
@@ -61,7 +195,7 @@
                     <input type="hidden" id="stadium-id" name="stadiumId" value="1">
                 </div>
 
-                <div class="review-input-group">
+                <div class="input-group">
                     <label>별점(Manner Score)</label>
                     <div class="star-rating" id="star-rating-input">
                         <input type="radio" id="star5" name="rating" value="5"><label for="star5" title="5점"></label>
@@ -72,7 +206,7 @@
                     </div>
                 </div>
 
-                <div class="review-input-group">
+                <div class="input-group">
                     <label for="review-content">한줄평</label>
                     <textarea id="review-content" name="content" placeholder="경기 소감이나 구장 피드백 등을 남겨주세요." required></textarea>
                 </div>

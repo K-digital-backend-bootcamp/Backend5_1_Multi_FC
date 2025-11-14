@@ -1,4 +1,4 @@
-package com.multi.backend5_1_multi_fc.user.service;
+package com.multi.backend5_1_multi_fc.User.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

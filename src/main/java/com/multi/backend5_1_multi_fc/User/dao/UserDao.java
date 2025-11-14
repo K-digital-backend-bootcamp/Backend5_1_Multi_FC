@@ -1,6 +1,6 @@
-package com.multi.backend5_1_multi_fc.user.dao;
+package com.multi.backend5_1_multi_fc.User.dao;
 
-import com.multi.backend5_1_multi_fc.user.dto.UserDto;
+import com.multi.backend5_1_multi_fc.User.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException; // [추가]
 import org.springframework.jdbc.core.BeanPropertyRowMapper; // [추가]

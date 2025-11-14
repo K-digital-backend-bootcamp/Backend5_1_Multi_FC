@@ -981,83 +981,24 @@
     }
 
     // 내 정보 (더미)
-    // async function fetchMyInfo(token) {
-    //     const myInfo = {
-    //         email: "real.user@example.com",
-    //         username: "RealUser123",
-    //         nickname: "리얼유저",
-    //         position: "픽소 (FIXO)",
-    //         address: "서울시 서초구",
-    //         skillLevel: "중급"
-    //     };
-    //     if(document.getElementById('view-email')) document.getElementById('view-email').textContent = myInfo.email;
-    //     if(document.getElementById('view-username')) document.getElementById('view-username').textContent = myInfo.username;
-    //     if(document.getElementById('view-nickname')) document.getElementById('view-nickname').textContent = myInfo.nickname;
-    //     if(document.getElementById('view-address')) document.getElementById('view-address').textContent = myInfo.address;
-    //     if(document.getElementById('view-position-score')) document.getElementById('view-position-score').textContent = myInfo.position;
-    //     if(document.getElementById('view-skill-level')) document.getElementById('view-skill-level').textContent = myInfo.skillLevel;
-    //     if(document.getElementById('user-menu-username')) document.getElementById('user-menu-username').textContent = myInfo.nickname;
-    // }
-
-    // ========== 로그인한 사용자 정보 불러오기 ==========
-    async function loadUserInfo() {
-        const token = localStorage.getItem('accessToken');
-
-        if (!token) {
-            alert('로그인이 필요합니다.');
-            window.location.href = '/login';
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/users/me', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (response.ok) {
-                const user = await response.json();
-                console.log('사용자 정보:', user);
-
-                // 회원정보 탭에 데이터 표시
-                document.getElementById('view-email').textContent = user.email || '정보 없음';
-                document.getElementById('view-username').textContent = user.username || '정보 없음';
-                document.getElementById('view-nickname').textContent = user.nickname || '정보 없음';
-                document.getElementById('view-address').textContent = user.address || '정보 없음';
-                document.getElementById('view-skill-level').textContent = user.level || '정보 없음';
-                document.getElementById('view-position-score').textContent = user.position || '정보 없음';
-
-                // 프로필 이미지 표시
-                if (user.profileImage) {
-                    document.getElementById('profile-preview-view').src = user.profileImage;
-                }
-
-                // 상단 메뉴의 사용자 이름 표시
-                document.getElementById('user-menu-username').textContent = user.nickname || user.username;
-
-            } else if (response.status === 401 || response.status === 404) {
-                alert('로그인 정보가 유효하지 않습니다. 다시 로그인해주세요.');
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('username');
-                window.location.href = '/login';
-            } else {
-                console.error('사용자 정보 조회 실패:', response.status);
-                alert('사용자 정보를 불러오는데 실패했습니다.');
-            }
-        } catch (error) {
-            console.error('사용자 정보 조회 중 오류:', error);
-            alert('사용자 정보를 불러오는데 실패했습니다.');
-        }
+    async function fetchMyInfo(token) {
+        const myInfo = {
+            email: "real.user@example.com",
+            username: "RealUser123",
+            nickname: "리얼유저",
+            position: "픽소 (FIXO)",
+            address: "서울시 서초구",
+            skillLevel: "중급"
+        };
+        if(document.getElementById('view-email')) document.getElementById('view-email').textContent = myInfo.email;
+        if(document.getElementById('view-username')) document.getElementById('view-username').textContent = myInfo.username;
+        if(document.getElementById('view-nickname')) document.getElementById('view-nickname').textContent = myInfo.nickname;
+        if(document.getElementById('view-address')) document.getElementById('view-address').textContent = myInfo.address;
+        if(document.getElementById('view-position-score')) document.getElementById('view-position-score').textContent = myInfo.position;
+        if(document.getElementById('view-skill-level')) document.getElementById('view-skill-level').textContent = myInfo.skillLevel;
+        if(document.getElementById('user-menu-username')) document.getElementById('user-menu-username').textContent = myInfo.nickname;
     }
 
-    // 페이지 로드 시 사용자 정보 불러오기
-    document.addEventListener('DOMContentLoaded', function() {
-        loadUserInfo();
-
-        // ... 기존 코드 유지 ...
-    });
     // 캘린더
     const monthYearElement = document.getElementById('current-month-year');
     const daysGrid = document.getElementById('calendar-days-grid');

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MULTI FC - 팀 정보 수정</title>
+
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        .team-main {
+            padding: 100px 40px 40px 40px;
+            background-color: #f7f7f7;
+            min-height: 100vh;
+        }
+        .team-container {
+            max-width: 650px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .team-title {
+            font-size: 32px;
+            font-weight: 800;
+            color: #4a90e2; /* 수정 페이지 강조색 */
+            margin-bottom: 25px;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 15px;
+        }
+        .input-group input[type="text"],
+        .input-group input[type="number"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        .input-group input[type="text"]:focus,
+        .input-group input[type="number"]:focus {
+            border-color: #6c5ce7;
+            outline: none;
+        }
+        .team-logo-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #eee;
+            margin-bottom: 10px;
+        }
+
+        .action-buttons {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+        }
+        .action-buttons button, .action-buttons a {
+            flex-grow: 1;
+            padding: 15px;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: transform 0.2s;
+        }
+        .btn-save {
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+        }
+        .btn-cancel {
+            background-color: #f0f0f0;
+            color: #555;
+            border: 1px solid #ddd;
+        }
+        .btn-save:hover, .btn-cancel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+    </style>
+
+</head>
+<body>
+
+<header class="quick-menu">
+</header>
+
+<main class="team-main">
+    <div class="team-container">
+        <h1 class="team-title"><i class="fas fa-edit"></i> 팀 정보 수정</h1>
+
+        <p id="message" style="display:none; text-align: center; margin-bottom: 20px;"></p>
+
+        <form id="team-edit-form">
+            <input type="hidden" id="team-id" name="teamId" value="101">
+
+            <div class="input-group" style="text-align: center;">
+                <label>팀 로고</label>
+                <img id="logo-preview" src="/images/default-team-logo.png" alt="팀 로고" class="team-logo-preview">
+                <input type="file" id="logo-image" name="logoImage" accept="image/*" onchange="previewLogo(event)">
+            </div>
+
+            <div class="input-group">
+                <label for="team-name">팀 이름</label>
+                <input type="text" id="team-name" name="teamName" placeholder="팀 이름" value="FC 매칭 히어로즈" required>
+            </div>
+
+            <div class="input-group">
+                <label for="motto">팀 슬로건</label>
+                <input type="text" id="motto" name="motto" placeholder="팀을 소개하는 멋진 슬로건" value="우리는 매칭의 영웅이다!">
+            </div>
+
+            <div class="input-group">
+                <label for="max-size">최대 팀 인원</label>
+                <input type="number" id="max-size" name="maxSize" value="10" min="5" required>
+            </div>
+
+            <div class="action-buttons">
+                <button type="submit" class="btn-save">정보 저장</button>
+                <a href="/team/manage?id=101" class="btn-cancel">취소</a>
+            </div>
+        </form>
+    </div>
+</main>
+
+<script>
+    const teamEditForm = document.getElementById('team-edit-form');
+    const teamIdInput = document.getElementById('team-id');
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // ⭐ 실제로는 팀 ID를 사용하여 팀 정보 API를 호출하고 폼을 채워야 합니다.
+        // 현재는 더미 데이터를 사용
+        const teamId = new URLSearchParams(window.location.search).get('id') || teamIdInput.value;
+        teamIdInput.value = teamId;
+
+        // (인증 및 로드 로직은 생략)
+    });
+
+    function previewLogo(event) {
+        const reader = new FileReader();
+        reader.onload = function(){
+            const output = document.getElementById('logo-preview');
+            output.src = reader.result;
+        };
+        if (event.target.files[0]) {
+            reader.readAsDataURL(event.target.files[0]);
+        }
+    }
+
+    // ⭐⭐ 폼 제출 (수정 API 시뮬레이션) ⭐⭐
+    teamEditForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const msg = document.getElementById('message');
+        msg.style.display = 'none';
+
+        // 실제로는 FormData를 PUT/PATCH /api/teams/update API로 전송해야 합니다.
+        console.log(`팀 ID ${teamIdInput.value} 정보 수정 요청 시뮬레이션...`);
+
+        try {
+            await new Promise(r => setTimeout(r, 1000));
+
+            msg.className = 'info-message';
+            msg.textContent = '✅ 팀 정보가 성공적으로 수정되었습니다.';
+            msg.style.display = 'block';
+
+            // 1.5초 후 팀 관리 페이지로 이동
+            setTimeout(() => {
+                window.location.href = `/team/manage?id=${teamIdInput.value}`;
+            }, 1500);
+
+        } catch (error) {
+            msg.className = 'error-message';
+            msg.textContent = '❌ 팀 정보 수정 중 오류가 발생했습니다.';
+            msg.style.display = 'block';
+        }
+    });
+</script>

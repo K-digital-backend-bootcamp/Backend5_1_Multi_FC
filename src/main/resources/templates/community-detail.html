@@ -11,13 +11,212 @@ community-detail.html
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
+    <style>
+        .community-main {
+            padding: 100px 40px 40px 40px;
+            background-color: #f7f7f7;
+            min-height: 100vh;
+        }
+        .board-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .detail-header {
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .detail-header h1 {
+            font-size: 26px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .detail-meta {
+            font-size: 14px;
+            color: #777;
+        }
+        .detail-meta span:not(:last-child)::after {
+            content: " | ";
+            color: #ccc;
+        }
+
+        .detail-content {
+            min-height: 200px;
+            padding: 20px 0;
+            line-height: 1.6;
+            font-size: 16px;
+            color: #333;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* 액션 버튼 그룹 */
+        .post-actions {
+            display: flex;
+            justify-content: space-between; /* ⭐⭐ 목록 버튼을 왼쪽 끝, 수정/삭제 버튼을 오른쪽 끝에 배치 ⭐⭐ */
+            align-items: center;
+            margin-top: 15px;
+        }
+        .detail-controls button, .detail-controls a {
+            padding: 8px 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            margin-left: 5px;
+            border: 1px solid #ddd;
+        }
+        /* 수정/삭제 버튼 스타일 */
+        .btn-edit { background-color: #4a90e2; color: white; border: none; }
+        .btn-delete { background-color: #e74c3c; color: white; border: none; }
+
+        /* ⭐⭐ 댓글 섹션 상단 마진 조정 ⭐⭐ */
+        .comments-section {
+            margin-top: 35px; /* 여백 확보 */
+        }
+        .comment-item {
+            border-bottom: 1px dotted #ddd;
+            padding: 15px 0;
+            font-size: 15px;
+            position: relative; /* 답글 버튼 위치 지정용 */
+        }
+        /* 댓글 헤더 및 액션 버튼 그룹 */
+        .comment-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .comment-meta {
+            display: flex;
+            font-size: 13px;
+            color: #999;
+            gap: 15px;
+        }
+        .comment-writer {
+            font-weight: 700;
+            color: #6c5ce7;
+            margin-right: 10px;
+        }
+        .comment-date {
+            font-size: 13px;
+            color: #999;
+        }
+        .comment-content {
+            color: #333;
+            line-height: 1.5;
+            margin-left: 0;
+        }
+        /* ⭐⭐ 댓글 액션 버튼 그룹 스타일 ⭐⭐ */
+        .comment-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .comment-actions button {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 0;
+            transition: color 0.2s;
+            font-weight: 500;
+        }
+        .comment-actions button:hover {
+            color: #4a90e2;
+        }
+        .comment-actions .delete {
+            color: #e74c3c;
+        }
+        .comment-actions .reply {
+            color: #2ecc71;
+            font-weight: 600;
+        }
+        /* ⭐⭐ 대댓글 시각적 구분 ⭐⭐ */
+        .comment-item.reply {
+            margin-left: 30px; /* 들여쓰기 */
+            border-left: 3px solid #f0f0f0; /* 시각적 구분선 */
+            padding-left: 10px;
+            margin-bottom: 5px;
+        }
+        /* ⭐⭐ 대댓글 폼 스타일 ⭐⭐ */
+        .reply-form-container {
+            margin-top: 10px;
+            padding: 15px;
+            background: #fcfcfc;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            margin-left: 20px;
+        }
+        .reply-form-container textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .reply-form-container button {
+            float: right;
+            padding: 8px 15px;
+            font-size: 14px;
+            margin-left: 10px;
+            background-color: #6c5ce7;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .reply-form-container .btn-reply-cancel {
+            background-color: #aaa;
+            color: white;
+            border: none;
+        }
+        .reply-form-container::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+        /* ⭐⭐ 댓글 섹션 스타일 끝 ⭐⭐ */
+        .comment-form textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            resize: vertical;
+            margin-bottom: 10px;
+        }
+        .comment-form button {
+            float: right;
+            padding: 10px 18px;
+            background-color: #6c5ce7;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+        .comment-form::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+    </style>
 </head>
 <body>
 
 <header class="quick-menu">
     <div class="logo"><a href="/">Multi FC</a></div>
     <div class="header-icons">
-        <button id="profile-menu-toggle" class="profile-icon" style="position: relative;">
+        <button id="profile-menu-toggle" class="profile-icon" style="position: relative; display: none;">
             <i class="fas fa-user-circle"></i>
             <span id="notification-badge" class="notification-badge"></span>
         </button>
@@ -103,8 +302,7 @@ community-detail.html
     let ALL_AVAILABLE_POSTS = []; // 통합된 모든 게시글 목록
 
     const CURRENT_USER_ID = 999; // 현재 로그인된 사용자 ID 가정
-    // ⭐⭐⭐ [수정] 로그인 사용자 닉네임을 로컬 스토리지에서 가져오도록 변경 ⭐⭐⭐
-    const CURRENT_USER_WRITER_NAME = localStorage.getItem('userNickname') || '로그인 사용자';
+    const CURRENT_USER_WRITER_NAME = '로그인 사용자';
 
     /**
      * 로컬 스토리지와 MOCK 데이터를 통합하여 모든 게시글을 반환합니다.
@@ -166,32 +364,6 @@ community-detail.html
         const profileMenuToggle = document.getElementById('profile-menu-toggle');
         const profileMenu = document.getElementById('profile-menu');
 
-        // ⭐⭐ 알림 배지 관련 전역 변수 및 함수 (Mock) ⭐⭐
-        const badge = document.getElementById('notification-badge');
-        let hasReviewNotif = false;
-        let hasScheduleNotif = false;
-
-        function updateGlobalBadge() {
-            if (badge) {
-                badge.style.display = (hasReviewNotif || hasScheduleNotif) ? 'block' : 'none';
-            }
-        }
-        async function checkPendingReviews() {
-            if (localStorage.getItem('hasReadReviews') === 'true') {
-                hasReviewNotif = false;
-                return;
-            }
-            const mockReviews = { "count": 1 };
-            if (mockReviews.count > 0) {
-                hasReviewNotif = true;
-            }
-        }
-        async function checkUpcomingSchedules() {
-            hasScheduleNotif = localStorage.getItem('hasReadSchedules') !== 'true';
-        }
-        // ⭐⭐ 알림 배지 관련 전역 변수 및 함수 끝 ⭐⭐
-
-
         if (menuToggle) {
             menuToggle.addEventListener('click', (event) => {
                 event.stopPropagation();
@@ -207,21 +379,6 @@ community-detail.html
             });
         }
         // ... (나머지 공통 로직 유지) ...
-
-        // ⭐⭐ 헤더 닉네임 로드 및 알림 배지 업데이트 ⭐⭐
-        const userMenuName = document.getElementById('user-menu-username');
-        const accessToken = localStorage.getItem('accessToken');
-
-        if (accessToken) {
-            if (profileMenuToggle) profileMenuToggle.style.display = 'flex';
-            if (userMenuName) userMenuName.textContent = CURRENT_USER_WRITER_NAME;
-
-            (async () => {
-                await checkPendingReviews();
-                await checkUpcomingSchedules();
-                updateGlobalBadge();
-            })();
-        }
 
 
         // ⭐⭐ URL에서 postId를 가져와 loadPostDetail 함수에 전달 ⭐⭐
@@ -284,8 +441,11 @@ community-detail.html
 
     // ⭐⭐ 대댓글 폼 제거 함수 (유지) ⭐⭐
     function removeReplyForm(targetCommentId) {
-        const form = document.querySelector(`.reply-form-container[data-parent-id="${targetCommentId}"]`);
-        if (form) {
+        const parentComment = document.querySelector(`.comment-item[data-comment-id="${targetCommentId}"]`);
+        const form = parentComment ? parentComment.nextElementSibling : null;
+
+        // 부모 댓글의 다음 요소가 폼 컨테이너라면 제거
+        if (form && form.classList.contains('reply-form-container')) {
             form.remove();
         }
     }
@@ -307,7 +467,6 @@ community-detail.html
             const isMyComment = String(comment.writerId) === String(CURRENT_USER_ID); // ID 비교
             const isReply = comment.parentCommentId !== null;
 
-            // ⭐ [수정] 현재 로그인 사용자는 수정/삭제 권한만 가지고, 답글 버튼은 모든 댓글에 표시
             let actions = `<button onclick="handleReply(${comment.id}, '${comment.writer}', event)" class="reply">답글</button>`;
 
             if (isMyComment) {
@@ -357,7 +516,7 @@ community-detail.html
         });
     }
 
-    // ⭐⭐ 댓글 작성 로직 (수정) ⭐⭐
+    // ⭐⭐ 댓글 작성 로직 (유지) ⭐⭐
     function submitComment() {
         const commentInput = document.getElementById('comment-input');
         const content = commentInput.value.trim();
@@ -369,7 +528,7 @@ community-detail.html
 
         const newComment = {
             id: Date.now(),
-            writer: CURRENT_USER_WRITER_NAME, // ⭐ 로그인 사용자 닉네임 사용
+            writer: CURRENT_USER_WRITER_NAME,
             writerId: CURRENT_USER_ID, // ID 저장
             date: new Date().toISOString().slice(0, 10),
             content: content,
@@ -389,11 +548,9 @@ community-detail.html
     }
 
 
-    // ⭐⭐ 댓글 CRUD Mock 함수 구현 (수정) ⭐⭐
+    // ⭐⭐ 댓글 CRUD Mock 함수 구현 (유지) ⭐⭐
     function handleCommentEdit(commentId, currentContent) {
-        // ⭐⭐⭐ [수정] 프롬프트 메시지에서 ID 제거 ⭐⭐⭐
-        const newContent = prompt(`댓글 수정:`, currentContent);
-
+        const newContent = prompt(`댓글 ${commentId}번 수정:`, currentContent);
         if (newContent && newContent.trim().length > 0) {
             const commentToUpdate = window.POST_DATA.comments.find(c => c.id === commentId);
             if (commentToUpdate) {
@@ -458,7 +615,7 @@ community-detail.html
         }
     }
 
-    // ⭐⭐ 대댓글 제출 (Mock) (수정) ⭐⭐
+    // ⭐⭐ 대댓글 제출 (Mock) (유지) ⭐⭐
     function submitReply(parentCommentId, writerName) {
         const replyInput = document.getElementById(`reply-input-${parentCommentId}`);
         const content = replyInput.value.trim();
@@ -470,7 +627,7 @@ community-detail.html
 
         const newComment = {
             id: Date.now(),
-            writer: CURRENT_USER_WRITER_NAME, // ⭐ 로그인 사용자 닉네임 사용
+            writer: CURRENT_USER_WRITER_NAME,
             writerId: CURRENT_USER_ID,
             date: new Date().toISOString().slice(0, 10),
             content: content,
@@ -480,13 +637,8 @@ community-detail.html
         if (window.POST_DATA) {
             if (!window.POST_DATA.comments) window.POST_DATA.comments = [];
             window.POST_DATA.comments.push(newComment);
-
-            // 폼 제거
             removeReplyForm(parentCommentId);
-
-            // 👉 댓글만 새로 렌더링
-            renderComments(window.POST_DATA.comments);
-
+            loadPostDetail(window.POST_DATA.postId);
             alert(`[답글 등록 완료] ${writerName}님에게 답글이 등록되었습니다.`);
         }
     }
@@ -509,3 +661,5 @@ community-detail.html
         location.href = `/community/write?edit=${window.POST_DATA.postId}`;
     }
 </script>
+</body>
+</html>

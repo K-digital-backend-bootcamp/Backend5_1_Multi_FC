@@ -1,4 +1,4 @@
-package com.multi.backend5_1_multi_fc.user.config;
+package com.multi.backend5_1_multi_fc.User.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

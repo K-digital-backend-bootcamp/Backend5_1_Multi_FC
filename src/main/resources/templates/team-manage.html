@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MULTI FC - 팀 관리</title>
+
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        .team-main {
+            padding: 100px 40px 40px 40px;
+            background-color: #f7f7f7;
+            min-height: 100vh;
+        }
+        .team-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .team-title {
+            font-size: 32px;
+            font-weight: 800;
+            color: #2ecc71;
+            margin-bottom: 25px;
+            border-bottom: 3px solid #6c5ce7;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+        .team-header-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px dashed #eee;
+        }
+        .team-slogan {
+            font-size: 18px;
+            color: #777;
+            font-style: italic;
+        }
+        .team-status {
+            font-weight: 700;
+            color: #6c5ce7;
+            font-size: 16px;
+        }
+
+        .section-header {
+            font-size: 22px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .team-members-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .member-card {
+            background: #f9f9f9;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative; /* 버튼이 없는 멤버도 클릭 가능하도록 */
+            cursor: pointer; /* ⭐ 추가: 마우스 포인터 ⭐ */
+        }
+        .member-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        }
+        .member-card .icon {
+            font-size: 40px;
+            color: #6c5ce7;
+            margin-bottom: 10px;
+        }
+        .member-card .icon.leader {
+            color: #e74c3c;
+        }
+        .member-card .name {
+            font-weight: 700;
+            color: #2c3e50;
+            font-size: 17px;
+            margin-bottom: 5px;
+        }
+        .member-card .role {
+            font-size: 13px;
+            color: #e74c3c;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .member-card .details {
+            font-size: 13px;
+            color: #999;
+            line-height: 1.5;
+        }
+
+        /* ⭐⭐ 버튼 커서 및 스타일 개선 ⭐⭐ */
+        .member-card button {
+            padding: 8px 15px;
+            font-size: 13px;
+            border-radius: 20px;
+            margin-top: 15px;
+            transition: background-color 0.2s, color 0.2s;
+            cursor: pointer; /* ⭐ 마우스 포인터 ⭐ */
+        }
+        .member-card .btn-kick {
+            background-color: #ff7675;
+            color: white;
+            border: none;
+        }
+        .member-card .btn-kick:hover {
+            background-color: #e74c3c;
+        }
+
+        .action-group {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .action-group .btn-action {
+            padding: 12px 25px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            color: white;
+            cursor: pointer; /* ⭐ 마우스 포인터 ⭐ */
+            transition: transform 0.2s, box-shadow 0.2s;
+            flex-shrink: 0;
+        }
+        .action-group .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .btn-invite {
+            background-color: #4a90e2;
+        }
+        .btn-disband {
+            background-color: #e74c3c;
+        }
+        .btn-back {
+            background-color: #999;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer; /* ⭐ 마우스 포인터 ⭐ */
+            transition: background-color 0.2s;
+        }
+        .btn-back:hover {
+            background-color: #777;
+        }
+    </style>
+
+</head>
+<body>
+
+<header class="quick-menu">
+    <div class="logo"><a href="/">MULTI FC</a></div>
+
+
+</header>
+
+<main class="team-main">
+    <div class="team-container">
+        <h1 class="team-title" id="team-name-title"><i class="fas fa-users-cog"></i> [팀 이름] 관리</h1>
+
+        <div class="team-header-info">
+            <p id="team-slogan" class="team-slogan">팀 슬로건</p>
+            <p id="team-status" class="team-status">인원: 0/0명</p>
+        </div>
+
+        <h3 class="section-header"><i class="fas fa-user-friends"></i> 팀 멤버 목록</h3>
+        <div id="team-members-container" class="team-members-grid">
+            <!-- JS 로직으로 멤버 카드가 여기에 삽입됩니다 -->
+        </div>
+
+        <div class="action-group">
+            <button class="btn-action btn-invite" onclick="alert('멤버 초대 모달/페이지로 이동')">
+                <i class="fas fa-user-plus"></i> 멤버 초대하기
+            </button>
+            <button class="btn-action btn-disband" id="disband-team-btn" onclick="confirmDisband()">
+                <i class="fas fa-trash-alt"></i> 팀 해체 (팀장 전용)
+            </button>
+
+            <a href="/friends?tab=team" class="btn-back">
+                <i class="fas fa-arrow-left"></i> 목록으로
+            </a>
+        </div>
+    </div>
+</main>
+
+<script>
+    // --- 더미 데이터 ---
+    const MOCK_TEAM_DATA = {
+        id: 1,
+        name: "FC 매칭 히어로즈",
+        slogan: "우리는 매칭의 영웅이다! 승리만이 우리의 목표!",
+        leaderId: 100,
+        maxSize: 10,
+        members: [
+            { id: 100, nickname: "UserA", username: "user_a", role: "Team Leader", position: "MF" },
+            { id: 102, nickname: "캡틴손", username: "captain_son", role: "Member", position: "FW" },
+            { id: 103, nickname: "구원투수", username: "closer_kim", role: "Member", position: "DF" },
+            { id: 104, nickname: "뉴비_김", username: "newbie_kim", role: "Member", position: "ALL" },
+        ]
+    };
+    const CURRENT_USER_ID = 100; // 현재 로그인된 사용자 (팀장 시뮬레이션)
+
+    // --- DOM 로드 및 초기화 ---
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. 인증 확인 (생략)
+        const accessToken = localStorage.getItem('accessToken');
+        if (!accessToken) {
+            alert("로그인이 필요한 페이지입니다.");
+            window.location.href = '/login';
+            return;
+        }
+
+        // 2. URL에서 팀 ID 가져오기
+        const urlParams = new URLSearchParams(window.location.search);
+        const teamId = urlParams.get('id');
+
+        if (!teamId) {
+            document.getElementById('team-name-title').textContent = '오류: 팀 ID가 없습니다.';
+            return;
+        }
+
+        // 3. 팀 정보 로드 및 렌더링 (백엔드 API 호출 시뮬레이션)
+        loadTeamDetails(teamId);
+    });
+
+    function loadTeamDetails(teamId) {
+        // ⭐ 실제로는 fetch('/api/teams/details?id=' + teamId) 호출 ⭐
+
+        const data = MOCK_TEAM_DATA; // 더미 데이터 사용 (팀 ID에 따라 달라질 수 있음)
+
+        document.getElementById('team-name-title').innerHTML = `<i class="fas fa-users-cog"></i> ${data.name} 관리 (ID: ${teamId})`;
+        document.getElementById('team-slogan').textContent = data.slogan;
+        document.getElementById('team-status').textContent = `인원: ${data.members.length}/${data.maxSize}명`;
+
+        renderTeamMembers(data.members, data.leaderId);
+
+        // ⭐⭐ 팀장만 해체 버튼 활성화 ⭐⭐
+        const disbandBtn = document.getElementById('disband-team-btn');
+        if (CURRENT_USER_ID !== data.leaderId) {
+            disbandBtn.style.display = 'none'; // 팀 해체 버튼 숨김
+        } else {
+            disbandBtn.style.display = 'inline-block'; // 팀장이라면 보이게
+        }
+    }
+
+    // ⭐⭐ 팀 멤버 목록 렌더링 함수 ⭐⭐
+    function renderTeamMembers(members, leaderId) {
+        const container = document.getElementById('team-members-container');
+        container.innerHTML = '';
+
+        members.forEach(member => {
+            const isLeader = member.id === leaderId;
+            const isSelf = member.id === CURRENT_USER_ID;
+            const card = document.createElement('div');
+            card.className = 'member-card';
+
+            card.innerHTML = `
+                <i class="fas fa-user-circle icon ${isLeader ? 'leader' : ''}"></i>
+                <div class="name">${member.nickname} ${isSelf ? '(나)' : ''}</div>
+                <div class="role">${member.role}</div>
+                <div class="details">
+                    <p>포지션: ${member.position}</p>
+                    <p>ID: ${member.username}</p>
+                </div>
+            `;
+
+            // ⭐⭐ 팀장일 경우 다른 팀원 추방 버튼 표시 ⭐⭐
+            if (CURRENT_USER_ID === leaderId && !isLeader) {
+                card.innerHTML += `
+                    <button class="btn-kick" onclick="handleKickMember(${member.id}, '${member.nickname}')">
+                        <i class="fas fa-user-times"></i> 추방
+                    </button>
+                `;
+            } else if (!isLeader && isSelf) {
+                // 일반 팀원이라면 탈퇴 버튼을 고려할 수 있으나, 여기서는 추방 버튼만 처리
+                // 탈퇴 기능은 복잡하므로 여기서는 생략하고 UI만 보여줍니다.
+            }
+
+            container.appendChild(card);
+        });
+    }
+
+    function handleKickMember(memberId, nickname) {
+        if (confirm(`정말로 팀원 ${nickname}님을 팀에서 추방하시겠습니까?`)) {
+            // ⭐ 백엔드 API 호출: POST /api/teams/kick/{teamId}/{memberId}
+            alert(`팀원 ${nickname} 추방 시뮬레이션.`);
+            // 성공 시 페이지 새로고침 또는 목록 업데이트
+            location.reload();
+        }
+    }
+
+    function confirmDisband() {
+        if (confirm("경고: 팀을 해체하면 되돌릴 수 없습니다. 정말로 해체하시겠습니까?")) {
+            // ⭐ 백엔드 API 호출: DELETE /api/teams/disband/{teamId}
+            alert("팀이 성공적으로 해체되었습니다. (시뮬레이션)");
+            window.location.href = '/friends?tab=team';
+        }
+    }
+</script>

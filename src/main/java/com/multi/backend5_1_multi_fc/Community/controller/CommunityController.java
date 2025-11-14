@@ -1,4 +1,4 @@
-package com.multi.backend5_1_multi_fc.community.controller;
+package com.multi.backend5_1_multi_fc.Community.controller;
 
 public class CommunityController {
 }
