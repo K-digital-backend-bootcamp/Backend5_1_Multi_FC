@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.multi.backend5_1_multi_fc.chat.dto.ChatMessageDto">
+<mapper namespace="com.multi.backend5_1_multi_fc.chat.dao.ChatMessageDao">
     <resultMap id="ChatMessageResultMap" type="ChatMessageDto">
         <id property="messageId" column="message_id" />
         <result property="roomId" column="chat_room_id" />
@@ -12,15 +12,15 @@
     </resultMap>
 
     <select id="findMessagesByRoomId" parameterType="long" resultMap="ChatMessageResultMap">
-        select *
-        from Chat_Message
-        where chat_room_id = #{roomId}
-        order by sent_at asc
+        select cm.message_id, cm.chat_room_id, cm.sender_id, u.nickname as sender_nickname, cm.content, cm.sent_at
+        from Chat_Message cm left join User u on cm.sender_id = u.user_id
+        where cm.chat_room_id = #{roomId}
+        order by cm.sent_at asc
     </select>
 
     <insert id="insertMessage" parameterType="com.multi.backend5_1_multi_fc.chat.dto.ChatMessageDto" useGeneratedKeys="true" keyProperty="messageId">
-        insert into Chat_Message (chat_room_id, sender_id, sender_nickname, content, sent_at)
-        values (${roomId}, #{senderId}, #{senderNickname}, #{content}, now())
+        insert into Chat_Message (chat_room_id, sender_id, content, sent_at)
+        values (#{roomId}, #{senderId}, #{content}, now())
     </insert>
 
     <delete id="deleteMessage" parameterType="long">

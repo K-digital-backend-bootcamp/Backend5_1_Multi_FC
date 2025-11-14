@@ -623,7 +623,7 @@
     <div class="chat-sidebar">
         <div class="chat-header">
             채팅 목록
-            <button id="new-chat-btn" onclick="openNewChatModal(true)" style="background:none; border:none; color:#6c5ce7; font-size:16px; cursor:pointer;" title="새 채팅 시작">
+            <button id="new-chat-btn" style="background:none; border:none; color:#6c5ce7; font-size:16px; cursor:pointer;" title="새 채팅 시작">
                 <i class="fas fa-plus-circle"></i>
             </button>
         </div>
@@ -781,6 +781,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 
 <script>
+    console.log('✅ 스크립트 로드 시작');
     // --- (★공통★) 메뉴 토글 및 인증 로직 ---
     const menuToggle = document.getElementById('menu-toggle');
     const mainMenu = document.getElementById('main-menu');
@@ -861,6 +862,13 @@
     //JWT 사용자 정보 추출
     function initUserInfo() {
         const token = localStorage.getItem('accessToken');
+
+        if (!token || token.includes('dummy')) {
+            console.warn('⚠️ 테스트 모드: 인증 없이 진행');
+            myUserId = 41;
+            myUsername = 'tester4';
+            return;
+        }
         if(!token) {
             alert("로그인이 필요합니다.");
             location.href = "/login";
@@ -951,7 +959,10 @@
 
         if(!response.ok) throw new Error(`사용자 "${nickname}"를 찾을 수 없습니다.`);
 
-        const user = await response.json();
+        const users = await response.json();
+
+        const user = users[0];
+        console.log(user);
         return user.userId;
     }
 
@@ -1037,6 +1048,8 @@
             content: messageContent,
         };
 
+        console.log(chatMessage);
+
         // 1. 서버로 전송 (실시간 웹소켓)
         stompClient.send(`/app/chatroom/${currentRoomId}/send`, {}, JSON.stringify(chatMessage));
 
@@ -1104,7 +1117,7 @@
             let rooms = [];
 
             if (type === 'public') {
-                const oneToOneResponse = await fetch('/chatroom?type=1대1, {
+                const oneToOneResponse = await fetch('/chatroom?type=1대1', {
                     headers: {
                         'Authorization': 'Bearer ' + token
                     }
@@ -1161,7 +1174,7 @@
             return;
         }
 
-        rooms.forEach( room => {
+        rooms.forEach(room => {
             const isActive = room.roomId === currentRoomId;
             const item = document.createElement('div');
             item.className = 'room-item' + (isActive ? ' active' : '');
@@ -1172,6 +1185,11 @@
                 typeIcon = '<i class="fas fa-user" style="color:#6c5ce7; margin-right:5px;"></i>';
             } else if (room.roomType === '그룹') {
                 typeIcon = '<i class="fas fa-users" style="color:#00b894; margin-right:5px;"></i>';
+            }
+
+            let memberInfo = `${room.memberCount}명`;
+            if (room.maxParticipants && room.maxParticipants > 0) {
+                memberInfo = `${room.memberCount}/${room.maxParticipants}명`;
             }
 
             // ★채팅방 정보 영역
@@ -1186,17 +1204,6 @@
             // roomInfo 클릭 시 room 객체 전체 전달
             roomInfo.onclick = () => selectRoom(room);
 
-            // ★삭제 버튼
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-room-btn';
-            deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
-            deleteBtn.title = '채팅방 나가기';
-            deleteBtn.onclick = (e) => {
-                e.stopPropagation(); // 목록 선택 이벤트 방지
-                if (confirm(`정말로 [${room.roomName}] 채팅방을 삭제하시겠습니까?`)) {
-                    leaveChatRoom(room.roomId);
-                }
-            };
 
             // ⭐⭐ 보강: 뱃지와 삭제 버튼 컨테이너 ⭐⭐
             const actionContainer = document.createElement('div');
@@ -1206,9 +1213,6 @@
             if (room.unreadCount > 0) {
                 actionContainer.innerHTML += `<span class="unread-badge">${room.unreadCount}</span>`;
             }
-            actionContainer.appendChild(deleteBtn);
-            // ⭐⭐ 보강 끝 ⭐⭐
-
 
             item.appendChild(roomInfo);
             item.appendChild(actionContainer);
@@ -1402,6 +1406,8 @@
             const room = await roomResponse.json();
             const participants = await participantsResponse.json();
 
+            console.log(`참가자 목록 명단 ${participants.map(p => p.nickname)}`);
+
             participantListContainer.innerHTML = '';
 
             if(!participants || participants.length === 0){
@@ -1418,26 +1424,25 @@
                 let iconClass = 'fas fa-user-circle';
                 let roleBadge = '';
                 const nickname = participant.nickname;
-                /* 이 부분 수정해야 됨.
 
-                if (nickname.includes('(운영진)') || nickname.includes('관리자')) {
-                    iconClass = 'fas fa-shield-alt';
-                    roleBadge = '<span class="participant-role-badge role-admin">운영진</span>';
-                } else if (nickname.includes('(방장)')) {
+                if(participant.role === 'creator'){
                     iconClass = 'fas fa-crown';
                     roleBadge = '<span class="participant-role-badge role-host">방장</span>';
                 }
 
-                // ⭐ 본인 표시
-                if (participant.userId === myUserId) {
+                if(participant.userId === myUserId){
                     roleBadge += '<span class="participant-role-badge role-me">나</span>';
+                    item.style.backgroundColor = '#f0f5ff';
                 }
 
-                 */
+                const displayName = nickname;
 
-                const displayName = participant.replace(/\s$$.*$$/g, '');
-
-                item.onclick = () => openInlineProfileDetail(participant.userId, displayName);
+                if(participant.userId === myUserId){
+                    item.onclick = () => openInlineProfileDetail(participant.userId, displayName);
+                    item.style.cursor = 'pointer';
+                } else {
+                    item.style.cursor = 'default';
+                }
 
                 item.innerHTML = `
                        <div class="participant-icon-wrapper">
@@ -1457,6 +1462,9 @@
 
     // ★★★ 최종 수정: 인라인 프로필 상세 정보 함수 (매칭내용 제거) ★★★
     async function openInlineProfileDetail(userId, displayName) {
+        console.log('=== openInlineProfileDetail 호출 ===');
+        console.log('userId:', userId, '타입:', typeof userId);
+        console.log('displayName:', displayName);
 
         const isCurrentlyOpen = inlineProfileDetail.classList.contains('open');
 
@@ -1551,6 +1559,9 @@
         const title = newChatTitleInput.value.trim();
         const recipientInput = newChatRecipientInput.value.trim();
         const maxParticipantsInput = document.getElementById('new-chat-max-participants'); // 추가된 변수
+        const maxParticipants = parseInt(maxParticipantsInput);
+        const createBtn = document.querySelector('.btn-create');
+        createBtn.disabled = true;
 
         if (!title) {
             alert("채팅방 제목을 입력해주세요.");
@@ -1560,7 +1571,12 @@
         try {
             const token = localStorage.getItem('accessToken');
             let apiUrl = '';
-            let requestBody = {};
+            let requestOptions = {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            };
 
             if (type === 'one-on-one') {
                 if (!recipientInput) {
@@ -1568,33 +1584,32 @@
                     return;
                 }
                 const targetUserId = await fetchUserIdByNickname(recipientInput);
-                apiUrl = '/chatroom/onetoone';
-                requestBody = { targetUserId : targetUserId };
+                apiUrl = `/chatroom/onetoone?targetUserId=${targetUserId}`;
+                console.log(apiUrl);
             } else {
                 const invitedNicknames = recipientInput ? recipientInput.split(',').map(n => n.trim()) : [];
-                const invitedUserIds = invitedNicknames.length > 0 ? await fetchUserIdsByNicknames(invitedNicknames) : [];
+                let invitedUserIds = invitedNicknames.length > 0 ? await fetchUserIdsByNicknames(invitedNicknames) : [];
+
+                invitedUserIds = invitedUserIds.filter(id => id !== myUserId);
+                console.log('초대할 사용자 (본인 제외):', invitedUserIds);
+
                 apiUrl = '/chatroom/group';
-                requestBody = {
-                    roomType: type === 'public' ? 'PUBLIC' : 'group',
+
+                requestOptions.headers['Content-Type'] = 'application/json';
+                requestOptions.body = JSON.stringify({
+                    roomType: '그룹',
                     roomName: title,
-                    invitedUserIds: invitedUserIds
-                };
-
-                // group 채팅인 경우 maxParticipants도 추가
-                if (type === 'group') {
-                    requestBody.maxParticipants = parseInt(maxParticipantsInput) || 10;
-                }
+                    invitedUserIds: invitedUserIds,
+                    maxParticipants: maxParticipants || 10
+                });
             }
+            const response = await fetch(apiUrl, requestOptions);
 
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` },
-                body: JSON.stringify(requestBody)
-            });
-
-            if (!response.ok) throw new Error(`채팅방 생성 실패`);
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('응답 에러:', errorText);
+                throw new Error('채팅방 생성 실패');
+            }
 
             const newRoom = await response.json();
 
@@ -1610,6 +1625,8 @@
         } catch (e) {
             console.error('채팅방 생성 실패'+e);
             alert('채팅방 생성에 실패했습니다:' + e.message);
+        } finally {
+            createBtn.disabled = false;
         }
     }
 
@@ -1770,6 +1787,7 @@
 
     // ⭐⭐ 인라인 프로필 액션 버튼 핸들러 연결 ⭐⭐
     document.addEventListener('DOMContentLoaded', () => {
+        console.log('✅ DOMContentLoaded 실행됨');
         initUserInfo();
 
         connect();
@@ -1789,6 +1807,14 @@
     });
 
     function initEventListeners() {
+        const newChatBtn = document.getElementById('new-chat-btn');
+        console.log(newChatBtn);
+        if (newChatBtn) {
+            newChatBtn.addEventListener('click', () => {
+                console.log('new chat btn clicked');
+                openNewChatModal(true);
+            });
+        }
         const profileChatBtn = document.getElementById('profile-chat-btn');
 
         if (profileChatBtn) {

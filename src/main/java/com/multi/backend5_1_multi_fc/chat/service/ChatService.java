@@ -73,58 +73,88 @@ public class ChatService {
     //1대 1 채팅방 버튼
     public ChatRoomDto createOrGetOneToOneChatRoom(Long userId1, Long userId2){
         ChatRoomDto existingRoom = chatRoomDao.findOneToOneChatRoom(userId1, userId2);
-        Long currentLastRoom = chatRoomDao.getLastRoomId();
+
         if(existingRoom != null){
             return existingRoom;
         }
 
+        Long currentLastRoom = chatRoomDao.getLastRoomId();
         UserDto targetUser = userDao.findByUserId(userId2);
 
         ChatRoomDto newRoom = ChatRoomDto.builder()
                 .roomId(currentLastRoom + 1)
                 .roomType("1대1")
                 .roomName(targetUser.getNickname() + " 님과의 채팅")
+                .creatorId(userId1)
                 .memberCount(2)
+                .maxParticipants(2)
                 .build();
 
         chatRoomDao.insertChatRoom(newRoom);
 
-        chatParticipantDao.insertParticipant(ChatParticipantDto.builder()
-                .roomId(newRoom.getRoomId())
-                .userId(userId1)
-                .build()
-        );
+        if(chatParticipantDao.findByUserIdAndRoomId(userId1, newRoom.getRoomId()) == null){
+            chatParticipantDao.insertParticipant(ChatParticipantDto.builder()
+                    .roomId(newRoom.getRoomId())
+                    .userId(userId1)
+                    .role("creator")
+                    .build()
+            );
+        }
 
-        chatParticipantDao.insertParticipant(ChatParticipantDto.builder()
-                .roomId(newRoom.getRoomId())
-                .userId(userId2)
-                .build()
-        );
+        if(chatParticipantDao.findByUserIdAndRoomId(userId2, newRoom.getRoomId()) == null){
+            chatParticipantDao.insertParticipant(ChatParticipantDto.builder()
+                    .roomId(newRoom.getRoomId())
+                    .userId(userId2)
+                    .role("member")
+                    .build()
+            );
+        }
         return newRoom;
     }
 
     //채팅방 생성 (그룹 채팅용)
     public ChatRoomDto createGroupChatRoom(Long creatorId, CreateGroupChatRequest request){
         Long currentLastRoom = chatRoomDao.getLastRoomId();
+
+        Integer maxParticipants = request.getMaxParticipants();
+        if (maxParticipants == null || maxParticipants <= 0) {
+            maxParticipants = 10;  // 기본값: 10명
+        }
         ChatRoomDto newRoom = ChatRoomDto.builder()
                 .roomId(currentLastRoom + 1)
                 .roomType(request.getRoomType())
                 .roomName(request.getRoomName())
+                .creatorId(creatorId)
                 .memberCount(request.getInvitedUserIds().size() + 1)
+                .maxParticipants(maxParticipants)
                 .build();
 
         chatRoomDao.insertChatRoom(newRoom);
 
+        //방장 추가
         chatParticipantDao.insertParticipant(ChatParticipantDto.builder()
                 .roomId(newRoom.getRoomId())
                 .userId(creatorId)
+                .role("creator")
                 .build()
         );
 
         for(Long userId: request.getInvitedUserIds()){
+            if(userId.equals(creatorId)){
+                System.out.println("방장 제외" + userId);
+                continue;
+            }
+
+            ChatParticipantDto existingParticipant = chatParticipantDao.findByUserIdAndRoomId(userId, newRoom.getRoomId());
+            if(existingParticipant != null){
+                System.out.println("이미 참가 중 " + userId);
+                continue;
+            }
+
             chatParticipantDao.insertParticipant(ChatParticipantDto.builder()
                     .roomId(newRoom.getRoomId())
                     .userId(userId)
+                    .role("member")
                     .build()
             );
 
@@ -193,10 +223,18 @@ public class ChatService {
         if(existingParticipant != null){
             throw new IllegalStateException("이미 해당 채팅방에 참여 중입니다.");
         }
-        chatParticipantDao.insertParticipant(participant);
 
         //초대받은 사용자에게 알림
         ChatRoomDto chatRoom = chatRoomDao.findChatRoomById(participant.getRoomId());
+
+        if (chatRoom.getMaxParticipants() != null
+                && chatRoom.getMemberCount() >= chatRoom.getMaxParticipants()) {
+            throw new IllegalStateException("채팅방 인원이 가득 찼습니다. (최대 "
+                    + chatRoom.getMaxParticipants() + "명)");
+        }
+
+        chatParticipantDao.insertParticipant(participant);
+
         notificationService.createAndSendNotification(
                 participant.getUserId(),
                 chatRoom.getRoomName() + "채팅방에 초대되었습니다.",
