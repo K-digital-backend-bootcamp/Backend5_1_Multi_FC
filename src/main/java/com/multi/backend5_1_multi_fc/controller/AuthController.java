@@ -88,25 +88,23 @@ public class AuthController {
         return ResponseEntity.ok().body(Map.of("message", "비밀번호가 성공적으로 변경되었습니다."));
     }
 
-    @PostMapping("/profile/confirm-password")
-    public ResponseEntity<?> handlePasswordConfirm(
-            @RequestBody Map<String, String> request
-    ) {
-        String password = request.get("currentPassword");
-        // 더미 비밀번호 확인 로직
-        boolean passwordMatches = password.equals("1234");
-
-        if (passwordMatches) {
-            return ResponseEntity.ok().body(Map.of("success", true));
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "비밀번호가 일치하지 않습니다."));
-        }
+    // 4. 구장, 일정, 마이페이지, 알림 (VIEW)
+    @GetMapping("/friends")
+    public String friendsPage() {
+        return "friends"; // templates/friends.html
     }
 
+    // 추가: 팀 생성 및 관리 페이지
+    @GetMapping("/team/create")
+    public String teamCreatePage() {
+        return "team-create"; // templates/team-create.html
+    }
 
-    // 4. 구장, 일정, 마이페이지, 알림 (VIEW)
-
-
+    @GetMapping("/team/manage")
+    public String teamManagePage(@RequestParam("id") Long id, Model model) {
+        model.addAttribute("teamId", id);
+        return "team-manage"; // templates/team-manage.html
+    }
 
 
     @GetMapping("/fields")
@@ -134,6 +132,11 @@ public class AuthController {
     @GetMapping("/schedule")
     public String schedulePage() {
         return "schedule"; // 일정 목록 (schedule.html)
+    }
+
+    @GetMapping("/schedule/add")
+    public String addSchedulePage() {
+        return "schedule-add"; // 새 일정 추가 (schedule-add.html)
     }
 
     @GetMapping("/schedule/detail/{id}")

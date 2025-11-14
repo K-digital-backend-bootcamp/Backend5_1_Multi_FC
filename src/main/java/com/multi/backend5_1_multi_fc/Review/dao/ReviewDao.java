@@ -1,4 +1,4 @@
-package com.multi.backend5_1_multi_fc.Review.dao;
+package com.multi.backend5_1_multi_fc.review.dao;
 
 public class ReviewDao {
 }

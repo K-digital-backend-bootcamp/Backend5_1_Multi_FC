@@ -6,9 +6,9 @@
     <insert id="insert" parameterType="NotificationDto" useGeneratedKeys="true" keyProperty="notificationId">
         INSERT INTO Notification (
             user_id, content, type, is_read, created_at, redirect_url, related_id
-        ) values (
-                     #{userId}, #{content}, #{type}, #{isRead}, NOW(), #{redirectUrl}, #{relatedId}
-                 )
+            ) values (
+                      #{userId}, #{content}, #{type}, #{isRead}, NOW(), #{redirectUrl}, #{relatedId}
+            )
     </insert>
 
     <select id="findByUserId" parameterType="long" resultType="NotificationDto">

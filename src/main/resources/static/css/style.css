@@ -1580,17 +1580,17 @@ body, html {
     gap: 20px;
 }
 
-     /* ⭐ 폼 중앙 정렬 및 배경 제거/단순화 ⭐ */
- .review-page-main {
-     padding: 100px 20px 40px 20px; /* 상단 패딩 유지, 좌우 패딩 줄임 */
-     min-height: 100vh;
-     display: flex;
-     justify-content: center; /* 폼을 중앙으로 */
-     align-items: flex-start; /* 상단 시작점 정렬 */
-     background-color: #f7f7f7;
-     position: relative;
-     z-index: 1;
- }
+/* ⭐ 폼 중앙 정렬 및 배경 제거/단순화 ⭐ */
+.review-page-main {
+    padding: 100px 20px 40px 20px; /* 상단 패딩 유지, 좌우 패딩 줄임 */
+    min-height: 100vh;
+    display: flex;
+    justify-content: center; /* 폼을 중앙으로 */
+    align-items: flex-start; /* 상단 시작점 정렬 */
+    background-color: #f7f7f7;
+    position: relative;
+    z-index: 1;
+}
 
 .review-page-main::before {
     content: none; /* 오버레이 제거 */

@@ -1,4 +1,4 @@
-package com.multi.backend5_1_multi_fc.Friend.repository;
+package com.multi.backend5_1_multi_fc.friend.repository;
 
 public class FriendRepo {
 }
