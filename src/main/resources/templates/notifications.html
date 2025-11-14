@@ -8,148 +8,6 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
-    <style>
-        /* ✅ 전체 배경 */
-        .login-page-main {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: url("/images/futsal_main_background_clean.jpg") center/cover no-repeat;
-            position: relative;
-        }
-
-        /* ✅ 중앙 알림 박스 */
-        .login-container {
-            background: rgba(255, 255, 255, 0.85);
-            border-radius: 25px;
-            padding: 50px 60px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            max-width: 700px;
-            width: 90%;
-            text-align: left;
-            backdrop-filter: blur(10px);
-            z-index: 10;
-        }
-
-        .title-login {
-            font-size: 28px;
-            font-weight: 800;
-            color: #2c3e50;
-            margin-bottom: 35px;
-            border-left: 6px solid #6c5ce7;
-            padding-left: 14px;
-        }
-
-        /* ✅ 알림 리스트 */
-        .notification-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        /* ✅ 알림 아이템 */
-        .notification-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 14px;
-            padding: 16px;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-            transition: all 0.2s ease-in-out;
-            cursor: pointer;
-        }
-
-        .notification-item:hover {
-            transform: translateY(-3px);
-            background: #f9f9ff;
-            box-shadow: 0 5px 12px rgba(108, 92, 231, 0.15);
-        }
-
-        /* ✅ 아이콘 색상 */
-        .icon-review { color: #faad14; }
-        .icon-schedule { color: #6c5ce7; }
-        .icon-friend { color: #2ecc71; }
-        .icon-comment { color: #3498db; }
-        .icon-chat { color: #9b59b6; }
-
-        .notification-content {
-            flex: 1;
-        }
-        .notification-content .main-text {
-            font-size: 16px;
-            font-weight: 600;
-            color: #2c3e50;
-            margin: 0;
-        }
-        .notification-content .time {
-            font-size: 13px;
-            color: #777;
-            margin-top: 4px;
-        }
-
-        /* ✅ 오른쪽 섹션 제거 */
-        .background-image-section {
-            display: none !important;
-        }
-
-        /* ✅ 중앙 정렬 */
-        .main-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            padding: 100px 20px;
-        }
-
-        /* ✅ 메뉴 관련 (show 상태 처리) */
-        .main-nav {
-            display: none;
-        }
-        .main-nav.show {
-            display: block;
-            background: white;
-            position: absolute;
-            top: 60px;
-            right: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            z-index: 20;
-        }
-
-        .user-menu {
-            display: none;
-            position: absolute;
-            right: 20px;
-            top: 60px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            width: 180px;
-            z-index: 20;
-        }
-        .user-menu.show {
-            display: block;
-        }
-
-        .user-menu ul {
-            list-style: none;
-            padding: 10px 0;
-            margin: 0;
-        }
-        .user-menu ul li a {
-            display: block;
-            padding: 10px 15px;
-            color: #333;
-            text-decoration: none;
-        }
-        .user-menu ul li a:hover {
-            background: #f0f0f0;
-        }
-    </style>
 </head>
 
 <body>
@@ -186,10 +44,10 @@
     </nav>
 </header>
 
-<main class="login-page-main">
-    <div class="main-wrapper">
-        <div class="login-container">
-            <h1 class="title-login">알림 목록</h1>
+<main class="notifications-page-main">
+    <div class="notification-main-wrapper">
+        <div class="notifications-container">
+            <h1 class="title-notifications">알림 목록</h1>
             <div class="notification-list" id="notification-list-container"></div>
         </div>
     </div>

@@ -1,4 +1,4 @@
-package com.multi.backend5_1_multi_fc.User.dto;
+package com.multi.backend5_1_multi_fc.user.dto;
 
 import lombok.Data;
 import java.sql.Timestamp;

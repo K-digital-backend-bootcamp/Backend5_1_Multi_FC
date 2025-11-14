@@ -1,4 +1,4 @@
-package com.multi.backend5_1_multi_fc.Friend.dto;
+package com.multi.backend5_1_multi_fc.friend.dto;
 
 public class FriendDto {
 }

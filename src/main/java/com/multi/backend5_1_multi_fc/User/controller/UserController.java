@@ -1,7 +1,7 @@
-package com.multi.backend5_1_multi_fc.User.controller;
+package com.multi.backend5_1_multi_fc.user.controller;
 
-import com.multi.backend5_1_multi_fc.User.dto.UserDto;
-import com.multi.backend5_1_multi_fc.User.service.UserService;
+import com.multi.backend5_1_multi_fc.user.dto.UserDto;
+import com.multi.backend5_1_multi_fc.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -95,5 +95,33 @@ public class UserController {
     @GetMapping("/check-nickname")
     public ResponseEntity<Boolean> checkNickname(@RequestParam String nickname) {
         return ResponseEntity.ok(userService.isNicknameTaken(nickname));
+    }
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(@RequestHeader("Authorization") String token) {
+        try {
+            String username = token.replace("Bearer ", "").replace("dummy-jwt-token-for-", "");
+
+            System.out.println("🔍 사용자 정보 조회 요청: " + username);
+
+            // DB에서 사용자 정보 조회
+            UserDto user = userService.getUserByUsername(username);
+
+            if (user != null) {
+                // 민감한 정보 제거
+                user.setPassword(null);
+                user.setResetCode(null);
+                user.setResetCodeExpires(null);
+
+                System.out.println("✅ 사용자 정보 조회 성공");
+                return ResponseEntity.ok(user);
+            } else {
+                System.out.println("❌ 사용자를 찾을 수 없음");
+                return new ResponseEntity<>("사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ 사용자 정보 조회 중 예외 발생:");
+            e.printStackTrace();
+            return new ResponseEntity<>("사용자 정보 조회 중 서버 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
