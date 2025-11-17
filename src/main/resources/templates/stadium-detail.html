@@ -152,6 +152,15 @@
             <select id="endTime" name="endTime"></select>
         </div>
 
+        <!-- ★ 실력 선택 추가 -->
+        <label for="skillLevel" style="margin-top: 10px;">실력</label>
+        <select id="skillLevel" name="skillLevel" required>
+            <option value="" disabled selected>실력을 선택해 주세요</option>
+            <option value="초급">초급</option>
+            <option value="중급">중급</option>
+            <option value="고급">고급</option>
+        </select>
+
         <div class="stadium-modal-actions">
             <button class="stadium-btn-cancel" onclick="openMatchModal(false)">취소</button>
             <button class="stadium-btn-create" onclick="submitMatchForm()">생성</button>
@@ -437,17 +446,18 @@
             const item = document.createElement('div');
             item.className = 'match-item';
 
-            // 🔥 상태 계산: status === 'closed' 이거나 current/max 꽉 찼으면 마감
             const current = match.current ?? 1;
             const max = match.max ?? 10;
             const isClosed = (match.status === 'closed') || (current >= max);
             const statusText = isClosed ? '마감' : '모집중';
             const statusClass = isClosed ? 'closed' : 'open';
 
+            // ★ 실력 표시 추가
             item.innerHTML = `
                 <div class="match-item-time">${match.startTime} ~ ${match.endTime}</div>
                 <div class="match-item-meta">
                     주최자: ${match.creator || '알 수 없음'}
+                    · 실력: ${match.skillLevel || '전체'}
                     ·
                     <span class="match-status ${statusClass}">${statusText}</span>
                 </div>
@@ -460,7 +470,6 @@
     }
 
     // 경기 생성 제출 로직
-    // 경기 생성 제출 로직
     function submitMatchForm() {
         const stadiumId = new URLSearchParams(window.location.search).get('id') || '1';
         const stadiumNameInput = document.getElementById('stadiumName');
@@ -468,10 +477,12 @@
         const matchDateInput = document.getElementById('matchDate');
         const startTimeSelect = document.getElementById('startTime');
         const endTimeSelect = document.getElementById('endTime');
+        const skillLevelSelect = document.getElementById('skillLevel'); // ★ 추가
 
         const matchDate = matchDateInput.value;
         const startTime = startTimeSelect.value;
         const endTime = endTimeSelect.value;
+        const skillLevel = skillLevelSelect.value; // ★ 추가
 
         if (!stadiumId || stadiumNameInput.value.includes("정보 없음")) {
             alert("❌ 경기 개설을 위해서는 유효한 구장을 먼저 선택해야 합니다.");
@@ -483,6 +494,10 @@
         }
         if (startTime >= endTime) {
             alert("❌ 시작 시간은 종료 시간보다 빨라야 합니다.");
+            return;
+        }
+        if (!skillLevel) { // ★ 실력 선택 검증
+            alert("❌ 참가자 실력을 선택해 주세요.");
             return;
         }
 
@@ -505,14 +520,13 @@
             current: 1,
             max: 10,
             status: "open",
-            type: "팀 매칭"
+            type: "팀 매칭",
+            skillLevel: skillLevel // ★ 저장
         };
 
         let localMatchSchedules = getLocalMatches();
         localMatchSchedules.unshift(newMatchData);
         localStorage.setItem('match_schedules', JSON.stringify(localMatchSchedules));
-
-        // ❌ 여기 있던 personalSchedules 추가 코드는 전부 삭제!
 
         alert(`'${newMatchData.location}' 경기가 성공적으로 개설되었습니다!`);
         openMatchModal(false);
@@ -564,25 +578,21 @@
         }
         activateTab('match');
 
-        // 🔽🔽 여기부터 네가 요청한 부분 🔽🔽
         const nameEl    = document.getElementById('stadium-name');
         const addrEl    = document.getElementById('stadium-address');
         const contactEl = document.getElementById('stadium-contact');
         const feeEl     = document.getElementById('stadium-fee');
         const sizeEl    = document.getElementById('stadium-size');
 
-        // stadiumId로 더미 데이터에서 찾기
         const stadium = MOCK_STADIUMS.find(s => String(s.id) === String(stadiumId));
 
         if (stadium) {
-            // ✅ 검색 결과에서 클릭한 구장 이름/정보 사용
             if (nameEl)    nameEl.textContent    = `${stadium.name} (ID: ${stadiumId})`;
             if (addrEl)    addrEl.textContent    = stadium.address;
             if (contactEl) contactEl.textContent = stadium.contact;
             if (feeEl)     feeEl.textContent     = stadium.fee;
             if (sizeEl)    sizeEl.textContent    = stadium.size;
         } else {
-            // ❗ 혹시 못 찾았을 때를 위해 기본값(fallback)
             const DUMMY_DATA = {
                 name: "알 수 없는 구장",
                 address: "주소 정보 없음",
@@ -596,7 +606,6 @@
             if (feeEl)     feeEl.textContent     = DUMMY_DATA.fee;
             if (sizeEl)    sizeEl.textContent    = DUMMY_DATA.size;
         }
-        // 🔼🔼 여기까지 수정 포인트 🔼🔼
 
         // 리뷰 데이터 세팅
         let baseReviews = generateMockReviews();
@@ -620,18 +629,16 @@
             document.getElementById('profile-menu-toggle').style.display = 'block';
         }
 
-        // stadium-detail.html 스크립트의 DOMContentLoaded 외부 (혹은 내부)
-// ...
         const btnCreateMatch = document.getElementById('btn-create-match');
-// ❗❗❗ 이 부분의 DEFAULT_USER 정의를 수정합니다 ❗❗❗
         const DEFAULT_USER = localStorage.getItem('userNickname') || "로그인 사용자";
         const hostNameInput = document.getElementById('hostName');
-// ...
+
         const stadiumNameInput = document.getElementById('stadiumName');
         const hiddenStadiumIdInput = document.getElementById('stadiumId');
         const matchDateInput = document.getElementById('matchDate');
         const startTimeSelect = document.getElementById('startTime');
         const endTimeSelect = document.getElementById('endTime');
+        const skillLevelSelect = document.getElementById('skillLevel'); // ★ 모달 실력 셀렉트
 
         function populateTimeSelects() {
             startTimeSelect.innerHTML = '';
@@ -661,8 +668,7 @@
         }
 
         function initMatchModalFields() {
-            // ⭐ 이 부분이 수정되어야 합니다. ⭐
-            hostNameInput.value = DEFAULT_USER; // 이제 '리얼유저' 값이 들어갑니다.
+            hostNameInput.value = DEFAULT_USER;
 
             const fullNameText = document.getElementById('stadium-name').textContent;
             const pureName = fullNameText.split('(ID')[0].trim();
@@ -671,6 +677,10 @@
 
             populateTimeSelects();
             setupDateFieldForModal();
+
+            if (skillLevelSelect) {
+                skillLevelSelect.value = ""; // 매번 초기화
+            }
         }
 
         if (btnCreateMatch) {
@@ -726,7 +736,6 @@
         });
     });
 </script>
-
 
 </body>
 </html>
