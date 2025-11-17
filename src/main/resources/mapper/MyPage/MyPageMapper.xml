@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.multi.backend5_1_multi_fc.mypage.mapper.MyPageMapper">
+
+    <resultMap id="MyPageResult" type="com.multi.backend5_1_multi_fc.mypage.dto.MyPageDto">
+        <id property="userId" column="user_id"/>
+        <result property="username" column="username"/>
+        <result property="email" column="email"/>
+        <result property="nickname" column="nickname"/>
+        <result property="profileImage" column="profile_image"/>
+        <result property="address" column="address"/>
+        <result property="level" column="level"/>
+        <result property="position" column="position"/>
+        <result property="gender" column="gender"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <!-- 1) username으로 한 번에 내 정보 + user_id 가져오기 -->
+    <select id="findByUsername" parameterType="string" resultMap="MyPageResult">
+        SELECT
+            user_id,
+            username,
+            email,
+            nickname,
+            profile_image,
+            address,
+            level,
+            position,
+            gender,
+            created_at,
+            updated_at
+        FROM User
+        WHERE username = #{username}
+    </select>
+
+    <!-- 2) userId 기준 내 정보 조회 (옵션) -->
+    <select id="findByUserId" parameterType="long" resultMap="MyPageResult">
+        SELECT
+            user_id,
+            username,
+            email,
+            nickname,
+            profile_image,
+            address,
+            level,
+            position,
+            gender,
+            created_at,
+            updated_at
+        FROM User
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 3) userId 기준 현재 비밀번호 조회 -->
+    <select id="findPasswordByUserId" parameterType="long" resultType="string">
+        SELECT password
+        FROM User
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 4) userId 기준 개인정보 수정 -->
+    <update id="updateProfileByUserId" parameterType="map">
+        UPDATE User
+        SET
+            nickname = #{request.nickname},
+            address = #{request.address},
+            level = #{request.level},
+            position = #{request.position},
+            profile_image = #{request.profileImage},
+            updated_at = NOW()
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 5) userId 기준 비밀번호 변경 -->
+    <update id="updatePasswordByUserId" parameterType="map">
+        UPDATE User
+        SET
+            password = #{encodedPassword},
+            updated_at = NOW()
+        WHERE user_id = #{userId}
+    </update>
+
+</mapper>
