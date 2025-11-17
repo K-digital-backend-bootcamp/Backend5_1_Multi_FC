@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.multi.backend5_1_multi_fc.friend.mapper.FriendMapper">
+
+    <!-- username -> user_id -->
+    <select id="findUserIdByUsername" parameterType="string" resultType="long">
+        <![CDATA[
+        SELECT user_id
+        FROM `User`
+        WHERE username = #{username}
+            LIMIT 1
+        ]]>
+    </select>
+
+    <!-- 내 친구 목록 (승인만) + 닉네임 like 검색 -->
+    <select id="findMyFriends"
+            resultType="com.multi.backend5_1_multi_fc.friend.dto.FriendDto$FriendListResponse">
+        SELECT * FROM (
+        <![CDATA[
+            SELECT f.friend_id      AS friendId,
+                   u.user_id        AS userId,
+                   u.username       AS username,
+                   u.nickname       AS nickname,
+                   f.created_at     AS createdAt
+            FROM `Friend` f
+            JOIN `User` u ON u.user_id = f.friend_user_id
+            WHERE f.user_id = #{meId}
+              AND f.status = '승인'
+            ]]>
+        <if test="keyword != null and keyword != ''">
+            <![CDATA[
+                AND u.nickname LIKE CONCAT('%', #{keyword}, '%')
+                ]]>
+        </if>
+
+        <![CDATA[
+            UNION ALL
+
+            SELECT f.friend_id      AS friendId,
+                   u.user_id        AS userId,
+                   u.username       AS username,
+                   u.nickname       AS nickname,
+                   f.created_at     AS createdAt
+            FROM `Friend` f
+            JOIN `User` u ON u.user_id = f.user_id
+            WHERE f.friend_user_id = #{meId}
+              AND f.status = '승인'
+            ]]>
+        <if test="keyword != null and keyword != ''">
+            <![CDATA[
+                AND u.nickname LIKE CONCAT('%', #{keyword}, '%')
+                ]]>
+        </if>
+        ) t
+        <![CDATA[
+        ORDER BY t.nickname
+        ]]>
+    </select>
+
+    <!-- 받은 친구 요청 (대기) -->
+    <select id="findIncomingRequests"
+            resultType="com.multi.backend5_1_multi_fc.friend.dto.FriendDto$FriendRequestResponse">
+        <![CDATA[
+        SELECT f.friend_id  AS friendId,
+               u.user_id    AS userId,
+               u.username   AS username,
+               u.nickname   AS nickname,
+               f.created_at AS createdAt
+        FROM `Friend` f
+                 JOIN `User` u ON u.user_id = f.user_id
+        WHERE f.friend_user_id = #{meId}
+          AND f.status = '대기'
+        ORDER BY f.created_at DESC
+        ]]>
+    </select>
+
+    <!-- 친구추가 검색: 나 제외 + isFriend 플래그 -->
+    <select id="searchUsers"
+            resultType="com.multi.backend5_1_multi_fc.friend.dto.FriendDto$FriendSearchResponse">
+        <![CDATA[
+        SELECT
+            u.user_id   AS userId,
+            u.username  AS username,
+            u.nickname  AS nickname,
+            EXISTS (
+                SELECT 1 FROM `Friend` f
+                WHERE (
+                    (f.user_id = #{meId} AND f.friend_user_id = u.user_id)
+                        OR
+                    (f.user_id = u.user_id AND f.friend_user_id = #{meId})
+                    )
+                  AND f.status IN ('대기','승인')
+            )          AS isFriend
+        FROM `User` u
+        WHERE u.user_id <> #{meId}
+          AND u.nickname LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY u.nickname
+        ]]>
+    </select>
+
+    <!-- 친구관계 삭제 (양방향) -->
+    <delete id="deleteFriendBothWays">
+        <![CDATA[
+        DELETE FROM `Friend`
+        WHERE (user_id = #{meId} AND friend_user_id = #{targetId})
+           OR (user_id = #{targetId} AND friend_user_id = #{meId})
+        ]]>
+    </delete>
+
+    <!-- 친구요청 전송 (중복/자가 요청 방지) -->
+    <insert id="insertFriendRequest">
+        <![CDATA[
+        INSERT INTO `Friend` (user_id, friend_user_id, status)
+        SELECT #{requesterId}, #{targetId}, '대기'
+            WHERE #{requesterId} <> #{targetId}
+            AND NOT EXISTS (
+            SELECT 1 FROM `Friend` f
+            WHERE (f.user_id = #{requesterId} AND f.friend_user_id = #{targetId})
+            OR (f.user_id = #{targetId} AND f.friend_user_id = #{requesterId})
+            )
+        ]]>
+    </insert>
+
+    <!-- 요청 수락 -->
+    <update id="approveFriend">
+        <![CDATA[
+        UPDATE `Friend`
+        SET status = '승인'
+        WHERE user_id = #{requesterId}
+          AND friend_user_id = #{meId}
+          AND status = '대기'
+        ]]>
+    </update>
+
+    <!-- 요청 거절 -->
+    <update id="rejectFriend">
+        <![CDATA[
+        UPDATE `Friend`
+        SET status = '거절'
+        WHERE user_id = #{requesterId}
+          AND friend_user_id = #{meId}
+          AND status = '대기'
+        ]]>
+    </update>
+
+    <!-- 두 사용자 간 관계 존재 여부 -->
+    <select id="existsRelationAny" resultType="int">
+        <![CDATA[
+        SELECT COUNT(1)
+        FROM `Friend`
+        WHERE (user_id = #{a} AND friend_user_id = #{b})
+           OR (user_id = #{b} AND friend_user_id = #{a})
+            LIMIT 1
+        ]]>
+    </select>
+
+</mapper>
