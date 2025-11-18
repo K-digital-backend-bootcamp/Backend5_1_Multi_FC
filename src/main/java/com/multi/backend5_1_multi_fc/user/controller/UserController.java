@@ -2,13 +2,14 @@ package com.multi.backend5_1_multi_fc.user.controller;
 
 import com.multi.backend5_1_multi_fc.user.dto.UserDto;
 import com.multi.backend5_1_multi_fc.user.service.UserService;
+import com.multi.backend5_1_multi_fc.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import java.util.Map; // [추가] 로그인 요청을 받기 위해 import
-import java.util.HashMap; // [추가] 로그인 응답을 주기 위해 import
+import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/users")
@@ -16,6 +17,7 @@ import java.util.HashMap; // [추가] 로그인 응답을 주기 위해 import
 public class UserController {
 
     private final UserService userService;
+    private final JwtUtil jwtUtil;
 
     // [기존] 회원가입 API
     @PostMapping("/signup")
@@ -37,7 +39,7 @@ public class UserController {
         }
     }
 
-    // --- [로그인 기능 추가] ---
+    // --- [로그인 기능 수정] ---
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> payload) {
         System.out.println("🔥🔥🔥 /api/users/login 요청 도착! 🔥🔥🔥");
@@ -57,14 +59,14 @@ public class UserController {
 
             if (user != null) {
                 // 2. 로그인 성공
-                user.setPassword(null);
+                user.setPassword(null); // (보안) 응답에서 비밀번호 제거
                 user.setResetCode(null);
                 user.setResetCodeExpires(null);
 
-                String dummyToken = "dummy-jwt-token-for-" + user.getUsername();
+                String realToken = jwtUtil.generateToken(user.getUsername());
 
                 Map<String, Object> response = new HashMap<>();
-                response.put("accessToken", dummyToken);
+                response.put("accessToken", realToken);
                 response.put("user", user);
 
                 System.out.println("✅ 로그인 성공 응답 반환");
@@ -80,9 +82,6 @@ public class UserController {
             return new ResponseEntity<>("로그인 중 서버 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-
-    // --- [기존] 중복 확인 API ---
 
     // 아이디 중복 확인 API
     @GetMapping("/check-username")

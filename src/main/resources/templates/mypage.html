@@ -255,9 +255,21 @@
         logoutButton.addEventListener('click', (e) => {
             e.preventDefault();
             localStorage.removeItem('accessToken');
+            localStorage.removeItem('username');
             window.location.href = '/login';
         });
     }
+
+    // 25-11-18 추가
+    function formatToHHMM(timeStr) {
+        if (!timeStr) return '';
+        const parts = timeStr.split(':'); // ["HH","mm","ss"]
+        if (parts.length >= 2) {
+            return parts[0].padStart(2, '0') + ':' + parts[1].padStart(2, '0');
+        }
+        return timeStr; // 이미 HH:mm 이거나 다른 형식이면 그대로
+    }
+
 
     // 알림 배지
     const badge = document.getElementById('notification-badge');
@@ -289,7 +301,7 @@
         }
 
         try {
-            const response = await fetch('/api/users/me', {
+            const response = await fetch('/api/mypage/me', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -354,13 +366,6 @@
     let currentDate = new Date();
     currentDate.setDate(1);
 
-    // 초기 더미, 실제로는 loadSchedulesFromStorage에서 덮어씀
-    let MOCK_SCHEDULES = [
-        { id: 1, year: 2025, month: 10, day: 5, time: "09:00", type: 'match', title: '09:00 경기 일정', detail: "장소: 강남 풋살장, 레벨: 중급, 인원: 10명" },
-        { id: 2, year: 2025, month: 10, day: 5, time: "13:00", type: 'personal', title: '13:00 개인 약속', detail: "축구화 세척 및 개인 연습 일정" },
-        { id: 3, year: 2025, month: 10, day: 25, time: "20:00", type: 'match', title: '수원 팀 매치', detail: "장소: 수원 월드컵 구장, 레벨: 고급" },
-        { id: 4, year: 2025, month: 11, day: 10, time: "18:00", type: 'personal', title: '친구와 풋살', detail: "잠실 풋살장" }
-    ];
 
     // ✅ 수정된 버전: 이제 personalSchedules만 사용
     function loadSchedulesFromStorage() {
@@ -405,12 +410,14 @@
             newScheduleTitle.style.display = 'none';
             scheduleTimeInput.style.display = 'none';
 
+            // 25-11-18 수정
             schedulesToday.forEach(schedule => {
                 const li = document.createElement('li');
                 const eventClass = schedule.type === 'match' ? 'match-schedule' : 'personal-schedule';
                 li.className = eventClass;
                 li.dataset.scheduleId = schedule.id;
-                li.innerHTML = `<span style="font-weight: 700;">${schedule.time}</span> ${schedule.title}`;
+                const displayTime = formatToHHMM(schedule.time);
+                li.innerHTML = `<span style="font-weight: 700;">${displayTime}</span> ${schedule.title}`;
                 li.onclick = (e) => bindScheduleToDetail(e, schedule);
                 detailList.appendChild(li);
             });
@@ -609,7 +616,6 @@
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${accessToken}`,
-                        'X-USERNAME': localStorage.getItem('username')
                     },
                     body: JSON.stringify(body)
                 });
@@ -625,7 +631,6 @@
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${accessToken}`,
-                        'X-USERNAME': localStorage.getItem('username')
                     },
                     body: JSON.stringify(body)
                 });
@@ -663,7 +668,6 @@
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
-                    'X-USERNAME': localStorage.getItem('username')
                 }
             });
 
@@ -695,7 +699,6 @@
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
-                'X-USERNAME': localStorage.getItem('username')
             }
         });
 
@@ -727,10 +730,9 @@
         renderCalendar();
     }
 
-    // 이번 달 전체 일정 서버에서 불러와서 MOCK_SCHEDULES 채우기
+    // 이번 달 전체 일정 서버에서 불러와서 채우기
     async function loadThisMonthSchedules() {
         const accessToken = localStorage.getItem('accessToken');
-        const username = localStorage.getItem('username');
         if (!accessToken) return;
 
         const year = currentDate.getFullYear();
@@ -741,7 +743,6 @@
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
-                    'X-USERNAME': username || ''
                 }
             });
 
@@ -815,12 +816,16 @@
                 .filter(s => s.year === year && s.month === month && s.day === day)
                 .sort((a, b) => a.time.localeCompare(b.time));
 
+            //25-11-18 수정
             if (schedulesToday.length > 0) {
                 const visible = schedulesToday.slice(0, 2);
                 visible.forEach(s => {
                     const eventDiv = document.createElement("div");
                     eventDiv.className = "calendar-event " + (s.type === "match" ? "match-schedule" : "personal-schedule");
-                    const timeText = s.time?.split("~")[0]?.trim() || "";
+
+                    const timeTextRaw = s.time?.split("~")[0]?.trim() || "";
+                    const timeText = formatToHHMM(timeTextRaw);   //초 제거
+
                     eventDiv.textContent = `${timeText} ${s.title.split(' ')[0]}`;
                     eventDiv.onclick = (e) => {
                         e.stopPropagation();
@@ -981,7 +986,6 @@
         return {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
-            'X-USERNAME': localStorage.getItem('username') || ''
         };
     }
 
