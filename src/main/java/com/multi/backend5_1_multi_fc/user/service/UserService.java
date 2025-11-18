@@ -4,6 +4,8 @@ import com.multi.backend5_1_multi_fc.user.dao.UserDao;
 import com.multi.backend5_1_multi_fc.user.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,10 +14,13 @@ import java.io.IOException;
 import java.util.Random;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
+import java.util.Collections;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 @Service
 @RequiredArgsConstructor
-public class UserService {
+public class UserService implements UserDetailsService {
 
     private final UserDao userDao;
     private final PasswordEncoder passwordEncoder;
@@ -25,9 +30,20 @@ public class UserService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        UserDto userDto = userDao.findUserByUsername(username);
+        if (userDto == null) {
+            throw new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username);
+        }
+
+        // Spring Security의 User 객체로 변환하여 반환 (권한은 일단 비워둠)
+        return new User(userDto.getUsername(), userDto.getPassword(), Collections.emptyList());
+    }
+
     @Transactional
     public void signup(UserDto userDto, MultipartFile profileImage) throws IOException {
-        // 1. 중복 체크 (signup 자체 로직)
+        // 1. 중복 체크 (기존 코드 유지)
         if (userDao.countByUsername(userDto.getUsername()) > 0) {
             throw new IllegalStateException("이미 존재하는 아이디입니다.");
         }
@@ -38,17 +54,30 @@ public class UserService {
             throw new IllegalStateException("이미 존재하는 닉네임입니다.");
         }
 
-        // 2. S3에 파일 업로드
-        String imageUrl = s3Service.uploadFile(profileImage);
+        // 2. 프로필 이미지 처리 (성별에 따라 다른 기본 이미지)
+        String imageUrl;
+        if (profileImage != null && !profileImage.isEmpty()) {
+            // 사용자가 직접 업로드한 경우
+            imageUrl = s3Service.uploadFile(profileImage);
+        } else {
+            // 기본 이미지 사용 (성별에 따라)
+            if ("남성".equals(userDto.getGender())) {
+                imageUrl = "https://multifc-profile-images.s3.ap-northeast-2.amazonaws.com/profile/tiger_profile_square.png";
+            } else {
+                imageUrl = "https://multifc-profile-images.s3.ap-northeast-2.amazonaws.com/profile/rabbit_profile_square.png";
+            }
+        }
 
-        userDto.setProfileImage(imageUrl); // DTO의 profile_image 필드에 S3 URL 저장
+        userDto.setProfileImage(imageUrl );
 
-        // 3. 비밀번호 암호화
+
+        // 3. 비밀번호 암호화 (기존 코드 유지)
         userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
 
-        // 4. DB 저장
+        // 4. DB 저장 (기존 코드 유지)
         userDao.insertUser(userDto);
     }
+
 
     // 로그인 (비밀번호 비교)
     public UserDto login(String username, String rawPassword) {
