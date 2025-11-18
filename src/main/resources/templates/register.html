@@ -155,7 +155,9 @@
                     <div class="input-group">
                         <label for="profile-pic">프로필 사진 (선택)</label>
                         <input type="file" id="profile-pic" name="profile_image_file" accept="image/*">
+                        <p id="profile-pic-message" class="info-message"></p>
                     </div>
+
 
                     <div class="terms-agreement">
                         <input type="checkbox" id="terms-agree" name="termsAgree" value="true" required>
@@ -486,6 +488,31 @@
                 checkSubmitButtonState();
             }, 500);
         }
+
+        // 프로필 사진 파일 크기 체크
+        const profilePicInput = document.getElementById('profile-pic');
+        const profilePicMsg = document.getElementById('profile-pic-message');
+        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+        profilePicInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+
+            if (file) {
+                // 파일 크기 체크
+                if (file.size > MAX_FILE_SIZE) {
+                    const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+                    showFeedback(profilePicMsg, `⚠️ 파일 크기가 너무 큽니다! (현재: ${fileSizeMB}MB, 최대: 5MB) 용량을 줄여주세요.`, true);
+                    profilePicInput.value = ''; // 파일 선택 초기화
+                } else {
+                    const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+                    showFeedback(profilePicMsg, `✅ 파일 업로드 가능 (${fileSizeMB}MB)`, false);
+                }
+            } else {
+                // 파일 선택 취소 시 메시지 숨기기
+                hideFeedback(profilePicMsg);
+            }
+        });
+
 
         // 정규식 제약조건 및 API 연동
         emailInput.addEventListener('input', () => {
