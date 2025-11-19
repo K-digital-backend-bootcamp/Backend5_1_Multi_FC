@@ -1,6 +1,5 @@
 package com.multi.backend5_1_multi_fc.user.service;
 
-
 import com.multi.backend5_1_multi_fc.user.dto.UserDto;
 import com.multi.backend5_1_multi_fc.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +22,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 @RequiredArgsConstructor
 public class UserService implements UserDetailsService {
 
-
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final S3Service s3Service;
@@ -42,7 +40,7 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public void signup(UserDto userDto, MultipartFile profileImage) throws IOException {
+    public void signup(UserDto userDto, MultipartFile profileImageFile) throws IOException {
         if (userMapper.countByUsername(userDto.getUsername()) > 0) {
             throw new IllegalStateException("이미 존재하는 아이디입니다.");
         }
@@ -53,10 +51,27 @@ public class UserService implements UserDetailsService {
             throw new IllegalStateException("이미 존재하는 닉네임입니다.");
         }
 
-        // 2. S3에 파일 업로드
-        String imageUrl = s3Service.uploadFile(profileImage);
+        String imageUrl = null;
 
-        userDto.setProfileImage(imageUrl); // DTO의 profile_image 필드에 S3 URL 저장
+        if (profileImageFile != null && !profileImageFile.isEmpty()) {
+            imageUrl = s3Service.uploadFile(profileImageFile);
+        }
+
+        else if (userDto.getProfileImage() != null && !userDto.getProfileImage().isEmpty()) {
+            imageUrl = userDto.getProfileImage();
+        }
+
+        else {
+            if ("남성".equals(userDto.getGender())) {
+                imageUrl = "https://multifc-profile-images.s3.ap-northeast-2.amazonaws.com/profile/tiger_profile_square.png";
+            } else {
+                imageUrl = "https://multifc-profile-images.s3.ap-northeast-2.amazonaws.com/profile/rabbit_profile_square.png";
+            }
+        }
+
+        // 최종 결정된 URL 저장
+        userDto.setProfileImage(imageUrl);
+
 
         // 3. 비밀번호 암호화
         userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
@@ -100,6 +115,10 @@ public class UserService implements UserDetailsService {
             return username.substring(0, username.length() - 1) + "*";
         }
         return username.substring(0, 3) + "*".repeat(username.length() - 3);
+    }
+    // [추가] 아이디로 회원 정보 전체 조회 (API용)
+    public UserDto getUserProfile(String username) {
+        return userMapper.findUserByUsername(username);
     }
 
     // 인증코드 요청

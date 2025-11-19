@@ -30,6 +30,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt;
         final String username;
 
+        System.out.println("🔍 필터 실행됨. URL: " + request.getRequestURI());
+        System.out.println("🔍 헤더 값: " + authHeader);
+
         // 1. 헤더가 없거나 "Bearer "로 시작하지 않으면 필터를 그냥 통과
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);

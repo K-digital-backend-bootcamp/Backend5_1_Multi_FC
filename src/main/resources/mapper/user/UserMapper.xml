@@ -38,7 +38,7 @@
         SELECT COUNT(*) FROM User WHERE nickname = #{nickname}
     </select>
 
-    <select id="findUserByUsername" parameterType="String" resultMap="userResultMap">
+    <select id="findUserByUsername" parameterType="String" resultMap="String">
         SELECT * FROM User WHERE username = #{username}
     </select>
 
@@ -65,4 +65,5 @@
         SET password = #{newPassword}, reset_code = NULL, reset_code_expires = NULL
         WHERE email = #{email}
     </update>
+
 </mapper>

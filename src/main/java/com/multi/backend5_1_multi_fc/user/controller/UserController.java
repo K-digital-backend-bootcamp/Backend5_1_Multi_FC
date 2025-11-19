@@ -6,6 +6,8 @@ import com.multi.backend5_1_multi_fc.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.Map;
@@ -179,5 +181,23 @@ public class UserController {
             e.printStackTrace();
             return new ResponseEntity<>("비밀번호 변경 중 서버 오류 발생", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인되지 않았습니다.");
+        }
+
+        UserDto user = userService.getUserProfile(userDetails.getUsername());
+
+        // 보안을 위해 비밀번호는 제외하고 필요한 정보만 Map으로 반환
+        Map<String, Object> response = new HashMap<>();
+        response.put("username", user.getUsername());
+        response.put("nickname", user.getNickname());
+        response.put("email", user.getEmail());
+        response.put("profileImage", user.getProfileImage());
+
+        return ResponseEntity.ok(response);
     }
 }
