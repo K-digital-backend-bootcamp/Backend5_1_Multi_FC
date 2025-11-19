@@ -9,6 +9,8 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @Service
@@ -26,22 +28,30 @@ public class S3Service {
             return null;
         }
 
-        // 1. 파일 이름이 겹치지 않도록 고유한 이름 생성
+        if (bucketName == null || bucketName.trim().isEmpty()) {
+            throw new IllegalStateException("S3 버킷 이름이 올바르지 않습니다. 환경설정을 확인하세요.");
+        }
+
+        // 1. 파일 이름이 겹치지 않도록 고유한 이름 생성 (영어/숫자/언더바만 남기기)
         String originalFilename = file.getOriginalFilename();
-        // 예: "profile/랜덤UUID_son.jpg"
-        String uniqueFilename = "profile/" + UUID.randomUUID().toString() + "_" + originalFilename;
+        String safeFilename = (originalFilename == null) ? "unknown" : originalFilename.replaceAll("[^a-zA-Z0-9.]", "_");
+        String uniqueFilename = "profile/" + UUID.randomUUID() + "_" + safeFilename;
 
         // 2. S3에 업로드할 요청(Request) 객체 생성
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
-                .key(uniqueFilename) // S3에 저장될 파일명
-                .contentType(file.getContentType()) // 파일 타입 (예: image/jpeg)
+                .key(uniqueFilename)
+                .contentType(file.getContentType())
                 .build();
 
-        // 3. 파일 업로드 실행
+        // 3. S3 업로드 실제 수행
         s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
 
-        // 4. 업로드된 파일의 S3 URL 반환 (이 URL을 DB에 저장함)
-        return s3Client.utilities().getUrl(builder -> builder.bucket(bucketName).key(uniqueFilename)).toExternalForm();
+        // 4. 업로드된 파일의 S3 URL 반환
+        // URL 인코딩을 적용하여 반환 (브라우저 호환성)
+        String encodedKey = URLEncoder.encode(uniqueFilename, StandardCharsets.UTF_8).replace("+", "%20");
+        String url = "https://" + bucketName + ".s3.amazonaws.com/" + encodedKey;
+
+        return url;
     }
 }
