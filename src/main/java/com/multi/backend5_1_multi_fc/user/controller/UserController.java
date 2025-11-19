@@ -2,14 +2,13 @@ package com.multi.backend5_1_multi_fc.user.controller;
 
 import com.multi.backend5_1_multi_fc.user.dto.UserDto;
 import com.multi.backend5_1_multi_fc.user.service.UserService;
-import com.multi.backend5_1_multi_fc.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.Map; // [추가] 로그인 요청을 받기 위해 import
+import java.util.HashMap; // [추가] 로그인 응답을 주기 위해 import
 
 @RestController
 @RequestMapping("/api/users")
@@ -17,7 +16,6 @@ import java.util.HashMap;
 public class UserController {
 
     private final UserService userService;
-    private final JwtUtil jwtUtil;
 
     // [기존] 회원가입 API
     @PostMapping("/signup")
@@ -25,8 +23,8 @@ public class UserController {
             @ModelAttribute UserDto userDto,
             @RequestParam(value = "profile_image_file", required = false) MultipartFile profileImageFile
     ) {
-        System.out.println("[요청 도착] DTO: " + userDto);
-        System.out.println("[요청 도착] 파일: " + (profileImageFile != null ? profileImageFile.getOriginalFilename() : "없음"));
+        System.out.println("👉 [요청 도착] DTO: " + userDto);
+        System.out.println("👉 [요청 도착] 파일: " + (profileImageFile != null ? profileImageFile.getOriginalFilename() : "없음"));
 
         try {
             userService.signup(userDto, profileImageFile);
@@ -39,49 +37,47 @@ public class UserController {
         }
     }
 
-    // --- [로그인 기능 수정] ---
+    // --- [로그인 기능 추가] ---
+    // login.html의 스크립트가 호출하는 API
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> payload) {
-        System.out.println("🔥🔥🔥 /api/users/login 요청 도착! 🔥🔥🔥");
-        System.out.println("payload: " + payload);
-
         String username = payload.get("username");
         String rawPassword = payload.get("password");
-
-        System.out.println("username: " + username);
-        System.out.println("password: " + rawPassword);
 
         try {
             // 1. 서비스로 아이디/비번을 보내 인증 요청
             UserDto user = userService.login(username, rawPassword);
 
-            System.out.println("userService.login() 결과: " + (user != null ? "성공" : "실패"));
-
             if (user != null) {
                 // 2. 로그인 성공
-                user.setPassword(null); // (보안) 응답에서 비밀번호 제거
+                // (보안) DTO에서 민감 정보(비밀번호 등) 제거
+                user.setPassword(null);
                 user.setResetCode(null);
                 user.setResetCodeExpires(null);
 
-                String realToken = jwtUtil.generateToken(user.getUsername());
+                // (임시) JWT 토큰 생성 (추후 실제 JWT 라이브러리로 교체)
+                // login.html 스크립트가 'accessToken'을 기대하고 있습니다.
+                String dummyToken = "dummy-jwt-token-for-" + user.getUsername();
 
+                // 3. 프론트엔드로 토큰과 사용자 정보 반환
                 Map<String, Object> response = new HashMap<>();
-                response.put("accessToken", realToken);
-                response.put("user", user);
+                response.put("accessToken", dummyToken);
+                response.put("user", user); // (닉네임, 프로필 이미지 URL 등을 위함)
 
-                System.out.println("✅ 로그인 성공 응답 반환");
                 return ResponseEntity.ok(response);
 
             } else {
-                System.out.println("❌ 로그인 실패: 아이디 또는 비밀번호 불일치");
+                // 4. 로그인 실패 (아이디 또는 비밀번호 불일치)
+                // (보안을 위해 "아이디가 틀렸습니다" 또는 "비밀번호가 틀렸습니다"라고 구체적으로 알려주지 않는 것이 좋습니다)
                 return new ResponseEntity<>("아이디 또는 비밀번호가 올바르지 않습니다.", HttpStatus.UNAUTHORIZED);
             }
         } catch (Exception e) {
-            System.err.println("❌ 로그인 중 예외 발생:");
             e.printStackTrace();
             return new ResponseEntity<>("로그인 중 서버 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    // --- [기존] 중복 확인 API ---
 
     // 아이디 중복 확인 API
     @GetMapping("/check-username")
@@ -100,84 +96,32 @@ public class UserController {
     public ResponseEntity<Boolean> checkNickname(@RequestParam String nickname) {
         return ResponseEntity.ok(userService.isNicknameTaken(nickname));
     }
-
-
-    @PostMapping("/find-id")
-    public ResponseEntity<?> findId(@RequestBody Map<String, String> payload) {
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(@RequestHeader("Authorization") String token) {
         try {
-            String email = payload.get("email");
-            String maskedUsername = userService.findMyId(email);
+            String username = token.replace("Bearer ", "").replace("dummy-jwt-token-for-", "");
 
-            // 성공 시 (예: { "username": "fut***" })
-            Map<String, String> response = new HashMap<>();
-            response.put("username", maskedUsername);
-            return ResponseEntity.ok(response);
+            System.out.println("🔍 사용자 정보 조회 요청: " + username);
 
-        } catch (IllegalStateException e) {
-            // 실패 시 (예: "일치하는 이메일 정보가 없습니다.")
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+            // DB에서 사용자 정보 조회
+            UserDto user = userService.getUserByUsername(username);
+
+            if (user != null) {
+                // 민감한 정보 제거
+                user.setPassword(null);
+                user.setResetCode(null);
+                user.setResetCodeExpires(null);
+
+                System.out.println("✅ 사용자 정보 조회 성공");
+                return ResponseEntity.ok(user);
+            } else {
+                System.out.println("❌ 사용자를 찾을 수 없음");
+                return new ResponseEntity<>("사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+            }
         } catch (Exception e) {
+            System.err.println("❌ 사용자 정보 조회 중 예외 발생:");
             e.printStackTrace();
-            return new ResponseEntity<>("아이디 찾기 중 서버 오류 발생", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    // 비밀번호 찾기 인증번호 요청
-    @PostMapping("/reset-password/request")
-    public ResponseEntity<String> requestPasswordReset(@RequestBody Map<String, String> payload) {
-        try {
-            String username = payload.get("username");
-            String email = payload.get("email");
-            userService.requestPasswordReset(username, email);
-
-            // 성공 시
-            return ResponseEntity.ok("인증코드가 이메일로 발송되었습니다. 메일함을 확인해주세요.");
-
-        } catch (IllegalStateException e) {
-            // [추가] 일치하는 정보가 없을 때
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new ResponseEntity<>("인증코드 발송 중 오류 발생", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    // 인증번호 검증
-    @PostMapping("/reset-password/verify")
-    public ResponseEntity<String> verifyPasswordResetCode(@RequestBody Map<String, String> payload) {
-        try {
-            String email = payload.get("email");
-            String code = payload.get("code");
-            userService.verifyPasswordResetCode(email, code);
-
-            return ResponseEntity.ok("인증 성공");
-        } catch (IllegalStateException e) {
-            // (예: "인증코드가 올바르지 않거나 만료되었습니다.")
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new ResponseEntity<>("인증 중 서버 오류 발생", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    // 새 비밀번호로 변경
-    @PostMapping("/reset-password/confirm")
-    public ResponseEntity<String> confirmPasswordReset(@RequestBody Map<String, String> payload) {
-        try {
-            String email = payload.get("email");
-            String code = payload.get("code");
-            String newPassword = payload.get("newPassword");
-
-            userService.confirmPasswordReset(email, code, newPassword);
-
-            return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
-        } catch (IllegalStateException e) {
-            // (예: "인증코드가 올바르지 않거나 만료되었습니다.")
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new ResponseEntity<>("비밀번호 변경 중 서버 오류 발생", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("사용자 정보 조회 중 서버 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
