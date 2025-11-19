@@ -285,6 +285,8 @@
     const navLoginLink = document.getElementById('nav-login-link');
     const navLogoutLink = document.getElementById('nav-logout-link');
 
+    const userMenuName = document.getElementById('user-menu-username');
+
     // ⭐⭐ 추가된 선택자: 메뉴바의 채팅 링크 ⭐⭐
     const navChatLinkElement = document.getElementById('nav-chat-link');
 
@@ -315,6 +317,7 @@
         logoutButton.addEventListener('click', (e) => {
             e.preventDefault();
             localStorage.removeItem('accessToken');
+            localStorage.removeItem('username');
             localStorage.removeItem('hasReadReviews');
             localStorage.removeItem('hasReadSchedules');
             window.location.href = '/login';
@@ -511,18 +514,48 @@
             if (navLoginLink) navLoginLink.parentElement.style.display = 'none';
             if (navLogoutLink) navLogoutLink.parentElement.style.display = 'list-item';
 
+            // ✅ 닉네임 표시 (localStorage + 서버 둘 다 활용)
+            if (userMenuName) {
+                // 1) localStorage에 값이 있으면 일단 그걸 먼저 사용
+                const storedName = localStorage.getItem('username');
+                if (storedName) {
+                    userMenuName.textContent = storedName;
+                }
+
+                // 2) 그 다음, 서버에서 한 번 더 정확한 값 가져와서 덮어쓰기
+                try {
+                    const res = await fetch('/api/mypage/me', {
+                        method: 'GET',
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
+                    });
+
+                    if (res.ok) {
+                        const user = await res.json(); // { username, nickname, ... }
+                        const name = user.nickname || user.username || '사용자';
+                        userMenuName.textContent = name;
+                        localStorage.setItem('username', name);  // 최신값으로 갱신
+                    } else {
+                        // 실패해도 화면이 안 깨지게만 처리
+                        if (!storedName) {
+                            userMenuName.textContent = '사용자';
+                        }
+                    }
+                } catch (err) {
+                    console.error('메인에서 닉네임 가져오기 실패:', err);
+                    if (!storedName) {
+                        userMenuName.textContent = '사용자';
+                    }
+                }
+            }
+
             // Hero 섹션 하단의 로그인 유도 텍스트 숨김
             if (mainLoginLink) mainLoginLink.style.display = 'none';
             if (noScheduleViewHero) noScheduleViewHero.style.display = 'none';
-
-            // 일정/알림 영역만 표시 준비
             if (memberContentArea) memberContentArea.style.display = 'block';
 
-            // ⭐⭐⭐ 수정: 회원일 때 하단 CTA 숨김 ⭐⭐⭐
             if (globalCtaRegister) {
                 globalCtaRegister.style.display = 'none';
             }
-            // ⭐⭐⭐
 
             await checkPendingReviews();
             await checkUpcomingSchedules();
