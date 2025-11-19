@@ -118,7 +118,16 @@ public class UserService implements UserDetailsService {
     }
     // [추가] 아이디로 회원 정보 전체 조회 (API용)
     public UserDto getUserProfile(String username) {
-        return userMapper.findUserByUsername(username);
+        UserDto userDto = userMapper.findUserByUsername(username);
+
+        if (userDto != null) {
+            String nick = userDto.getNickname();
+            System.out.println("✅ [UserService] 조회된 사용자 Nickname: " + (nick == null ? "NULL" : "'" + nick + "'"));
+        } else {
+            System.out.println("❌ [UserService] 조회된 사용자(" + username + ") 객체가 NULL임");
+        }
+
+        return userDto;
     }
 
     // 인증코드 요청

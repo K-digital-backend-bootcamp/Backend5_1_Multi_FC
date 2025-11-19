@@ -197,7 +197,6 @@ public class UserController {
         response.put("nickname", user.getNickname());
         response.put("email", user.getEmail());
         response.put("profileImage", user.getProfileImage());
-
         return ResponseEntity.ok(response);
     }
 }

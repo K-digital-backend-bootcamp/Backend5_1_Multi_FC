@@ -409,7 +409,7 @@
             // (3) 내 정보(닉네임) 가져오기 API 호출
             try {
                 const response = await fetch('/api/users/me', {
-                    headers: { 'Authorization': token }
+                    headers: { 'Authorization': 'Bearer ' + token }
                 });
 
                 if (response.ok) {
@@ -422,9 +422,6 @@
                 console.error("사용자 정보 가져오기 실패", e);
             }
 
-            // (4) 새로고침하여 로그인 상태 반영
-            window.location.reload();
-            return;
         }
 
         const accessToken = localStorage.getItem('accessToken');
@@ -520,6 +517,7 @@
 
             const userMenuUsername = document.getElementById('user-menu-username');
             if (userMenuUsername) {
+                console.log("✅ [main.html] 현재 localStorage 닉네임 값:", loggedInUsername);
                 userMenuUsername.textContent = loggedInUsername; // 헤더 닉네임 변경
             }
 

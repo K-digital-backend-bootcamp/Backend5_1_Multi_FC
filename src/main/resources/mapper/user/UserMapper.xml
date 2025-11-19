@@ -42,9 +42,6 @@
         SELECT * FROM User WHERE username = #{username}
     </select>
 
-    <select id="findUsernameByEmail" parameterType="String" resultType="userResultMap">
-        SELECT username FROM User WHERE email = #{email}
-    </select>
 
     <select id="checkUserByUsernameAndEmail" resultType="boolean">
         SELECT COUNT(*) > 0 FROM User WHERE username = #{username} AND email = #{email}
@@ -66,4 +63,7 @@
         WHERE email = #{email}
     </update>
 
+    <select id="findUserByEmail" parameterType="String" resultMap="userResultMap">
+        SELECT * FROM User WHERE email = #{email}
+    </select>
 </mapper>
