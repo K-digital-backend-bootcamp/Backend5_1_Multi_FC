@@ -50,4 +50,10 @@ public class ScheduleRepo {
     public int upsertApprovedMatches(Long userId) {
         return dao.upsertApprovedMatches(userId);
     }
+
+    public List<ScheduleDto.DayItem> findAllBetween(Long userId,
+                                                    LocalDate startDate,
+                                                    LocalDate endDate) {
+        return dao.findAllBetween(userId, startDate, endDate);
+    }
 }

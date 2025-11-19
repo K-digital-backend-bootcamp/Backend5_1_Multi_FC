@@ -42,4 +42,9 @@ public interface ScheduleMapper {
 
     // 경기 자동 연동
     int upsertApprovedMatches(@Param("userId") Long userId);
+
+    // 이번 달 전체 일정 조회
+    List<ScheduleDto.DayItem> findAllBetween(@Param("userId") Long userId,
+                                             @Param("startDate") LocalDate startDate,
+                                             @Param("endDate") LocalDate endDate);
 }
