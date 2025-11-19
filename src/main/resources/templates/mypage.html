@@ -319,7 +319,7 @@
                 document.getElementById('view-address').textContent = user.address || '정보 없음';
                 document.getElementById('view-skill-level').textContent = user.level || '정보 없음';
                 document.getElementById('view-position-score').textContent = user.position || '정보 없음';
-                localStorage.setItem('username', user.username);
+                localStorage.setItem('username', user.nickname || user.username);
 
                 // 프로필 이미지 표시
                 if (user.profileImage) {
