@@ -2,61 +2,77 @@ package com.multi.backend5_1_multi_fc.chat.controller;
 
 import com.multi.backend5_1_multi_fc.chat.dto.*;
 import com.multi.backend5_1_multi_fc.chat.service.ChatService;
+import com.multi.backend5_1_multi_fc.notification.service.NotificationService;
 import com.multi.backend5_1_multi_fc.security.CustomUserDetails;
+import com.multi.backend5_1_multi_fc.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.file.AccessDeniedException;
+import java.security.Principal;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class ChatController {
     private final ChatService chatService;
+    private final UserService userService;
+    private final NotificationService notificationService;
 
-    private static final Long TEST_USER_ID = 41L;  // 테스트할 사용자 ID
-    private static final String TEST_USERNAME = "tester4";
+    private Long getAuthenticatedUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || authentication.getPrincipal() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.");
+        }
+        Object principal = authentication.getPrincipal();
+        System.out.println("principal = " + principal + ", type = " + principal.getClass().getName());
+        if (principal instanceof com.multi.backend5_1_multi_fc.security.CustomUserDetails customUser) {
+            return customUser.getUserId();
+        }
+        // anonymousUser일 때
+        if (principal instanceof String str && str.equals("anonymousUser")) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인 필요: anonymousUser");
+        }
+
+
+        // 그 외 (알 수 없는 인증 타입)
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 인증 객체: " + principal.getClass().getName());
+    }
+
+
 
     //1. 1대 1 채팅방 생성
     @PostMapping("/chatroom/onetoone")
     public ChatRoomDto createOneToOneChatRoom(
-            @RequestParam("targetUserId") Long targetUserId,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @RequestParam("targetUserId") Long targetUserId
     ) {
-
-        // 테스트 용
-        Long userId = (userDetails != null) ? userDetails.getUserId() : TEST_USER_ID;
-        System.out.println("✅ 1:1 채팅방 생성 요청");
-        System.out.println("  - userId: " + userId + " (테스트 모드)");
-        System.out.println("  - targetUserId: " + targetUserId);
-
+        Long userId = getAuthenticatedUserId();
         return chatService.createOrGetOneToOneChatRoom(userId, targetUserId);
     }
 
     //2. 그룹 채팅방 생성
     @PostMapping("/chatroom/group")
     public ChatRoomDto createChatRoom(
-            @RequestBody CreateGroupChatRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails){
-
-        //테스트
-        Long userId = (userDetails != null) ? userDetails.getUserId() : TEST_USER_ID;
-
+            @RequestBody CreateGroupChatRequest request){
+        Long userId = getAuthenticatedUserId();
         return chatService.createGroupChatRoom(userId, request);
     }
 
     //3. 사용자의 채팅방 목록 조회 (타입별) - 동적 이름 포함
     @GetMapping("/chatroom")
     public List<ChatRoomWithParticipantDto> getChatRooms(
-            @RequestParam("type") String roomType,
-            @AuthenticationPrincipal CustomUserDetails userDetails){
-
-        Long userId = (userDetails != null) ? userDetails.getUserId() : TEST_USER_ID; // 테스트 용
-
+            @RequestParam("type") String roomType){
+        Long userId = getAuthenticatedUserId();
         return chatService.getUserChatRoomsByType(userId, roomType);
     }
 
@@ -68,8 +84,8 @@ public class ChatController {
 
     //5. 채팅방 메세지 목록
     @GetMapping("/chatroom/{id}/messages")
-    public List<ChatMessageDto> getChatMessages(@PathVariable("id") Long roomId, @AuthenticationPrincipal CustomUserDetails userDetails) throws AccessDeniedException {
-        Long userId = (userDetails != null) ? userDetails.getUserId() : TEST_USER_ID; // 테스트 용
+    public List<ChatMessageDto> getChatMessages(@PathVariable("id") Long roomId) throws AccessDeniedException {
+        Long userId = getAuthenticatedUserId();
         return chatService.getMessagesByRoomId(userId, roomId);
     }
 
@@ -104,18 +120,21 @@ public class ChatController {
 
     //8. 채팅 전송 기능
     @MessageMapping("/chatroom/{roomId}/send")
-    public void sendMessage(@DestinationVariable Long roomId, @Payload ChatMessageDto messageDto, @AuthenticationPrincipal CustomUserDetails userDetails){
+    public void sendMessage(@DestinationVariable Long roomId, @Payload ChatMessageDto messageDto, Principal principal){
+        String username = principal.getName();
+        try {
+            Long userId = userService.getUserByUsername(username).getUserId();
 
-        //테스트
-        String username = (userDetails != null) ? userDetails.getUsername() : TEST_USERNAME;
-        messageDto.setRoomId(roomId);
-        messageDto.setSenderId(TEST_USER_ID);
-        messageDto.setSenderNickname(username);
+            messageDto.setRoomId(roomId);
+            messageDto.setSenderId(userId);
+            messageDto.setSenderNickname(username);
 
-//        messageDto.setRoomId(roomId);
-//        messageDto.setSenderId(userId);
-//        messageDto.setSenderNickname(username);
-        chatService.sendMessage(messageDto);
+            chatService.sendMessage(messageDto);
+
+        } catch (Exception e) {
+            log.error("❌ 메시지 전송 실패: {}", e.getMessage(), e);
+            throw new RuntimeException("메시지 전송 실패: " + e.getMessage());
+        }
     }
 
 
