@@ -38,11 +38,11 @@
         SELECT COUNT(*) FROM User WHERE nickname = #{nickname}
     </select>
 
-    <select id="findUserByUsername" parameterType="String" resultMap="String">
+    <select id="findUserByUsername" parameterType="String" resultMap="userResultMap">
         SELECT * FROM User WHERE username = #{username}
     </select>
 
-    <select id="findUsernameByEmail" parameterType="String" resultType="String">
+    <select id="findUsernameByEmail" parameterType="String" resultType="userResultMap">
         SELECT username FROM User WHERE email = #{email}
     </select>
 
