@@ -28,6 +28,14 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         // (1) API: 인증 없이 허용
+                        .requestMatchers("/login", "/signup", "/api/auth/**").permitAll()
+                        .requestMatchers("/chat", "/chat/**").permitAll()
+                        .requestMatchers("/chatroom/**").authenticated()
+                        .requestMatchers("/api/chatroom/**").authenticated()
+                        .requestMatchers("/notifications","/notifications/**").permitAll()
+                        .requestMatchers("/api/notifications/**").authenticated()
+                        .requestMatchers("/api/users/me", "/api/user/**").authenticated()
+                        .requestMatchers("/api/friends/**").authenticated()
                         .requestMatchers("/api/users/login", "/api/users/signup").permitAll()
                         .requestMatchers("/api/users/check-username", "/api/users/check-email", "/api/users/check-nickname").permitAll()
                         .requestMatchers("/api/users/find-id", "/api/users/reset-password/**").permitAll()
@@ -49,6 +57,7 @@ public class SecurityConfig {
                         // (4) 그 외 모든 요청 (주로 API)은 인증 필요
                         .anyRequest().authenticated()
                 )
+
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
