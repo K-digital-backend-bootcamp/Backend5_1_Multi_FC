@@ -42,7 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             username = jwtUtil.extractUsername(jwt);
 
             // 2. username이 존재하고, 아직 SecurityContext에 인증 정보가 없다면
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (username != null) {
 
                 // 3. DB에서 사용자 정보 조회
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
@@ -64,8 +64,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            // 토큰 파싱/검증 중 오류 발생 시 (예: 만료, 서명 오류)
-            System.err.println("JWT 검증 중 오류 발생: " + e.getMessage());
+            // 토큰이 유효하지 않다면 SecurityContext
+            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);
