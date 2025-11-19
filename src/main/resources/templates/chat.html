@@ -959,11 +959,11 @@
         if (currentRoomId && !userQueueSubscription) {
             try {
                 userQueueSubscription = stompClient.subscribe(`/user/queue/messages`, function (message) {
-                    const receivedMessage = JSON.parse(message.body);
-                    console.log('📨 개인 메시지 수신:', receivedMessage);
-                    handleReceivedMessage(receivedMessage);
-                },{
-                    id : `user-queue-${currentRoomId}`}
+                        const receivedMessage = JSON.parse(message.body);
+                        console.log('📨 개인 메시지 수신:', receivedMessage);
+                        handleReceivedMessage(receivedMessage);
+                    },{
+                        id : `user-queue-${currentRoomId}`}
                 );
                 console.log('개인 메세지 큐 구독 완료');
             } catch (e) {
