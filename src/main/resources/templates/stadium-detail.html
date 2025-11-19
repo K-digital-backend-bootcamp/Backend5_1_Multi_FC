@@ -50,13 +50,24 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
+        /* 후기 항목 및 버튼 스타일 추가 */
+        .review-item { border-bottom: 1px dashed #ddd; padding: 15px 0; position: relative; }
+        .review-item:last-child { border-bottom: none; }
+        .review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .review-author { font-weight: 600; font-size: 15px; }
+        .review-rating { color: #f39c12; font-weight: 700; font-size: 14px; }
+        .review-content { font-size: 14px; color: #555; margin-top: 5px; }
+        .review-actions { text-align: right; margin-top: 8px; }
+        .action-btn { background: #eee; border: 1px solid #ccc; padding: 4px 8px; font-size: 11px; cursor: pointer; border-radius: 4px; margin-left: 5px; }
+        .action-btn:hover { background: #ddd; }
+
         /* 모달 */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 999; }
         .modal-overlay.show { display: flex; }
         .modal-content { background: #fff; border-radius: 15px; padding: 25px; width: 90%; max-width: 600px; box-shadow: 0 10px 25px rgba(0,0,0,0.25); }
         .modal-content h2 { font-size: 24px; margin-bottom: 15px; font-weight: 800; color: #2c3e50; }
         .modal-content label { display: block; font-size: 15px; font-weight: 700; color: #34495e; margin-top: 10px; margin-bottom: 6px; }
-        .modal-content input, .modal-content select { width: 100%; padding: 10px; font-size: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; color: #333; box-sizing: border-box; }
+        .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 10px; font-size: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; color: #333; box-sizing: border-box; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
         .btn-cancel { background-color: #e0e0e0; color: #555; padding: 8px 16px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; }
         .btn-create { background-color: #333; color: #fff; padding: 8px 16px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; }
@@ -129,6 +140,7 @@
             <div id="tab-review" class="tab-content">
                 <h2 style="font-size: 24px; color: #333; margin-bottom: 15px;">⭐ 구장 리뷰</h2>
                 <div id="review-list"></div>
+                <button id="write-review-btn" class="btn-create" style="width: 100%; margin-top: 20px; display: none;">후기 작성</button>
             </div>
         </div>
 
@@ -160,6 +172,23 @@
     </div>
 </div>
 
+<div id="edit-review-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h2>후기 수정</h2>
+        <form id="edit-review-form">
+            <input type="hidden" id="edit-review-id">
+            <label>평점</label>
+            <input type="number" id="edit-rating" name="rating" min="1" max="5" required>
+            <label>내용</label>
+            <textarea id="edit-content" name="content" rows="5" required></textarea>
+            <div class="modal-actions">
+                <button class="btn-cancel" type="button" onclick="document.getElementById('edit-review-modal').style.display='none'">취소</button>
+                <button class="btn-create" type="submit">수정 완료</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', async () => {
         // 1. 헤더 및 로그인 상태 확인
@@ -185,6 +214,8 @@
 
         // 2. 구장 정보 및 경기 로드
         const stadiumId = new URLSearchParams(window.location.search).get('id');
+        const currentUserId = localStorage.getItem('userId');
+
         if(stadiumId) {
             // 구장 정보
             const stadium = await (await fetch('/api/stadiums')).json().then(list => list.find(s => s.stadiumId == stadiumId));
@@ -194,6 +225,7 @@
                 document.getElementById('stadiumName').value = stadium.name;
                 document.getElementById('stadiumId').value = stadiumId;
 
+                // Kakao Map 초기화 및 마커 표시
                 if (window.kakao && kakao.maps) {
                     const map = new kakao.maps.Map(document.getElementById('map'), { center: new kakao.maps.LatLng(stadium.latitude, stadium.longitude), level: 3 });
                     new kakao.maps.Marker({ position: map.getCenter(), map: map });
@@ -215,11 +247,9 @@
             stompClient.connect({}, () => {
                 stompClient.subscribe(`/topic/matches/${stadiumId}`, (msg) => {
                     const newMatch = JSON.parse(msg.body);
-                    // 기존 리스트에 없으면 추가 (중복 방지)
                     if(!allMatches.some(m => m.roomId === newMatch.roomId)) {
                         allMatches.push(newMatch);
                     } else {
-                        // 상태 변경일 수 있으므로 업데이트 (마감 등)
                         allMatches = allMatches.map(m => m.roomId === newMatch.roomId ? newMatch : m);
                     }
                     renderMatches(allMatches, document.getElementById('match-date-filter').value);
@@ -238,9 +268,181 @@
             setupTime();
             openMatchModal(true);
         });
+
+        // 4. 초기 탭 설정 및 이벤트 리스너 추가
+        document.getElementById('tab-btn-match').addEventListener('click', () => changeTab('match'));
+        document.getElementById('tab-btn-review').addEventListener('click', () => changeTab('review'));
+
+        // 후기 작성 버튼 이벤트
+        document.getElementById('write-review-btn').addEventListener('click', () => {
+            const currentStadiumId = new URLSearchParams(window.location.search).get('id');
+            // 'id' 파라미터를 'stadiumId'로 전달하여 후기 작성 페이지로 이동
+            window.location.href = `/reviews/write?stadiumId=${currentStadiumId}`;
+        });
+
+        changeTab('match');
     });
 
-    // ✅ [수정됨] 경기 목록 렌더링 함수 (상태값 반영)
+    /** 탭 변경 처리 및 후기 로드 */
+    function changeTab(activeTab) {
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+        document.getElementById(`tab-btn-${activeTab}`).classList.add('active');
+        document.getElementById(`tab-${activeTab}`).classList.add('active');
+
+        if (activeTab === 'review') {
+            const stadiumId = new URLSearchParams(window.location.search).get('id');
+            const currentUserId = localStorage.getItem('userId');
+            if (stadiumId) {
+                fetchReviews(stadiumId, currentUserId);
+            }
+        }
+    }
+
+    /** 후기 데이터를 서버에서 가져오는 함수 */
+    async function fetchReviews(stadiumId, currentUserId) {
+        const reviewListEl = document.getElementById('review-list');
+        reviewListEl.innerHTML = '<p style="color:#777; padding:10px 0;">후기 로딩중...</p>';
+
+        // 로그인 상태라면 후기 작성 버튼 노출 (실제는 경기 종료 후 가능 여부 확인 필요)
+        document.getElementById('write-review-btn').style.display = localStorage.getItem('accessToken') ? 'block' : 'none';
+
+        try {
+            const res = await fetch(`/api/reviews/stadium/${stadiumId}`);
+            if (!res.ok) throw new Error('후기 로드 실패');
+
+            const reviews = await res.json();
+            renderReviews(reviews, currentUserId);
+
+        } catch (e) {
+            console.error("Failed to fetch reviews:", e);
+            reviewListEl.innerHTML = '<p style="color:#e74c3c; padding:10px 0;">후기 로드 중 오류 발생</p>';
+        }
+    }
+
+    /** 후기 목록을 HTML로 렌더링하고, 수정/삭제 버튼을 동적으로 추가하는 함수 */
+    function renderReviews(reviews, currentUserId) {
+        const reviewListEl = document.getElementById('review-list');
+        reviewListEl.innerHTML = '';
+
+        if (!reviews || reviews.length === 0) {
+            reviewListEl.innerHTML = '<p style="color:#777; padding:10px 0;">아직 작성된 후기가 없습니다.</p>';
+            return;
+        }
+
+        reviews.forEach(review => {
+            // ⭐ [수정] 비교 시 항상 Number()로 변환
+            const isMyReview = currentUserId && Number(currentUserId) === Number(review.userId);
+            const stars = '⭐'.repeat(review.rating);
+
+            const reviewDiv = document.createElement('div');
+            reviewDiv.className = 'review-item';
+
+            reviewDiv.innerHTML = `
+                <div class="review-header">
+                    <span class="review-author">${review.nickname || '익명'} ${isMyReview ? '(나)' : ''}</span>
+                    <span class="review-rating">${stars} (${review.rating}/5)</span>
+                </div>
+                <p class="review-content">${review.content}</p>
+                <div class="review-actions">
+                    ${isMyReview ?
+                `<button class="action-btn edit-review-btn"
+                             data-id="${review.reviewId}"
+                             data-rating="${review.rating}"
+                             data-content="${review.content}">수정</button>
+                           <button class="action-btn delete-review-btn"
+                             data-id="${review.reviewId}">삭제</button>`
+                : ''}
+                    <small style="color: #aaa; margin-left: 10px;">작성일: ${review.createdAt || '방금'}</small>
+                </div>
+            `;
+            reviewListEl.appendChild(reviewDiv);
+        });
+
+        // ⭐ 버튼 이벤트 리스너 등록
+        registerReviewActionListeners(currentUserId);
+    }
+
+    /** 수정/삭제 버튼 이벤트 리스너 등록 */
+    function registerReviewActionListeners(currentUserId) {
+        const stadiumId = new URLSearchParams(window.location.search).get('id');
+
+        // 1. 삭제 이벤트
+        document.querySelectorAll('.delete-review-btn').forEach(button => {
+            button.addEventListener('click', async (e) => {
+                const reviewId = e.target.dataset.id;
+                if (!confirm("정말로 이 후기를 삭제하시겠습니까?")) return;
+
+                try {
+                    // ⭐ [수정] currentUserId를 Number()로 변환하여 쿼리 파라미터로 전송
+                    const response = await fetch(`/api/reviews/${reviewId}?userId=${Number(currentUserId)}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        alert('후기가 삭제되었습니다.');
+                        fetchReviews(stadiumId, currentUserId); // 목록 새로고침
+                    } else {
+                        const errorText = await response.text();
+                        alert(`삭제 실패: ${errorText}`);
+                    }
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    alert('서버 통신 중 오류가 발생했습니다.');
+                }
+            });
+        });
+
+        // 2. 수정 이벤트 (모달 오픈)
+        document.querySelectorAll('.edit-review-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                // 모달에 기존 데이터 설정
+                document.getElementById('edit-review-id').value = e.target.dataset.id;
+                document.getElementById('edit-rating').value = e.target.dataset.rating;
+                document.getElementById('edit-content').value = e.target.dataset.content;
+
+                document.getElementById('edit-review-modal').style.display = 'flex';
+            });
+        });
+
+        // 3. 수정 폼 제출
+        document.getElementById('edit-review-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const reviewId = document.getElementById('edit-review-id').value;
+            const newRating = document.getElementById('edit-rating').value;
+            const newContent = document.getElementById('edit-content').value;
+
+            const updatedReviewData = {
+                // ⭐ [수정] currentUserId를 Number()로 변환하여 요청 본문에 포함
+                userId: Number(currentUserId), // 권한 확인용
+                rating: Number(newRating),
+                content: newContent
+            };
+
+            try {
+                const response = await fetch(`/api/reviews/${reviewId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedReviewData)
+                });
+
+                if (response.ok) {
+                    alert('후기가 수정되었습니다.');
+                    document.getElementById('edit-review-modal').style.display = 'none';
+                    fetchReviews(stadiumId, currentUserId); // 목록 새로고침
+                } else {
+                    const errorText = await response.text();
+                    alert(`수정 실패: ${errorText}`);
+                }
+            } catch (error) {
+                console.error('Update error:', error);
+                alert('서버 통신 중 오류가 발생했습니다.');
+            }
+        });
+    }
+
+    /* --- 기존 기타 함수 유지 --- */
     function renderMatches(matches, date) {
         const list = document.getElementById('match-list');
         const filtered = matches.filter(m => m.matchDate === date);
@@ -250,11 +452,9 @@
             return;
         }
 
-        // 시간순 정렬
         filtered.sort((a, b) => a.matchTime.localeCompare(b.matchTime));
 
         list.innerHTML = filtered.map(m => {
-            // 'CLOSED' 상태인지 확인
             const isClosed = (m.status === 'CLOSED' || m.status === 'closed');
             const statusText = isClosed ? '모집 마감' : '모집중';
             const statusClass = isClosed ? 'closed' : 'open';
@@ -312,10 +512,4 @@
             alert("생성 실패");
         }
     }
-
-    window.openMatchModal = openMatchModal;
-    window.submitMatchForm = submitMatchForm;
 </script>
-
-</body>
-</html>

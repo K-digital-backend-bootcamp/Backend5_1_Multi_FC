@@ -11,4 +11,7 @@ public class ReviewCreateReq {
     private Long userId;    // 사용자 ID (FK)
     private Integer rating; // 평점 (1~5)
     private String content; // 후기 내용
+
+    // ⭐ [필수] MyBatis keyProperty='reviewId' 문제를 해결하기 위해 필드 추가
+    private Long reviewId;
 }

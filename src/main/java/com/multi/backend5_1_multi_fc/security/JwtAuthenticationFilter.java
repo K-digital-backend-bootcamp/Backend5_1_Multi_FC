@@ -42,7 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             username = jwtUtil.extractUsername(jwt);
 
             // 2. username이 존재하고, 아직 SecurityContext에 인증 정보가 없다면
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (username != null) {
 
                 // 3. DB에서 사용자 정보 조회
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);

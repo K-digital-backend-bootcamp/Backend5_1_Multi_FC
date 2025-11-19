@@ -342,26 +342,46 @@
     let hasReviewNotif = false;
     let hasScheduleNotif = false;
 
+    // ⭐ [수정] 후기 작성이 필요한 구장 ID 목록 (동적으로 가져옴)
+    let pendingReviewStadiumIds = [];
+
     function updateGlobalBadge() {
-        if (hasReviewNotif || hasScheduleNotif) {
+        if (pendingReviewStadiumIds.length > 0 || hasScheduleNotif) {
             if (badge) badge.style.display = 'block';
         } else {
             if (badge) badge.style.display = 'none';
         }
     }
+
     async function checkPendingReviews() {
         if (localStorage.getItem('hasReadReviews') === 'true') {
             hasReviewNotif = false;
             return;
         }
+
+        const currentUserId = localStorage.getItem('userId');
+        if (!currentUserId) return; // 로그인 안 했으면 통과
+
         try {
-            await new Promise(r => setTimeout(r, 200));
-            const mockReviews = { "count": 1 };
-            if (mockReviews.count > 0) {
-                hasReviewNotif = true;
+            // ⭐ [수정] 새로운 API 호출: 로그인된 사용자가 후기 작성이 필요한 구장 ID 목록을 가져옴
+            const response = await fetch(`/api/reviews/pending-stadiums?userId=${currentUserId}`);
+
+            if (response.ok) {
+                const ids = await response.json();
+                pendingReviewStadiumIds = ids;
+
+                if (ids && ids.length > 0) {
+                    hasReviewNotif = true;
+                } else {
+                    hasReviewNotif = false;
+                }
             }
-        } catch (error) { console.error("후기 알림 요청 중 오류:", error); }
+        } catch (error) {
+            console.error("후기 알림 요청 중 오류:", error);
+            hasReviewNotif = false;
+        }
     }
+
     async function checkUpcomingSchedules() {
         if (localStorage.getItem('hasReadSchedules') === 'true') {
             hasScheduleNotif = false;
@@ -369,7 +389,6 @@
         }
         try {
             await new Promise(r => setTimeout(r, 500));
-            // 이전 이미지에서는 3개의 일정이 있었으므로, 3개 이상의 목업 데이터를 가정합니다.
             const mockSchedules = [
                 { id: 1, date: "2025-11-01", time: "19:00", location: "서울 강남 풋살장", type: "개인 매치" },
                 { id: 2, date: "2025-11-03", time: "20:00", location: "수원 월드컵 풋살장", type: "팀 매치" },
@@ -513,13 +532,18 @@
                 chatPromoLink.textContent = "실시간 채팅 바로가기";
             }
 
-            // (★) 후기 알림 배너 표시 로직 (텍스트 및 닫기 버튼 추가)
-            if (reviewSection && hasReviewNotif) {
+            // (★) 후기 알림 배너 표시 로직 (링크에 stadiumId 추가)
+            if (reviewSection && pendingReviewStadiumIds.length > 0) {
+                // ⭐⭐ [수정됨] 후기 작성 링크에 첫 번째 stadiumId 파라미터 추가 ⭐⭐
+                const targetStadiumId = pendingReviewStadiumIds[0];
+                const reviewLinkUrl = `/reviews/write?stadiumId=${targetStadiumId}`;
+                const count = pendingReviewStadiumIds.length;
+
                 reviewSection.innerHTML = `
                     <div class="review-notification-text">
-                        <i class="fas fa-bell"></i> 작성하지 않은 경기 후기가 <strong>1건</strong> 있습니다.
+                        <i class="fas fa-bell"></i> 작성하지 않은 경기 후기가 <strong>${count}건</strong> 있습니다.
                     </div>
-                    <a href="/reviews/write" id="main-review-link" class="review-notification-link">후기 작성하기</a>
+                    <a href="${reviewLinkUrl}" id="main-review-link" class="review-notification-link">후기 작성하기</a>
                     <button class="close-review-btn" onclick="closeReviewNotification()">&times;</button>
                 `;
                 reviewSection.style.display = 'flex';
@@ -528,7 +552,8 @@
                 mainReviewLink.addEventListener('click', (e) => {
                     localStorage.setItem('hasReadReviews', 'true');
                     reviewSection.style.display = 'none';
-                    hasReviewNotif = false;
+                    // 알림을 읽었으므로 배열 초기화
+                    pendingReviewStadiumIds = [];
                     updateGlobalBadge();
                 });
 
@@ -639,5 +664,3 @@
         }
     });
 </script>
-</body>
-</html>
