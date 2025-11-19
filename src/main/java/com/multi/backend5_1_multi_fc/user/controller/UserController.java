@@ -1,16 +1,24 @@
 package com.multi.backend5_1_multi_fc.user.controller;
 
+import com.multi.backend5_1_multi_fc.security.CustomUserDetails;
 import com.multi.backend5_1_multi_fc.user.dto.UserDto;
 import com.multi.backend5_1_multi_fc.user.service.UserService;
 import com.multi.backend5_1_multi_fc.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -180,4 +188,105 @@ public class UserController {
             return new ResponseEntity<>("비밀번호 변경 중 서버 오류 발생", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserDto> getCurrentUser() {
+        log.info("📡 /api/users/me 호출됨");
+
+        // ✅ SecurityContext에서 Authentication 가져오기
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            log.error("❌ 인증 정보가 없음");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        // ✅ Principal에서 username 추출
+        String username = authentication.getName();
+        log.info("✅ 인증된 사용자: {}", username);
+
+        if (username == null || username.equals("anonymousUser")) {
+            log.error("❌ 익명 사용자");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        try {
+            // ✅ username으로 사용자 정보 조회
+            UserDto user = userService.getUserByUsername(username);
+
+            if (user == null) {
+                log.error("❌ 사용자를 찾을 수 없음: {}", username);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+
+            // 보안: 민감 정보 제거
+            user.setPassword(null);
+            user.setResetCode(null);
+            user.setResetCodeExpires(null);
+
+            log.info("✅ 사용자 정보 조회 성공: userId={}, nickname={}", user.getUserId(), user.getNickname());
+            return ResponseEntity.ok(user);
+
+        } catch (Exception e) {
+            log.error("❌ 사용자 정보 조회 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // ✅ 수정: /search 엔드포인트
+    @GetMapping("/search")
+    public ResponseEntity<List<UserDto>> searchUsersByNickname(
+            @RequestParam("nickname") String nickname) {
+
+        log.info("📡 /api/users/search 호출됨, nickname={}", nickname);
+
+        // ✅ 인증 확인
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            log.error("❌ 인증 정보가 없음");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        try {
+            List<UserDto> users = userService.searchUsersByNickname(nickname);
+
+            // 보안: 비밀번호 제거
+            users.forEach(user -> {
+                user.setPassword(null);
+                user.setResetCode(null);
+                user.setResetCodeExpires(null);
+            });
+
+            log.info("✅ 검색 성공: {}명 조회됨", users.size());
+            return ResponseEntity.ok(users);
+
+        } catch (Exception e) {
+            log.error("❌ 사용자 검색 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // ✅ 기존: /{userId} 엔드포인트 (인증 불필요하므로 그대로 유지)
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserDto> getUserProfile(@PathVariable("userId") Long userId) {
+        log.info("📡 /api/users/{} 호출됨", userId);
+
+        try {
+            UserDto user = userService.findUserById(userId);
+
+            // 보안: 민감 정보 제거
+            user.setPassword(null);
+            user.setResetCode(null);
+            user.setResetCodeExpires(null);
+            user.setEmail(null); // 이메일도 숨김
+
+            log.info("✅ 프로필 조회 성공: nickname={}", user.getNickname());
+            return ResponseEntity.ok(user);
+
+        } catch (Exception e) {
+            log.error("❌ 프로필 조회 실패: userId={}, error={}", userId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
 }

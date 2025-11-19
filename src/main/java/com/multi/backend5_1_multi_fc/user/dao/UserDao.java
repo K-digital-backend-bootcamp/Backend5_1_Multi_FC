@@ -7,6 +7,9 @@ import org.springframework.jdbc.core.BeanPropertyRowMapper; // [추가]
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
+import java.util.List;
+
 // import java.util.List; // (Moon님 코드에 없으므로 삭제)
 
 @Repository
@@ -104,4 +107,28 @@ public class UserDao {
         String sql = "UPDATE User SET password = ?, reset_code = NULL, reset_code_expires = NULL WHERE email = ?";
         jdbcTemplate.update(sql, newEncryptedPassword, email);
     }
+
+
+    // userId로 사용자 정보 조회
+    public UserDto findByUserId(Long userId) {
+        String sql = "SELECT * FROM User WHERE user_id = ?";
+        try {
+            return jdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(UserDto.class), userId);
+        } catch (EmptyResultDataAccessException e) {
+            // 일치하는 유저가 없으면 null을 반환합니다.
+            return null;
+        }
+    }
+    // 닉네임으로 사용자 검색 (부분 일치)
+    public List<UserDto> findUsersByNickname(String nickname) {
+        String sql = "SELECT * FROM User WHERE nickname LIKE ? LIMIT 10";
+        try {
+            return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(UserDto.class), "%" + nickname + "%");
+        } catch (EmptyResultDataAccessException e) {
+            return new ArrayList<>();
+        }
+    }
+
+
+
 }

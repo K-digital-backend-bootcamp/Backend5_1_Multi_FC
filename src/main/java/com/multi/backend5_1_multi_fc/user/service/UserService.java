@@ -3,6 +3,7 @@ package com.multi.backend5_1_multi_fc.user.service;
 import com.multi.backend5_1_multi_fc.user.dao.UserDao;
 import com.multi.backend5_1_multi_fc.user.dto.UserDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import java.util.List;
 import java.util.Random;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -18,6 +20,7 @@ import java.util.Collections;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService implements UserDetailsService {
@@ -39,6 +42,24 @@ public class UserService implements UserDetailsService {
 
         // Spring Security의 User 객체로 변환하여 반환 (권한은 일단 비워둠)
         return new User(userDto.getUsername(), userDto.getPassword(), Collections.emptyList());
+    }
+    public List<UserDto> searchUsersByNickname(String nickname) {
+        return userDao.findUsersByNickname(nickname);
+    }
+    public UserDto findUserById(Long userId) {
+        return userDao.findByUserId(userId);
+    }
+    public UserDto getUserByUsername(String username) {
+        log.info("🔍 getUserByUsername 호출: username={}", username);
+        UserDto user = userDao.findUserByUsername(username);
+
+        if (user == null) {
+            log.error("❌ 사용자를 찾을 수 없음: {}", username);
+            throw new RuntimeException("User not found: " + username);
+        }
+
+        log.info("✅ 사용자 조회 성공: userId={}, nickname={}", user.getUserId(), user.getNickname());
+        return user;
     }
 
     @Transactional
