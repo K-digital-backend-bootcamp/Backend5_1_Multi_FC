@@ -157,7 +157,7 @@
     // (★기존 더미 데이터)
     const initialPosts = [
         { id: 1000, category: 'notice', categoryDisplay: '공지', title: '[필독] 공지사항 및 매너 점수 안내', writer: '관리자', date: '2025-10-25', commentCount: 3, viewCount: 1200 },
-        { id: 999, category: 'team', categoryDisplay: '팀모집', title: '일요 새벽 경기 인원 모집 (MF 급구)', writer: '캡틴손', date: '2025-10-31', commentCount: 12, viewCount: 150 },
+        { id: 999, category: 'team', categoryDisplay: '자유', title: '일요 새벽 경기 인원 모집 (MF 급구)', writer: '캡틴손', date: '2025-10-31', commentCount: 12, viewCount: 150 },
         { id: 998, category: 'free', categoryDisplay: '자유', title: '이번 주말 풋살화 추천 받아요', writer: '풋살매니아', date: '2025-10-28', commentCount: 2, viewCount: 80 },
     ];
 
@@ -195,7 +195,10 @@
             id: String(post.id),
             commentCount: post.commentCount || 0,
             viewCount: post.viewCount || 0,
-            categoryDisplay: post.categoryDisplay || (post.category === 'notice' ? '공지' : (post.category === 'free' ? '자유' : '팀모집'))
+            categoryDisplay:
+                post.category === 'notice'
+                    ? '공지'
+                    : '자유'
         }));
 
         const combinedPosts = [...localPosts];

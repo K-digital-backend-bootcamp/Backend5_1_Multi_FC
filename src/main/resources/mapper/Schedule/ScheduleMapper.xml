@@ -86,7 +86,7 @@
             (schedule_date BETWEEN #{tomorrow} AND #{sixDaysLater})
             )
         ORDER BY schedule_date ASC, schedule_time ASC, schedule_id ASC
-        LIMIT 5
+            LIMIT 5
     </select>
 
     <!-- 경기 자동 연동 (승인 + 모집완료/경기완료, 중복 방지) -->

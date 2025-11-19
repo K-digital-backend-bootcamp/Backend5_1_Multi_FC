@@ -1,40 +1,64 @@
 package com.multi.backend5_1_multi_fc.security;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // 1. CSRF(Cross-Site Request Forgery) POST/PUT 요청이 차단
                 .csrf(AbstractHttpConfigurer::disable)
-
-                // 2. Spring Security가 기본으로 제공하는 로그인 폼을 비활성화
                 .formLogin(AbstractHttpConfigurer::disable)
-
-                // 3. HTTP Basic 인증(브라우저 팝업 인증)을 비활성화
                 .httpBasic(AbstractHttpConfigurer::disable)
-
-                // 4. 모든 HTTP 요청에 대해 인증 없이 접근을 허용
-                // 주의 (개발 완료 후에는 .requestMatchers("/api/...).permitAll()" 등으로 변경 해야 함)
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()
-                );
+                        // (1) API: 인증 없이 허용
+                        .requestMatchers("/login", "/signup", "/api/auth/**").permitAll()
+                        .requestMatchers("/chat", "/chat/**").permitAll()
+                        .requestMatchers("/chatroom/**").authenticated()
+                        .requestMatchers("/api/chatroom/**").authenticated()
+                        .requestMatchers("/notifications","/notifications/**").permitAll()
+                        .requestMatchers("/api/notifications/**").authenticated()
+                        .requestMatchers("/api/users/me", "/api/user/**").authenticated()
+                        .requestMatchers("/api/friends/**").authenticated()
+                        .requestMatchers("/api/users/login", "/api/users/signup").permitAll()
+                        .requestMatchers("/api/users/check-username", "/api/users/check-email", "/api/users/check-nickname").permitAll()
+                        .requestMatchers("/api/users/find-id", "/api/users/reset-password/**").permitAll()
+
+                        // (2) ★★★ 정적 리소스: 인증 없이 허용 ★★★
+                        .requestMatchers("/css/**", "/images/**", "/js/**").permitAll()
+
+                        // (3) HTML 페이지: 인증 없이 허용
+                        .requestMatchers(
+                                "/", "/login", "/register", "/forgot-password",
+                                "/mypage", "/profile/edit", "/friends", "/chat",
+                                "/fields", "/stadium/detail",
+                                "/schedule", "/schedule/add", "/schedule/detail/**", "/schedule/private/detail",
+                                "/community", "/community/write", "/community/detail/**",
+                                "/reviews/write",
+                                "/team/create", "/team/manage", "/team/invite", "/team-edit"
+                        ).permitAll()
+
+                        // (4) 그 외 모든 요청 (주로 API)은 인증 필요
+                        .anyRequest().authenticated()
+                )
+
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

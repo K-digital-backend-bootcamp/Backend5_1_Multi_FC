@@ -15,7 +15,7 @@
 <body>
 
 <header class="quick-menu">
-    <div class="logo"><a href="/">Multi FC</a></div>
+    <div class="logo"><a href="/">MULTI FC</a></div>
     <div class="header-icons">
         <button id="profile-menu-toggle" class="profile-icon" style="position: relative; display: none;">
             <i class="fas fa-user-circle"></i>
@@ -51,7 +51,6 @@
 <main class="community-main">
     <div class="board-container">
 
-        <!-- ✅ 작성/수정 폼 -->
         <p id="post-success-message" class="info-message" style="display:none;"></p>
         <p id="post-error-message" class="error-message" style="display:none;"></p>
 
@@ -70,6 +69,7 @@
                     <select id="category" name="category" required>
                         <option value="notice">공지</option>
                         <option value="free">자유</option>
+                        <option value="team">팀원 모집</option>
                     </select>
                 </div>
 
@@ -171,18 +171,12 @@
         });
     }
 
-    // --- (★추가★) 수정 모드 더미 데이터 (유지함) ---
-    const MOCK_DETAIL_POSTS = {
-        10: {
-            category: 'notice',
-            title: '[필독] 공지사항 및 매너 점수 안내',
-            contentHtml: '<p>안녕하세요. FUTSAL MATCH입니다. 원활하고 공정한 경기 매칭을 위해 매너 점수(Manner Score) 시스템을 다음과 같이 개편합니다.</p><p><b>변경 규정을 숙지하여 주시기 바랍니다.</b></p>',
-        },
-    };
+    // ⭐⭐⭐ [핵심 수정] 관리자 닉네임 정의 및 권한 확인 로직 ⭐⭐⭐
+    const ADMIN_NICKNAME = "AdminUser";
+    const CURRENT_USER_NICKNAME = localStorage.getItem('userNickname') || '사용자';
+    const CURRENT_USER_ROLE = (CURRENT_USER_NICKNAME === ADMIN_NICKNAME) ? 'ADMIN' : 'USER';
+    // ---
 
-    /**
-     * 게시글 ID를 받아 수정 모드로 폼을 로드합니다. (유지)
-     */
     /**
      * 게시글 ID를 받아 수정 모드로 폼을 로드합니다. (로컬스토리지 연동)
      */
@@ -199,7 +193,8 @@
         const post = posts.find(p => String(p.id) === String(postId));
 
         const headerTitle = document.querySelector('.write-header h1');
-        const submitBtn = document.querySelector('.btn-save');
+        const submitBtn = document.querySelector('.write-btn-save');
+        const categorySelect = document.getElementById('category');
 
         if (!post) {
             alert("❌ 수정할 게시물 정보를 찾을 수 없습니다.");
@@ -207,14 +202,18 @@
             return;
         }
 
-
         // ✅ UI 변경
         headerTitle.textContent = `게시글 수정 (ID: ${postId})`;
         submitBtn.textContent = '수정';
 
         // ✅ 데이터 채우기
-        document.getElementById('category').value = post.category;
+        categorySelect.value = post.category;
         document.getElementById('title').value = post.title;
+
+        // ✅ 관리자 권한 체크 (수정 모드): 일반 사용자가 공지 외 다른 글을 수정하는 경우, 공지로 변경 방지
+        if (CURRENT_USER_ROLE !== 'ADMIN') {
+            categorySelect.querySelector('option[value="notice"]').disabled = true;
+        }
 
 
         // ✅ Quill 에디터 내용 반영
@@ -283,6 +282,24 @@
         // 2. 메뉴 활성화 함수 실행
         setActiveMenuItem();
 
+        // ⭐⭐⭐ [핵심 수정] 공지사항 카테고리 제한 ⭐⭐⭐
+        const categorySelect = document.getElementById('category');
+        const noticeOption = categorySelect.querySelector('option[value="notice"]');
+
+        if (CURRENT_USER_ROLE !== 'ADMIN') {
+            // 1. 공지사항 카테고리를 비활성화
+            if (noticeOption) {
+                noticeOption.disabled = true;
+            }
+
+            // 2. 혹시 '공지'가 기본 선택되어 있다면 '자유'로 강제 변경
+            if (categorySelect.value === 'notice') {
+                categorySelect.value = 'free';
+            }
+        }
+        // ---------------------------------------------
+
+
         // ⭐⭐ 3. 수정 모드 체크 및 데이터 로드 ⭐⭐
         const urlParams = new URLSearchParams(window.location.search);
         const editPostId = urlParams.get('id') || urlParams.get('edit');
@@ -292,7 +309,7 @@
         } else {
             // 작성 모드인 경우 기본 UI 유지
             document.querySelector('.write-header h1').textContent = '새 게시글 작성';
-            document.querySelector('.btn-save').textContent = '등록';
+            document.querySelector('.write-btn-save').textContent = '등록';
         }
     });
 
@@ -327,6 +344,13 @@
             errorMsg.style.display = 'block';
             return;
         }
+        // ★★★ [수정] 관리자 권한 확인 (공지) ★★★
+        if (category === 'notice' && CURRENT_USER_ROLE !== 'ADMIN') {
+            errorMsg.textContent = '❌ 공지사항은 관리자만 작성/수정할 수 있습니다.';
+            errorMsg.style.display = 'block';
+            return;
+        }
+
 
         // ✅ 한국 시간 기준 yyyy-mm-dd hh:mm 문자열 생성
         const today = new Date();
@@ -350,6 +374,9 @@
             case 'free':
                 categoryDisplayValue = '자유';
                 break;
+            case 'team':
+                categoryDisplayValue = '팀모집';
+                break;
             default:
                 categoryDisplayValue = '기타';
         }
@@ -360,12 +387,18 @@
             categoryDisplay: categoryDisplayValue,
             title: title,
             content: contentHtml,
-            writer: '현재 사용자',
+            writer: CURRENT_USER_NICKNAME, // ⭐ 현재 사용자 닉네임 사용
             date: formattedDate, // ✅ 한국 시간 기준
             commentCount: 0,
             viewCount: 0,
             writerId: 999 // 더미 writerId 추가 (권한 체크 대비)
         };
+
+        // 공지글의 경우 작성자를 명시적으로 '관리자'로 설정 (DB 대체 시 DB 닉네임 사용)
+        if (category === 'notice') {
+            newPost.writer = '관리자';
+        }
+
 
         // ✅ 로컬 스토리지에 글 목록 업데이트
         let posts = JSON.parse(localStorage.getItem('community_posts')) || [];
