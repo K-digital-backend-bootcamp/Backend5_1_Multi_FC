@@ -66,4 +66,8 @@
     <select id="findUserByEmail" parameterType="String" resultMap="userResultMap">
         SELECT * FROM User WHERE email = #{email}
     </select>
+
+    <select id="findUsernameByEmail" parameterType="String" resultType="String">
+        SELECT username FROM User WHERE email = #{email}
+    </select>
 </mapper>
