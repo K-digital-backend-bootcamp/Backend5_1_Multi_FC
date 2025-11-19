@@ -64,4 +64,11 @@ public interface UserMapper {
      * @param newPassword - 암호화된 새 비밀번호
      */
     void updatePasswordByEmail(@Param("email") String email, @Param("newPassword") String newPassword);
+
+    /**
+     * 9. 이메일로 사용자 정보 조회 (소셜 로그인용)
+     * @param email - 이메일
+     * @return UserDto
+     */
+    UserDto findUserByEmail(String email);
 }
