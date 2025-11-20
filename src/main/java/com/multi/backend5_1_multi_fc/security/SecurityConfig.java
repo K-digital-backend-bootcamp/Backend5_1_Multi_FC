@@ -3,6 +3,7 @@ package com.multi.backend5_1_multi_fc.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -31,13 +32,15 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/login", "/api/users/signup").permitAll()
                         .requestMatchers("/api/users/check-username", "/api/users/check-email", "/api/users/check-nickname").permitAll()
                         .requestMatchers("/api/users/find-id", "/api/users/reset-password/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/community/posts", "/api/community/posts/**").permitAll()
 
                         // (2) 정적 리소스: 인증 없이 허용 (기존과 동일)
                         .requestMatchers("/css/**", "/images/**", "/js/**").permitAll()
 
                         // (3) HTML 페이지: '공개' 페이지만 허용하도록 수정
                         .requestMatchers(
-                                "/", "/login", "/register", "/forgot-password"
+                                "/", "/login", "/register", "/forgot-password",
+                                "/fields", "/reviews/**", "/community", "/community/**"
                                 // (주의! /mypage, /schedule 등 로그인 후 페이진 '제거'해야 합니다)
                         ).permitAll()
 

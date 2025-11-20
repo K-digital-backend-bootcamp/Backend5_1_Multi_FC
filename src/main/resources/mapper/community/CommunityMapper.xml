@@ -35,28 +35,28 @@
     <insert id="insertPost">
         INSERT INTO Post (
 
-                          user_id,
-                          category,
-                          title,
-                          content,
-                          image_url,
-                          created_at,
-                          updated_at,
-                          view_count,
-                          last_checked_comment_id,
-                          current_comment_id
+            user_id,
+            category,
+            title,
+            content,
+            image_url,
+            created_at,
+            updated_at,
+            view_count,
+            last_checked_comment_id,
+            current_comment_id
         )
         VALUES (
-                #{userId},
-                #{req.category},
-                #{req.title},
-                #{req.content},
-                #{imageUrl},
-                NOW(),
-                NOW(),
-                0,
-                0,
-                0
+                   #{userId},
+                   #{req.category},
+                   #{req.title},
+                   #{req.content},
+                   #{imageUrl},
+                   NOW(),
+                   NOW(),
+                   0,
+                   0,
+                   0
                )
     </insert>
 
