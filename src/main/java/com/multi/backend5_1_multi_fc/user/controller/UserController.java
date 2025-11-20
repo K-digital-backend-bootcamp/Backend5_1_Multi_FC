@@ -27,8 +27,6 @@ public class UserController {
             @ModelAttribute UserDto userDto,
             @RequestParam(value = "profile_image_file", required = false) MultipartFile profileImageFile
     ) {
-        System.out.println("[요청 도착] DTO: " + userDto);
-        System.out.println("[요청 도착] 파일: " + (profileImageFile != null ? profileImageFile.getOriginalFilename() : "없음"));
 
         try {
             userService.signup(userDto, profileImageFile);
@@ -44,20 +42,15 @@ public class UserController {
     // --- [로그인 기능 수정] ---
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> payload) {
-        System.out.println("🔥🔥🔥 /api/users/login 요청 도착! 🔥🔥🔥");
-        System.out.println("payload: " + payload);
 
         String username = payload.get("username");
         String rawPassword = payload.get("password");
 
-        System.out.println("username: " + username);
-        System.out.println("password: " + rawPassword);
 
         try {
             // 1. 서비스로 아이디/비번을 보내 인증 요청
             UserDto user = userService.login(username, rawPassword);
 
-            System.out.println("userService.login() 결과: " + (user != null ? "성공" : "실패"));
 
             if (user != null) {
                 // 2. 로그인 성공
@@ -71,11 +64,9 @@ public class UserController {
                 response.put("accessToken", realToken);
                 response.put("user", user);
 
-                System.out.println("✅ 로그인 성공 응답 반환");
                 return ResponseEntity.ok(response);
 
             } else {
-                System.out.println("❌ 로그인 실패: 아이디 또는 비밀번호 불일치");
                 return new ResponseEntity<>("아이디 또는 비밀번호가 올바르지 않습니다.", HttpStatus.UNAUTHORIZED);
             }
         } catch (Exception e) {

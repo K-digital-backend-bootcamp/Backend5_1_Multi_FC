@@ -122,9 +122,6 @@ public class UserService implements UserDetailsService {
 
         if (userDto != null) {
             String nick = userDto.getNickname();
-            System.out.println("✅ [UserService] 조회된 사용자 Nickname: " + (nick == null ? "NULL" : "'" + nick + "'"));
-        } else {
-            System.out.println("❌ [UserService] 조회된 사용자(" + username + ") 객체가 NULL임");
         }
 
         return userDto;
@@ -134,7 +131,6 @@ public class UserService implements UserDetailsService {
     @Transactional
     public void requestPasswordReset(String username, String email) {
         if (!userMapper.checkUserByUsernameAndEmail(username, email)) {
-            System.out.println("비밀번호 찾기: 일치 정보 없음 - 인증코드 발송 안 함");
             throw new IllegalStateException("입력하신 아이디와 이메일이 일치하지 않습니다.");
         }
 
@@ -150,7 +146,6 @@ public class UserService implements UserDetailsService {
 
         try {
             javaMailSender.send(message);
-            System.out.println("✅ 이메일 발송 성공!");
         } catch (Exception e) {
             System.err.println("❌ 이메일 발송 실패: " + e.getMessage());
             e.printStackTrace();
