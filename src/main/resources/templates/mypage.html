@@ -45,39 +45,39 @@
     </nav>
 </header>
 
-    <main class="login-page-main">
-        <div class="main-wrapper">
-            <div class="main-section" id="full-width-section">
-                <div class="login-container">
-                    <h1 class="title-login">마이페이지</h1>
+<main class="login-page-main">
+    <div class="main-wrapper">
+        <div class="main-section" id="full-width-section">
+            <div class="login-container">
+                <h1 class="title-login">마이페이지</h1>
 
-                    <div class="tab-buttons">
-                        <button class="tab-btn active" data-tab="tab-info">회원정보</button>
-                        <button class="tab-btn" data-tab="tab-calendar">캘린더</button>
-                        <button class="tab-btn" data-tab="tab-friends">친구 관리</button>
+                <div class="tab-buttons">
+                    <button class="tab-btn active" data-tab="tab-info">회원정보</button>
+                    <button class="tab-btn" data-tab="tab-calendar">캘린더</button>
+                    <button class="tab-btn" data-tab="tab-friends">친구 관리</button>
+                </div>
+
+                <div id="day-schedule-popup" style="display: none;"></div>
+
+                <div id="tab-info" class="tab-content active">
+                    <h3 style="font-size: 24px; color: #2c3e50; margin-top: 20px; margin-bottom: 25px;">회원정보 확인</h3>
+
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <img id="profile-preview-view" th:src="@{/images/default-profile.png}" alt="프로필 사진" class="info-view-profile-pic">
                     </div>
 
-                    <div id="day-schedule-popup" style="display: none;"></div>
-
-                    <div id="tab-info" class="tab-content active">
-                        <h3 style="font-size: 24px; color: #2c3e50; margin-top: 20px; margin-bottom: 25px;">회원정보 확인</h3>
-
-                        <div style="text-align: center; margin-bottom: 15px;">
-                            <img id="profile-preview-view" th:src="@{/images/default-profile.png}" alt="프로필 사진" class="info-view-profile-pic">
+                    <div class="score-display">
+                        <div class="score-item">
+                            <span class="icon-box"><i class="fas fa-running"></i></span>
+                            실력 레벨
+                            <strong id="view-skill-level">중급</strong>
                         </div>
-
-                        <div class="score-display">
-                            <div class="score-item">
-                                <span class="icon-box"><i class="fas fa-running"></i></span>
-                                실력 레벨
-                                <strong id="view-skill-level">중급</strong>
-                            </div>
-                            <div class="score-item">
-                                <span class="icon-box"><i class="fas fa-crosshairs"></i></span>
-                                포지션
-                                <strong id="view-position-score">픽소 (FIXO)</strong>
-                            </div>
+                        <div class="score-item">
+                            <span class="icon-box"><i class="fas fa-crosshairs"></i></span>
+                            포지션
+                            <strong id="view-position-score">픽소 (FIXO)</strong>
                         </div>
+                    </div>
 
                     <div class="info-view-group">
                         <label>이메일</label>
@@ -977,7 +977,7 @@
     }
 
     // [추가] 친구 공통 헬퍼
-        function requireLoginOrRedirect() {
+    function requireLoginOrRedirect() {
         const token = localStorage.getItem('accessToken');
         if (!token) {
             alert('로그인이 필요합니다.');
