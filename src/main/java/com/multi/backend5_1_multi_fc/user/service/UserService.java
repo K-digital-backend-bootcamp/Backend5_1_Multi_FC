@@ -45,21 +45,18 @@ public class UserService implements UserDetailsService {
         return new User(userDto.getUsername(), userDto.getPassword(), Collections.emptyList());
     }
     public List<UserDto> searchUsersByNickname(String nickname) {
-        return userDao.findUsersByNickname(nickname);
+        return userMapper.findUsersByNickname(nickname);
     }
     public UserDto findUserById(Long userId) {
-        return userDao.findByUserId(userId);
+        return userMapper.findByUserId(userId);
     }
     public UserDto getUserByUsername(String username) {
-        log.info("🔍 getUserByUsername 호출: username={}", username);
-        UserDto user = userDao.findUserByUsername(username);
+        UserDto user = userMapper.findUserByUsername(username);
 
         if (user == null) {
             log.error("❌ 사용자를 찾을 수 없음: {}", username);
             throw new RuntimeException("User not found: " + username);
         }
-
-        log.info("✅ 사용자 조회 성공: userId={}, nickname={}", user.getUserId(), user.getNickname());
         return user;
     }
 
