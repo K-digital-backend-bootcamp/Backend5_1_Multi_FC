@@ -3,6 +3,7 @@ package com.multi.backend5_1_multi_fc.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -37,8 +38,18 @@ public class SecurityConfig {
 
                         // (3) HTML 페이지: '공개' 페이지만 허용하도록 수정
                         .requestMatchers(
-                                "/", "/login", "/register", "/forgot-password"
-                                // (주의! /mypage, /schedule 등 로그인 후 페이진 '제거'해야 합니다)
+                                "/", "/login", "/register", "/forgot-password",
+                                "/mypage", "/profile/edit",
+                                "/fields", "/chat", "/notifications",
+                                "/schedule", "/reviews/**"
+                        ).permitAll()
+
+                        // 커뮤니티 HTML 전체 허용
+                        .requestMatchers("/community", "/community/**").permitAll()
+
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/community/posts",
+                                "/api/community/posts/**"
                         ).permitAll()
 
                         // (4) 그 외 모든 요청 (예: /mypage, /schedule, /api/mypage/** 등)은 인증 필요

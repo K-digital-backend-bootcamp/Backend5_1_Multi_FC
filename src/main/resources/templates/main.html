@@ -285,13 +285,8 @@
     const navLoginLink = document.getElementById('nav-login-link');
     const navLogoutLink = document.getElementById('nav-logout-link');
 
-    const userMenuName = document.getElementById('user-menu-username');
-
     // ⭐⭐ 추가된 선택자: 메뉴바의 채팅 링크 ⭐⭐
     const navChatLinkElement = document.getElementById('nav-chat-link');
-
-    // [추가] 메인 7일 이내 일정 데이터를 담을 전역 배열
-    let upcomingSchedules = [];
 
     if (menuToggle) {
         menuToggle.addEventListener('click', () => {
@@ -317,7 +312,7 @@
         logoutButton.addEventListener('click', (e) => {
             e.preventDefault();
             localStorage.removeItem('accessToken');
-            localStorage.removeItem('username');
+            localStorage.removeItem('username'); //
             localStorage.removeItem('hasReadReviews');
             localStorage.removeItem('hasReadSchedules');
             window.location.href = '/login';
@@ -367,49 +362,24 @@
             }
         } catch (error) { console.error("후기 알림 요청 중 오류:", error); }
     }
-
-    // [수정]7일 이내 일정: DB에서 실제 데이터 가져오기
     async function checkUpcomingSchedules() {
-        // 이미 “읽음” 표시 해둔 경우에는 배지/일정 안 불러오기
         if (localStorage.getItem('hasReadSchedules') === 'true') {
             hasScheduleNotif = false;
-            upcomingSchedules = [];
             return;
         }
-
         try {
-            const accessToken = localStorage.getItem('accessToken');
-            if (!accessToken) {
-                hasScheduleNotif = false;
-                upcomingSchedules = [];
-                return;
+            await new Promise(r => setTimeout(r, 500));
+            // 이전 이미지에서는 3개의 일정이 있었으므로, 3개 이상의 목업 데이터를 가정합니다.
+            const mockSchedules = [
+                { id: 1, date: "2025-11-01", time: "19:00", location: "서울 강남 풋살장", type: "개인 매치" },
+                { id: 2, date: "2025-11-03", time: "20:00", location: "수원 월드컵 풋살장", type: "팀 매치" },
+                { id: 3, date: "2025-11-05", time: "21:00", location: "용인 풋살파크", type: "개인 매치" },
+                { id: 4, date: "2025-11-08", time: "18:00", location: "분당 탄천 구장", type: "팀 매치" }
+            ];
+            if (mockSchedules.length > 0) {
+                hasScheduleNotif = true;
             }
-
-            // /api/schedule/upcoming 호출 (ScheduleController.getUpcoming7Days)
-            const response = await fetch('/api/schedule/upcoming', {
-                method: 'GET',
-                headers: {
-                    // 너가 만든 resolveUsername() 기준으로 두 개 다 보냄
-                    'Authorization': 'Bearer ' + accessToken,
-                    'X-USERNAME': encodeURIComponent(accessToken),
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('다가오는 일정 API 호출 실패: ' + response.status);
-            }
-
-            const data = await response.json();
-            // data: [{scheduleId, title, scheduleType, scheduleDate, scheduleTime}, ...]
-            upcomingSchedules = Array.isArray(data) ? data : [];
-
-            hasScheduleNotif = upcomingSchedules.length > 0;
-        } catch (error) {
-            console.error("일정 요청 중 오류 발생:", error);
-            hasScheduleNotif = false;
-            upcomingSchedules = [];
-        }
+        } catch (error) { console.error("일정 요청 중 오류 발생:", error); }
     }
 
     // ⭐⭐ [추가] 알림 닫기 로직: 리뷰 알림 배너 숨기기 ⭐⭐
@@ -424,7 +394,38 @@
 
     // --- (★페이지별★) 로직 실행 ---
     document.addEventListener('DOMContentLoaded', async () => {
+
+        // ⭐️ 1. SSO 로그인 후 처리 (토큰 저장 + 내 정보 가져오기) ⭐️
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
+        if (token) {
+            // (1) 토큰 저장
+            localStorage.setItem('accessToken', token);
+
+            // (2) URL 정리
+            window.history.replaceState({}, document.title, "/");
+
+            // (3) 내 정보(닉네임) 가져오기 API 호출
+            try {
+                const response = await fetch('/api/users/me', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+                    // 닉네임과 아이디를 저장 (화면 표시에 사용됨)
+                    localStorage.setItem('username', userData.nickname);
+                    localStorage.setItem('userId', userData.username);
+                }
+            } catch (e) {
+                console.error("사용자 정보 가져오기 실패", e);
+            }
+
+        }
+
         const accessToken = localStorage.getItem('accessToken');
+        const loggedInUsername = localStorage.getItem('username'); //
         const mainLoginLink = document.getElementById('main-login-link');
         const heroSection = document.querySelector('.hero-section');
         const memberContentArea = document.getElementById('member-content-area');
@@ -514,48 +515,24 @@
             if (navLoginLink) navLoginLink.parentElement.style.display = 'none';
             if (navLogoutLink) navLogoutLink.parentElement.style.display = 'list-item';
 
-            // ✅ 닉네임 표시 (localStorage + 서버 둘 다 활용)
-            if (userMenuName) {
-                // 1) localStorage에 값이 있으면 일단 그걸 먼저 사용
-                const storedName = localStorage.getItem('username');
-                if (storedName) {
-                    userMenuName.textContent = storedName;
-                }
-
-                // 2) 그 다음, 서버에서 한 번 더 정확한 값 가져와서 덮어쓰기
-                try {
-                    const res = await fetch('/api/mypage/me', {
-                        method: 'GET',
-                        headers: { 'Authorization': `Bearer ${accessToken}` }
-                    });
-
-                    if (res.ok) {
-                        const user = await res.json(); // { username, nickname, ... }
-                        const name = user.nickname || user.username || '사용자';
-                        userMenuName.textContent = name;
-                        localStorage.setItem('username', name);  // 최신값으로 갱신
-                    } else {
-                        // 실패해도 화면이 안 깨지게만 처리
-                        if (!storedName) {
-                            userMenuName.textContent = '사용자';
-                        }
-                    }
-                } catch (err) {
-                    console.error('메인에서 닉네임 가져오기 실패:', err);
-                    if (!storedName) {
-                        userMenuName.textContent = '사용자';
-                    }
-                }
+            const userMenuUsername = document.getElementById('user-menu-username');
+            if (userMenuUsername) {
+                console.log("✅ [main.html] 현재 localStorage 닉네임 값:", loggedInUsername);
+                userMenuUsername.textContent = loggedInUsername; // 헤더 닉네임 변경
             }
 
             // Hero 섹션 하단의 로그인 유도 텍스트 숨김
             if (mainLoginLink) mainLoginLink.style.display = 'none';
             if (noScheduleViewHero) noScheduleViewHero.style.display = 'none';
+
+            // 일정/알림 영역만 표시 준비
             if (memberContentArea) memberContentArea.style.display = 'block';
 
+            // ⭐⭐⭐ 수정: 회원일 때 하단 CTA 숨김 ⭐⭐⭐
             if (globalCtaRegister) {
                 globalCtaRegister.style.display = 'none';
             }
+            // ⭐⭐⭐
 
             await checkPendingReviews();
             await checkUpcomingSchedules();
@@ -590,68 +567,64 @@
                 reviewSection.style.display = 'none';
             }
 
-            //[수정] 다가오는 일정 슬라이더 로직 - DB 데이터 사용
+            // (★) 다가오는 일정 슬라이더 로직
             if (scheduleSection) {
                 scheduleSection.style.display = 'block';
                 const noScheduleView = document.getElementById('no-schedule-view');
 
-                // ✅ checkUpcomingSchedules() 에서 채워준 전역 배열 사용
-                const schedules = upcomingSchedules;  // [{scheduleId, title, scheduleType, scheduleDate, scheduleTime}, ...]
+                // 목업 데이터 (3개 이상)
+                // ⭐⭐⭐ 수정된 목업 데이터 (type 추가) ⭐⭐⭐
+                const mockSchedules = [
+                    { id: 1, date: "2025-11-01", time: "19:00", location: "서울 강남 풋살장", type: "개인 매치" },
+                    { id: 2, date: "2025-11-03", time: "20:00", location: "수원 월드컵 풋살장", type: "팀 매치" },
+                    { id: 3, date: "2025-11-05", time: "21:00", location: "용인 풋살파크", type: "개인 매치" },
+                    { id: 4, date: "2025-11-08", time: "18:00", location: "분당 탄천 구장", type: "팀 매치" }
+                ];
+                // ⭐⭐⭐ 수정된 목업 데이터 끝 ⭐⭐⭐
 
-                if (schedules.length > 0) {
-                    // 슬라이더 DOM 초기화
+                if (mockSchedules.length > 0) {
+                    // 슬라이더 DOM 렌더링 및 로직 유지
                     sliderTrack.innerHTML = '';
                     paginationContainer.innerHTML = '';
 
-                    schedules.forEach((schedule, index) => {
+                    mockSchedules.forEach((schedule, index) => {
                         const item = document.createElement('div');
                         item.className = 'schedule-item';
-
-                        // scheduleTime: "19:00:00" → "19:00" 로 잘라주기
-                        let timeText = '';
-                        if (schedule.scheduleTime) {
-                            const t = schedule.scheduleTime.toString();
-                            timeText = t.length >= 5 ? t.substring(0, 5) : t;
-                        }
-
-                        // HTML 구조: 타입 / 날짜+시간 / 제목(= title)
+                        // ⭐⭐⭐ 수정된 HTML 구조: 날짜, 시간, 장소, 타입을 명확히 표시 ⭐⭐⭐
                         item.innerHTML = `
-                <div class="item-info-wrapper">
-                    <div class="item-type">${schedule.scheduleType}</div>
-                    <strong>${schedule.scheduleDate} (${timeText})</strong>
-                    <div class="item-location">
-                        <i class="fas fa-futbol"></i>${schedule.title}
-                    </div>
-                </div>
-                <a href="/schedule" class="schedule-item-link">일정 전체 보기</a>
-            `;
+                            <div class="item-info-wrapper">
+                                <div class="item-type">${schedule.type}</div>
+                                <strong>${schedule.date} (${schedule.time})</strong>
+                                <div class="item-location"><i class="fas fa-map-marker-alt"></i>${schedule.location}</div>
+                            </div>
+                            <a href="/schedule/detail/${schedule.id}" class="schedule-item-link">상세보기</a>
+                        `;
+                        // ⭐⭐⭐ 수정된 HTML 구조 끝 ⭐⭐
 
                         sliderTrack.appendChild(item);
 
                         const dot = document.createElement('span');
                         dot.className = 'dot';
                         dot.dataset.index = index;
+                        // 클릭 이벤트는 위에서 통합해서 처리합니다.
                         paginationContainer.appendChild(dot);
                     });
 
-                    totalSlides = schedules.length;
+                    totalSlides = mockSchedules.length; // 각 아이템당 1페이지
                     currentIndex = 0;
 
                     updateSliderControls();
                     updatePaginationDots();
-                    if (sliderContainer) sliderContainer.style.display = 'block';
-                    if (noScheduleView) noScheduleView.style.display = 'none';
+                    if(document.querySelector('.schedule-slider-container')) document.querySelector('.schedule-slider-container').style.display = 'block';
+                    if(noScheduleView) noScheduleView.style.display = 'none';
 
                 } else if (noScheduleView) {
-                    // 7일 이내 일정이 하나도 없을 때 문구
-                    noScheduleView.innerHTML =
-                        '<p class="no-schedule-message" style="color:white; text-shadow: 0 0 3px black;">아직 7일 이내의 일정이 없습니다. 😥</p>';
+                    // 일정이 없을 때 빈 메시지 표시 (Hero 섹션 내에서)
+                    noScheduleView.innerHTML = '<p class="no-schedule-message" style="color:white; text-shadow: 0 0 3px black;">아직 7일 이내의 일정이 없습니다. 😥</p>';
                     noScheduleView.style.display = 'block';
-                    if (sliderContainer) sliderContainer.style.display = 'none';
+                    if(document.querySelector('.schedule-slider-container')) document.querySelector('.schedule-slider-container').style.display = 'none';
                 }
             }
-
-
 
         } else {
             // [비회원일 때] - Hero 섹션에 로그인 유도 메시지 표시
@@ -686,11 +659,12 @@
                 };
             }
 
-            // ⭐⭐ 보강: 메뉴바의 채팅 링크 클릭 방지 ⭐⭐
             if (navChatLinkElement) {
-                navChatLinkElement.querySelector('a').addEventListener('click', function(e) {
+                // ✅ 수정됨: 요소를 바로 사용
+                navChatLinkElement.addEventListener('click', function(e) {
                     e.preventDefault();
-                    alert("❌ 실시간 채팅은 회원만 이용할 수 없습니다.");
+                    // alert("❌ 실시간 채팅은 회원만 이용할 수 없습니다."); // (메시지가 좀 어색해서 수정 제안)
+                    alert("로그인이 필요한 서비스입니다.");
                     window.location.href = '/login';
                 });
             }
