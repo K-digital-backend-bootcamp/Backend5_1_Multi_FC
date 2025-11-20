@@ -55,13 +55,9 @@ public class UserService implements UserDetailsService {
 
         if (profileImageFile != null && !profileImageFile.isEmpty()) {
             imageUrl = s3Service.uploadFile(profileImageFile);
-        }
-
-        else if (userDto.getProfileImage() != null && !userDto.getProfileImage().isEmpty()) {
+        } else if (userDto.getProfileImage() != null && !userDto.getProfileImage().isEmpty()) {
             imageUrl = userDto.getProfileImage();
-        }
-
-        else {
+        } else {
             if ("남성".equals(userDto.getGender())) {
                 imageUrl = "https://multifc-profile-images.s3.ap-northeast-2.amazonaws.com/profile/tiger_profile_square.png";
             } else {
@@ -103,6 +99,7 @@ public class UserService implements UserDetailsService {
     public boolean isNicknameTaken(String nickname) {
         return userMapper.countByNickname(nickname) > 0;
     }
+
     // 이메일로 마스킹된 아이디 반환
     public String findMyId(String email) {
         String username = userMapper.findUsernameByEmail(email);
@@ -116,6 +113,7 @@ public class UserService implements UserDetailsService {
         }
         return username.substring(0, 3) + "*".repeat(username.length() - 3);
     }
+
     // [추가] 아이디로 회원 정보 전체 조회 (API용)
     public UserDto getUserProfile(String username) {
         UserDto userDto = userMapper.findUserByUsername(username);
@@ -181,5 +179,14 @@ public class UserService implements UserDetailsService {
         Random random = new Random();
         int code = 100000 + random.nextInt(900000); // 100000 ~ 999999
         return String.valueOf(code);
+    }
+
+    public UserDto getUserByUsername(String username) {
+        UserDto user = userMapper.findUserByUsername(username);
+
+        if (user == null) {
+            throw new RuntimeException("User not found: " + username);
+        }
+        return user;
     }
 }

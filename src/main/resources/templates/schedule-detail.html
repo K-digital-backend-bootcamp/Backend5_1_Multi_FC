@@ -11,9 +11,86 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=4caaf2cb0e09303d4dd13d3fb5ff15e9&libraries=services"></script>
 
     <style>
-        /* --- 기존 스타일 유지 --- */
+        /* ======================================= */
+        /* 헤더/메뉴 스타일 (Stadum/Image 기반 디자인 통합) */
+        /* ======================================= */
+        .quick-menu {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+        .quick-menu .logo a {
+            font-size: 24px;
+            font-weight: 900;
+            color: #333; /* 로고 색상 유지 */
+            text-decoration: none;
+        }
+        .header-icons {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .profile-icon {
+            font-size: 24px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: #333;
+        }
+        .menu-toggle-btn {
+            border: none;
+            background: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .user-menu { /* 프로필 메뉴 */
+            position: absolute;
+            top: 60px;
+            right: 30px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px 0;
+            display: none;
+            width: 200px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        .user-menu.show { display: block; }
+        .user-info { padding: 10px 15px; border-bottom: 1px solid #eee; margin-bottom: 5px; }
+        .user-menu ul { list-style: none; padding: 0; margin: 0; }
+        .user-menu ul li a { padding: 8px 15px; text-decoration: none; color: #333; display: block; font-size: 14px;}
+
+        .main-nav { /* 메인 네비게이션 메뉴 */
+            display: none;
+            position: absolute;
+            top: 60px;
+            right: 0;
+            background: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 200px;
+            border-radius: 8px;
+            z-index: 90;
+        }
+        .main-nav.show { display: block; /* 메뉴 토글 활성화 CSS */ }
+        .main-nav ul { list-style: none; padding: 10px 0; margin: 0; }
+        .main-nav ul li a { display: block; padding: 10px 15px; text-decoration: none; color: #333; font-weight: 500;}
+
+
+        /* ======================================= */
+        /* 본문 상세 디자인 (원본 유지) */
+        /* ======================================= */
         .schedule-search-main { padding: 100px 40px 40px 40px; background-color: #f7f7f7; min-height: 100vh; }
         .search-container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         .search-title { font-size: 28px; font-weight: 700; color: #2c3e50; margin-bottom: 25px; border-bottom: 2px solid #6c5ce7; padding-bottom: 10px; }
@@ -25,7 +102,7 @@
         .status-card { background: #f9f9f9; border: 1px solid #ddd; border-radius: 10px; padding: 20px; }
         .status-card h3 { font-size: 20px; color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 15px; }
 
-        /* --- 참가자 리스트 & 관리 버튼 스타일 (신규 추가) --- */
+        /* --- 참가자 리스트 & 관리 버튼 스타일 (원본 유지) --- */
         .participant-list { list-style: none; padding: 0; margin: 10px 0 20px 0; }
         .participant-list li { padding: 10px 0; border-bottom: 1px dashed #eee; }
         .participant-list li:last-child { border-bottom: none; }
@@ -36,24 +113,22 @@
 
         /* 배지 스타일 */
         .badge { padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 5px; color: white; }
-        .badge-host { background-color: #e74c3c; } /* 방장 */
-        .badge-me { background-color: #6c5ce7; }   /* 나 */
-        .badge-waiting { background-color: #f39c12; } /* 대기 */
-        .badge-confirmed { background-color: #27ae60; } /* 확정 */
+        .badge-host { background-color: #e74c3c; }
+        .badge-me { background-color: #6c5ce7; }
+        .badge-waiting { background-color: #f39c12; }
+        .badge-confirmed { background-color: #27ae60; }
 
         /* 관리 버튼 그룹 */
         .manage-btns { display: flex; gap: 5px; }
         .btn-sm { padding: 4px 8px; border: none; border-radius: 4px; font-size: 12px; cursor: pointer; color: white; }
         .btn-approve { background-color: #27ae60; }
         .btn-reject { background-color: #e74c3c; }
-        .btn-approve:hover { background-color: #219150; }
-        .btn-reject:hover { background-color: #c0392b; }
 
         /* 하단 메인 버튼 */
         .join-button { width: 100%; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 16px; border: none; cursor: pointer; margin-top: 10px; transition: 0.2s; }
         .btn-join { background-color: #333; color: white; }
         .btn-cancel { background-color: #e74c3c; color: white; }
-        .btn-close { background-color: #2c3e50; color: white; } /* 마감 버튼 */
+        .btn-close { background-color: #2c3e50; color: white; }
         .btn-disabled { background-color: #ccc; color: #666; cursor: not-allowed; }
 
         .match-status-label { font-weight: 800; margin-left: 10px; }
@@ -79,7 +154,7 @@
                 <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
             </ul>
         </div>
-        <button id="menu-toggle" class="menu-toggle-btn"><i class="fas fa-bars"></i></button>
+        <button id="menu-toggle" class="menu-toggle-btn" style="background:none; border:none; font-size:20px;"> <i class="fas fa-bars"></i> </button>
     </div>
     <nav id="main-menu" class="main-nav">
         <ul>
@@ -98,7 +173,7 @@
 
         <div class="detail-grid">
             <div class="detail-left-column">
-                <div class="map-area" id="map">(KakaoMap API가 표시될 영역)</div>
+                <div class="map-area" id="map">지도를 로드하는 중...</div>
 
                 <h3>
                     경기 정보
@@ -170,17 +245,24 @@
         }
 
         // 메뉴 이벤트
-        document.getElementById('profile-menu-toggle').addEventListener('click', () => {
+        document.getElementById('profile-menu-toggle')?.addEventListener('click', () => {
             document.getElementById('profile-menu').classList.toggle('show');
         });
-        document.getElementById('logout-button').addEventListener('click', (e) => {
+        document.getElementById('logout-button')?.addEventListener('click', (e) => {
             e.preventDefault();
             localStorage.clear();
             window.location.href = '/login';
         });
 
+        // ⭐⭐ 메뉴 토글 이벤트 (메뉴 나오게 하는 JS) ⭐⭐
+        document.getElementById('menu-toggle')?.addEventListener('click', () => {
+            document.getElementById('main-menu').classList.toggle('show');
+            document.getElementById('profile-menu')?.classList.remove('show');
+        });
+        // ---------------------------------------------
+
         // 데이터 로드
-        await fetchMatchDetail();
+        await fetchMatchDetail(); // ⭐ 이 함수가 지도를 초기화하도록 수정됨
         await fetchParticipantList();
 
         // WebSocket 연결
@@ -188,7 +270,39 @@
     });
 
     /* =========================================================
-       2. 데이터 로드 함수
+       2. 지도 초기화 함수
+    ========================================================= */
+    function initMap(lat, lng, name) {
+        if (window.kakao && kakao.maps) {
+            const mapContainer = document.getElementById('map');
+            const mapOption = {
+                center: new kakao.maps.LatLng(lat, lng), // 지도의 중심좌표
+                level: 3 // 지도의 확대 레벨
+            };
+            const map = new kakao.maps.Map(mapContainer, mapOption);
+
+            // 마커 표시
+            const markerPosition = new kakao.maps.LatLng(lat, lng);
+            new kakao.maps.Marker({
+                position: markerPosition,
+                map: map
+            });
+
+            // 인포윈도우 표시 (선택 사항: 구장 이름 표시)
+            const infowindow = new kakao.maps.InfoWindow({
+                content: `<div style="padding:5px;font-size:12px;font-weight:bold;">${name}</div>`
+            });
+            infowindow.open(map, new kakao.maps.Marker({ position: markerPosition }));
+
+            console.log("Kakao Map initialized successfully.");
+        } else {
+            console.error("Kakao Map API is not loaded.");
+        }
+    }
+
+
+    /* =========================================================
+       3. 데이터 로드 함수 (지도 초기화 로직 포함)
     ========================================================= */
     async function fetchMatchDetail() {
         try {
@@ -196,14 +310,28 @@
             if (!res.ok) throw new Error('경기 정보 로드 실패');
             currentMatchData = await res.json();
 
-            // 정보 표시
+            // 1. 경기 정보 표시
             document.getElementById('detail-datetime').textContent = `${currentMatchData.matchDate} ${currentMatchData.matchTime}`;
-            document.getElementById('detail-location').textContent = `구장 ID: ${currentMatchData.stadiumId}`;
             document.getElementById('detail-match-type').textContent = `개인 매칭 (${currentMatchData.maxPlayers}명)`;
             document.getElementById('detail-skill-level').textContent = currentMatchData.level;
             document.getElementById('max-players').textContent = currentMatchData.maxPlayers;
 
-            // 상태 표시
+            // 2. 구장 정보 조회 및 지도 초기화
+            const stadiumId = currentMatchData.stadiumId;
+            const stadiumRes = await fetch(`/api/stadiums`);
+            const allStadiums = await stadiumRes.json();
+            const stadium = allStadiums.find(s => s.stadiumId === stadiumId);
+
+            if (stadium) {
+                document.getElementById('detail-location').textContent = stadium.name + ' (' + stadium.address + ')';
+                // ⭐ 좌표를 얻은 후 지도 초기화 ⭐
+                initMap(stadium.latitude, stadium.longitude, stadium.name);
+            } else {
+                document.getElementById('detail-location').textContent = `구장 ID ${stadiumId} 정보를 찾을 수 없습니다.`;
+                document.getElementById('map').textContent = '구장 정보를 찾을 수 없어 지도를 표시할 수 없습니다.';
+            }
+
+            // 3. 상태 표시
             const statusEl = document.getElementById('match-status-display');
             if (currentMatchData.status === 'CLOSED') {
                 statusEl.textContent = "(모집 마감)";
@@ -212,7 +340,10 @@
                 statusEl.textContent = "(모집중)";
                 statusEl.className = "match-status-label status-open";
             }
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            console.error(err);
+            document.getElementById('map').textContent = '경기 정보 로드 중 오류 발생.';
+        }
     }
 
     async function fetchParticipantList() {
@@ -225,7 +356,7 @@
     }
 
     /* =========================================================
-       3. 화면 렌더링 (핵심!)
+       4. 화면 렌더링
     ========================================================= */
     function renderParticipantList(participants) {
         const listEl = document.getElementById('participant-list');
@@ -320,7 +451,7 @@
     }
 
     /* =========================================================
-       4. 액션 함수들 (API 호출)
+       5. 액션 함수들 (API 호출)
     ========================================================= */
 
     // 참가 신청
@@ -374,7 +505,7 @@
     };
 
     /* =========================================================
-       5. WebSocket (실시간 갱신)
+       6. WebSocket (실시간 갱신)
     ========================================================= */
     function connectWebSocket() {
         const socket = new SockJS('/ws');
@@ -388,6 +519,7 @@
             });
         }, (err) => console.error("WebSocket Error:", err));
     }
+
 
 </script>
 

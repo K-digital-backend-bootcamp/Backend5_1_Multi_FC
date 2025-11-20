@@ -12,9 +12,9 @@
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 
     <style>
-        /* 스타일 유지 */
+        /* [기존 스타일 유지] */
         .stadium-main { padding: 100px 40px 40px 40px; background-color: #f7f7f7; min-height: 100vh; }
-        .stadium-container { max-width: 1200px; margin: 0 auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: grid; grid-template-columns: 1fr 400px; gap: 30px; }
+        .search-container { max-width: 1200px; margin: 0 auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: grid; grid-template-columns: 1fr 400px; gap: 30px; }
         .stadium-title { grid-column: 1 / -1; font-size: 32px; font-weight: 800; color: #333; margin-bottom: 5px; border-bottom: 3px solid #6c5ce7; padding-bottom: 10px; }
         .detail-left-column { grid-column: 1 / 2; display: flex; flex-direction: column; }
         .map-area { width: 100%; height: 350px; background-color: #eee; border-radius: 10px; margin-bottom: 25px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #888; }
@@ -75,6 +75,13 @@
         /* 헤더 스타일 (공통) */
         .user-menu { position: absolute; top: 60px; right: 20px; background: white; border: 1px solid #ddd; border-radius: 10px; padding: 15px; display: none; width: 200px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); z-index: 1000; }
         .user-menu.show { display: block; }
+
+        /* ⭐⭐ 메뉴 토글 CSS 추가 (메뉴 나오게 하기 위해 필수) ⭐⭐ */
+        .quick-menu { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; background: white; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); }
+        .main-nav { display: none; position: absolute; top: 60px; right: 0; background: white; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); width: 200px; border-radius: 8px; z-index: 90; list-style: none; padding: 10px 0; margin: 0;}
+        .main-nav.show { display: block; }
+        .main-nav ul { list-style: none; padding: 0; margin: 0; }
+        .main-nav ul li a { display: block; padding: 10px 15px; text-decoration: none; color: #333; }
     </style>
 </head>
 <body>
@@ -83,7 +90,7 @@
     <div class="logo"><a href="/">MULTI FC</a></div>
     <div class="header-icons">
         <a href="/login" id="nav-login-btn" style="margin-right:10px; font-weight:bold; color:#333; display:block;">로그인</a>
-        <button id="profile-menu-toggle" class="profile-icon" style="position: relative; display: none; background:none; border:none; font-size:24px; cursor:pointer;">
+        <button id="profile-menu-toggle" class="profile-icon" style="position: relative; display: none;">
             <i class="fas fa-user-circle"></i>
         </button>
         <div id="profile-menu" class="user-menu">
@@ -100,7 +107,7 @@
     <nav id="main-menu" class="main-nav">
         <ul>
             <li><a href="/"><i class="fas fa-home"></i> 메인 (Home)</a></li>
-            <li><a href="/fields" class="active"><i class="fas fa-search"></i> 구장검색</a></li>
+            <li><a href="/fields"><i class="fas fa-search"></i> 구장검색</a></li>
             <li><a href="/community"><i class="fas fa-users"></i> 커뮤니티</a></li>
             <li id="nav-chat-link-li"><a href="/chat" id="nav-chat-link"><i class="fas fa-comments"></i> 실시간채팅</a></li>
         </ul>
@@ -108,7 +115,7 @@
 </header>
 
 <main class="stadium-main">
-    <div class="stadium-container">
+    <div class="search-container">
         <h1 class="stadium-title" id="stadium-name">구장 정보 로딩중... (ID: <span th:text="${stadiumId}"></span>)</h1>
 
         <div class="detail-left-column">
@@ -116,8 +123,6 @@
             <div class="info-card">
                 <h2>구장 기본 정보</h2>
                 <div class="info-item"><i class="fas fa-map-marker-alt"></i> <span id="stadium-address">주소</span></div>
-                <div class="info-item"><i class="fas fa-phone"></i> <span id="stadium-contact">-</span></div>
-                <div class="info-item"><i class="fas fa-won-sign"></i> <span id="stadium-fee">-</span></div>
                 <div class="info-item"><i class="fas fa-users"></i> <span id="stadium-size">-</span></div>
             </div>
         </div>
@@ -140,7 +145,9 @@
             <div id="tab-review" class="tab-content">
                 <h2 style="font-size: 24px; color: #333; margin-bottom: 15px;">⭐ 구장 리뷰</h2>
                 <div id="review-list"></div>
-                <button id="write-review-btn" class="btn-create" style="width: 100%; margin-top: 20px; display: none;">후기 작성</button>
+                <div style="text-align: center; margin-top: 20px; font-size: 14px; color: #777;">
+                    후기 작성은 매칭 완료 후 메인 페이지 알림을 통해 가능합니다.
+                </div>
             </div>
         </div>
 
@@ -159,6 +166,11 @@
         <label>장소</label>
         <input type="text" id="stadiumName" readonly>
         <input type="hidden" id="stadiumId">
+        <label>레벨</label> <select id="matchLevel">
+        <option value="초급">초급</option>
+        <option value="중급">중급</option>
+        <option value="고급">고급</option>
+    </select>
         <label>날짜</label>
         <input type="date" id="matchDate">
         <label>시간</label>
@@ -205,7 +217,10 @@
         }
 
         document.getElementById('profile-menu-toggle')?.addEventListener('click', () => document.getElementById('profile-menu').classList.toggle('show'));
+
+        // ⭐ 메뉴 토글 활성화 ⭐
         document.getElementById('menu-toggle')?.addEventListener('click', () => document.getElementById('main-menu').classList.toggle('show'));
+
         document.getElementById('logout-button')?.addEventListener('click', (e) => {
             e.preventDefault();
             localStorage.clear();
@@ -265,20 +280,13 @@
                 return location.href = '/login';
             }
             document.getElementById('hostName').value = localStorage.getItem('userNickname') || '회원';
-            setupTime();
+            setupTime(); // 시간/레벨 초기화
             openMatchModal(true);
         });
 
         // 4. 초기 탭 설정 및 이벤트 리스너 추가
         document.getElementById('tab-btn-match').addEventListener('click', () => changeTab('match'));
         document.getElementById('tab-btn-review').addEventListener('click', () => changeTab('review'));
-
-        // 후기 작성 버튼 이벤트
-        document.getElementById('write-review-btn').addEventListener('click', () => {
-            const currentStadiumId = new URLSearchParams(window.location.search).get('id');
-            // 'id' 파라미터를 'stadiumId'로 전달하여 후기 작성 페이지로 이동
-            window.location.href = `/reviews/write?stadiumId=${currentStadiumId}`;
-        });
 
         changeTab('match');
     });
@@ -305,9 +313,6 @@
         const reviewListEl = document.getElementById('review-list');
         reviewListEl.innerHTML = '<p style="color:#777; padding:10px 0;">후기 로딩중...</p>';
 
-        // 로그인 상태라면 후기 작성 버튼 노출 (실제는 경기 종료 후 가능 여부 확인 필요)
-        document.getElementById('write-review-btn').style.display = localStorage.getItem('accessToken') ? 'block' : 'none';
-
         try {
             const res = await fetch(`/api/reviews/stadium/${stadiumId}`);
             if (!res.ok) throw new Error('후기 로드 실패');
@@ -332,8 +337,7 @@
         }
 
         reviews.forEach(review => {
-            // ⭐ [수정] 비교 시 항상 Number()로 변환
-            const isMyReview = currentUserId && Number(currentUserId) === Number(review.userId);
+            const isMyReview = currentUserId && Number(currentUserId) === review.userId;
             const stars = '⭐'.repeat(review.rating);
 
             const reviewDiv = document.createElement('div');
@@ -375,7 +379,6 @@
                 if (!confirm("정말로 이 후기를 삭제하시겠습니까?")) return;
 
                 try {
-                    // ⭐ [수정] currentUserId를 Number()로 변환하여 쿼리 파라미터로 전송
                     const response = await fetch(`/api/reviews/${reviewId}?userId=${Number(currentUserId)}`, {
                         method: 'DELETE'
                     });
@@ -414,7 +417,6 @@
             const newContent = document.getElementById('edit-content').value;
 
             const updatedReviewData = {
-                // ⭐ [수정] currentUserId를 Number()로 변환하여 요청 본문에 포함
                 userId: Number(currentUserId), // 권한 확인용
                 rating: Number(newRating),
                 content: newContent
@@ -442,7 +444,59 @@
         });
     }
 
-    /* --- 기존 기타 함수 유지 --- */
+    /** [수정] 시간 및 레벨 초기화 */
+    function setupTime() {
+        const start = document.getElementById("startTime");
+        const end = document.getElementById("endTime");
+        const levelSelect = document.getElementById("matchLevel"); // 레벨 드롭다운
+
+        start.innerHTML = ""; end.innerHTML = "";
+
+        // 시간 옵션 생성
+        for(let i=0; i<24; i++) {
+            const t = `${i < 10 ? '0'+i : i}:00`;
+            start.innerHTML += `<option>${t}</option>`;
+            end.innerHTML += `<option>${t}</option>`;
+        }
+        start.value = "19:00"; end.value = "20:00";
+
+        // 레벨 옵션 초기화 (HTML에 이미 있으므로 초기 값만 설정)
+        if (levelSelect) {
+            levelSelect.value = "초급";
+        }
+    }
+
+    /** [수정] 경기 생성 폼 제출 */
+    async function submitMatchForm() {
+        const hostId = localStorage.getItem('userId');
+        const level = document.getElementById('matchLevel').value; // ⭐ 레벨 값 가져오기 ⭐
+
+        if(!hostId) { alert("로그인 정보가 없습니다."); location.href='/login'; return; }
+
+        const req = {
+            stadiumId: Number(document.getElementById('stadiumId').value),
+            hostId: Number(hostId),
+            matchDate: document.getElementById('matchDate').value,
+            matchTime: document.getElementById('startTime').value,
+            maxPlayers: 10,
+            level: level // ⭐ 레벨 값 포함 ⭐
+        };
+
+        const res = await fetch('/api/matchrooms', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(req)
+        });
+
+        if(res.ok) {
+            alert("경기 생성 완료!");
+            openMatchModal(false);
+        } else {
+            alert("생성 실패");
+        }
+    }
+
+    // --- 기존 기타 함수 유지 ---
     function renderMatches(matches, date) {
         const list = document.getElementById('match-list');
         const filtered = matches.filter(m => m.matchDate === date);
@@ -473,43 +527,6 @@
     function openMatchModal(show) {
         document.getElementById('match-create-modal').style.display = show ? 'flex' : 'none';
     }
-
-    function setupTime() {
-        const start = document.getElementById("startTime");
-        const end = document.getElementById("endTime");
-        start.innerHTML = ""; end.innerHTML = "";
-        for(let i=0; i<24; i++) {
-            const t = `${i < 10 ? '0'+i : i}:00`;
-            start.innerHTML += `<option>${t}</option>`;
-            end.innerHTML += `<option>${t}</option>`;
-        }
-        start.value = "19:00"; end.value = "20:00";
-    }
-
-    async function submitMatchForm() {
-        const hostId = localStorage.getItem('userId');
-        if(!hostId) { alert("로그인 정보가 없습니다."); location.href='/login'; return; }
-
-        const req = {
-            stadiumId: Number(document.getElementById('stadiumId').value),
-            hostId: Number(hostId),
-            matchDate: document.getElementById('matchDate').value,
-            matchTime: document.getElementById('startTime').value,
-            maxPlayers: 10,
-            level: "초급"
-        };
-
-        const res = await fetch('/api/matchrooms', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(req)
-        });
-
-        if(res.ok) {
-            alert("경기 생성 완료!");
-            openMatchModal(false);
-        } else {
-            alert("생성 실패");
-        }
-    }
 </script>
+</body>
+</html>
