@@ -444,8 +444,12 @@
             newScheduleTitle.style.display = 'block';
             setNewScheduleMode();
         }
+
         fixedDetailWindow.style.display = 'block';
-        event.stopPropagation();
+
+        if (event && event.stopPropagation) {
+            event.stopPropagation();
+        }
     }
 
     function setNewScheduleMode() {
@@ -554,7 +558,7 @@
             document.getElementById('fixed-detail-edit-area').appendChild(summaryDiv);
 
             document.getElementById('go-to-match-btn').addEventListener('click', () => {
-                window.location.href = `/schedule/detail/${schedule.matchId ?? schedule.id}`;
+                window.location.href = `/schedule/detail/${schedule.matchId}`;
             });
             return;
         }
@@ -722,8 +726,8 @@
                 time: item.scheduleTime,
                 type: item.scheduleType === '경기' ? 'match' : 'personal',
                 title: item.title,
-                detail: '',
-                matchId: null
+                detail: item.content || '',
+                matchId: item.matchId ?? null
             });
         });
 
@@ -1202,15 +1206,57 @@
         const mainTab = urlParams.get('tab');
         const subTab = urlParams.get('subtab');
 
-        if (mainTab === 'calendar') {
-            document.querySelector('.tab-btn[data-tab="tab-calendar"]').click();
-        } else if (mainTab === 'friends') {
-            document.querySelector('.tab-btn[data-tab="tab-friends"]').click();
-            if (subTab === 'add') {
-                document.querySelector('.sub-tab-btn[data-sub-tab="sub-tab-friend-add"]').click();
+        // 캘린더 딥링크 처리
+        const dateParam = urlParams.get('date');        // ex) "2025-11-20"
+        const scheduleIdParam = urlParams.get('scheduleId'); // ex) "123"
+
+        if (mainTab === 'calendar' && dateParam) {
+            const calendarTabBtn = document.querySelector('.tab-btn[data-tab="tab-calendar"]');
+            if (calendarTabBtn) calendarTabBtn.click();
+            const [dy, dm, dd] = dateParam.split('-').map(Number);
+
+            // 캘린더 기준 월을 해당 날짜의 월로 맞추기
+            if (dy && dm) {
+                currentDate = new Date(dy, dm - 1, 1);
+                await loadThisMonthSchedules();   // 그 달 일정 다시 로딩 + 렌더
+                monthYearElement.textContent = `${dy}년 ${dm}월`;
             }
-        } else {
-            document.querySelector('.tab-btn[data-tab="tab-info"]').click();
+
+            // 해당 날짜 상세 패널 열기
+            await openDaySchedule(dd, { stopPropagation: () => {} });
+
+            // 특정 scheduleId까지 넘어왔으면 그 일정 자동 선택
+            if (scheduleIdParam) {
+                setTimeout(() => {
+                    const targetLi = document.querySelector(
+                        `#fixed-schedule-list li[data-schedule-id="${scheduleIdParam}"]`
+                    );
+                    if (!targetLi) return;
+
+                    const schedule = (window.MOCK_SCHEDULES || []).find(
+                        s => String(s.id) === String(scheduleIdParam)
+                    );
+                    if (schedule) {
+                        bindScheduleToDetail({ currentTarget: targetLi }, schedule);
+                    } else {
+                        targetLi.click();
+                    }
+                }, 200);
+            }
+        }
+
+
+        if (!(mainTab === 'calendar' && dateParam)) {
+            if (mainTab === 'calendar' && !dateParam) {
+                document.querySelector('.tab-btn[data-tab="tab-calendar"]').click();
+            } else if (mainTab === 'friends') {
+                document.querySelector('.tab-btn[data-tab="tab-friends"]').click();
+                if (subTab === 'add') {
+                    document.querySelector('.sub-tab-btn[data-sub-tab="sub-tab-friend-add"]').click();
+                }
+            } else {
+                document.querySelector('.tab-btn[data-tab="tab-info"]').click();
+            }
         }
 
         // 🔗 모달 이벤트 바인딩
@@ -1251,6 +1297,8 @@
             });
         }
     });
+
+
 </script>
 </body>
 </html>

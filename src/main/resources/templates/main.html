@@ -345,6 +345,9 @@
     // ⭐ [수정] 후기 작성이 필요한 구장 ID 목록 (동적으로 가져옴)
     let pendingReviewStadiumIds = [];
 
+    // ⭐ [추가] 다가오는 일정 데이터 (실제 API 응답 저장용)
+    let upcomingSchedules = [];
+
     function updateGlobalBadge() {
         if (pendingReviewStadiumIds.length > 0 || hasScheduleNotif) {
             if (badge) badge.style.display = 'block';
@@ -387,19 +390,46 @@
             hasScheduleNotif = false;
             return;
         }
+
+        const accessToken = localStorage.getItem('accessToken');
+        if (!accessToken) {
+            hasScheduleNotif = false;
+            return;
+        }
+
         try {
-            await new Promise(r => setTimeout(r, 500));
-            const mockSchedules = [
-                { id: 1, date: "2025-11-01", time: "19:00", location: "서울 강남 풋살장", type: "개인 매치" },
-                { id: 2, date: "2025-11-03", time: "20:00", location: "수원 월드컵 풋살장", type: "팀 매치" },
-                { id: 3, date: "2025-11-05", time: "21:00", location: "용인 풋살파크", type: "개인 매치" },
-                { id: 4, date: "2025-11-08", time: "18:00", location: "분당 탄천 구장", type: "팀 매치" }
-            ];
-            if (mockSchedules.length > 0) {
-                hasScheduleNotif = true;
+            const response = await fetch(`/api/schedule/upcoming`, {
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+
+                upcomingSchedules = data.map(item => ({
+                    id: item.scheduleId,
+                    matchId: item.matchId,
+                    type: item.scheduleType,    // "경기" / "개인"
+                    date: item.scheduleDate,
+                    time: item.scheduleTime,
+                    title: item.title
+                }));
+
+                hasScheduleNotif = upcomingSchedules.length > 0;
+            } else {
+                console.error("다가오는 일정 조회 실패:", response.status);
+                hasScheduleNotif = false;
+                upcomingSchedules = [];
             }
-        } catch (error) { console.error("일정 요청 중 오류 발생:", error); }
+        } catch (error) {
+            console.error("일정 요청 중 오류 발생:", error);
+            hasScheduleNotif = false;
+            upcomingSchedules = [];
+        }
     }
+
 
     // ⭐⭐ [추가] 알림 닫기 로직: 리뷰 알림 배너 숨기기 ⭐⭐
     function closeReviewNotification() {
@@ -597,60 +627,77 @@
                 scheduleSection.style.display = 'block';
                 const noScheduleView = document.getElementById('no-schedule-view');
 
-                // 목업 데이터 (3개 이상)
-                // ⭐⭐⭐ 수정된 목업 데이터 (type 추가) ⭐⭐⭐
-                const mockSchedules = [
-                    { id: 1, date: "2025-11-01", time: "19:00", location: "서울 강남 풋살장", type: "개인 매치" },
-                    { id: 2, date: "2025-11-03", time: "20:00", location: "수원 월드컵 풋살장", type: "팀 매치" },
-                    { id: 3, date: "2025-11-05", time: "21:00", location: "용인 풋살파크", type: "개인 매치" },
-                    { id: 4, date: "2025-11-08", time: "18:00", location: "분당 탄천 구장", type: "팀 매치" }
-                ];
-                // ⭐⭐⭐ 수정된 목업 데이터 끝 ⭐⭐⭐
+                // ✔ checkUpcomingSchedules()에서 채워준 값 사용
+                const list = upcomingSchedules;
 
-                if (mockSchedules.length > 0) {
-                    // 슬라이더 DOM 렌더링 및 로직 유지
+                if (list && list.length > 0) {
                     sliderTrack.innerHTML = '';
                     paginationContainer.innerHTML = '';
 
-                    mockSchedules.forEach((schedule, index) => {
+                    list.forEach((schedule, index) => {
                         const item = document.createElement('div');
                         item.className = 'schedule-item';
-                        // ⭐⭐⭐ 수정된 HTML 구조: 날짜, 시간, 장소, 타입을 명확히 표시 ⭐⭐⭐
-                        item.innerHTML = `
-                            <div class="item-info-wrapper">
-                                <div class="item-type">${schedule.type}</div>
-                                <strong>${schedule.date} (${schedule.time})</strong>
-                                <div class="item-location"><i class="fas fa-map-marker-alt"></i>${schedule.location}</div>
-                            </div>
-                            <a href="/schedule/detail/${schedule.id}" class="schedule-item-link">상세보기</a>
-                        `;
-                        // ⭐⭐⭐ 수정된 HTML 구조 끝 ⭐⭐
+
+                        const isMatch = schedule.type === '경기';   // 경기 일정인지 여부
+
+                        if (isMatch) {
+                            const targetMatchId = schedule.matchId;
+                            // ⭐ 경기 일정 카드
+                            item.innerHTML = `
+                                <div class="item-info-wrapper">
+                                    <div class="item-type type-match">경기 일정</div>
+                                    <strong>${schedule.title || ''}</strong>
+                                    <div class="item-location">
+                                        <i class="fas fa-clock"></i>
+                                        ${schedule.date || ''} ${schedule.time ? `(${schedule.time})` : ''}
+                                    </div>
+                                </div>
+                                 <a href="/schedule/detail/${targetMatchId}" class="schedule-item-link">상세보기</a>
+                            `;
+                        } else {
+                            // ⭐ 개인 일정 카드
+                            item.innerHTML = `
+                                <div class="item-info-wrapper">
+                                    <div class="item-type type-personal">개인 일정</div>
+                                    <strong>${schedule.title || '(제목 없는 일정)'}</strong>
+                                    <div class="item-location">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        ${schedule.date || ''} ${schedule.time ? `(${schedule.time})` : ''}
+                                    </div>
+                                </div>
+                                <a href="/mypage?tab=calendar&date=${schedule.date}&scheduleId=${schedule.id}" class="schedule-item-link">
+                                달력에서 보기</a>
+                            `;
+                        }
 
                         sliderTrack.appendChild(item);
 
                         const dot = document.createElement('span');
                         dot.className = 'dot';
                         dot.dataset.index = index;
-                        // 클릭 이벤트는 위에서 통합해서 처리합니다.
                         paginationContainer.appendChild(dot);
                     });
 
-                    totalSlides = mockSchedules.length; // 각 아이템당 1페이지
+                    totalSlides = list.length;
                     currentIndex = 0;
 
                     updateSliderControls();
                     updatePaginationDots();
-                    if(document.querySelector('.schedule-slider-container')) document.querySelector('.schedule-slider-container').style.display = 'block';
-                    if(noScheduleView) noScheduleView.style.display = 'none';
+
+                    if (document.querySelector('.schedule-slider-container')) {
+                        document.querySelector('.schedule-slider-container').style.display = 'block';
+                    }
+                    if (noScheduleView) noScheduleView.style.display = 'none';
 
                 } else if (noScheduleView) {
-                    // 일정이 없을 때 빈 메시지 표시 (Hero 섹션 내에서)
-                    noScheduleView.innerHTML = '<p class="no-schedule-message" style="color:white; text-shadow: 0 0 3px black;">아직 7일 이내의 일정이 없습니다. 😥</p>';
+                    noScheduleView.innerHTML =
+                        '<p class="no-schedule-message" style="color:white; text-shadow: 0 0 3px black;">아직 7일 이내의 일정이 없습니다. 😥</p>';
                     noScheduleView.style.display = 'block';
-                    if(document.querySelector('.schedule-slider-container')) document.querySelector('.schedule-slider-container').style.display = 'none';
+                    if (document.querySelector('.schedule-slider-container')) {
+                        document.querySelector('.schedule-slider-container').style.display = 'none';
+                    }
                 }
             }
-
         } else {
             // [비회원일 때] - Hero 섹션에 로그인 유도 메시지 표시
             if (profileMenuToggle) profileMenuToggle.style.display = 'none';
