@@ -506,6 +506,7 @@
         const skillLevelSelect = document.getElementById('skill-level');
         const addressInput = document.getElementById('address');
         const genderInputs = document.querySelectorAll('input[name="gender"]');
+        const dateElement = document.getElementById('terms-date');
 
         // 메시지창
         const emailMsg = document.getElementById('email-message');
@@ -692,6 +693,15 @@
         if (nicknameInput.value) nicknameInput.dispatchEvent(new Event('input')); // 소셜 닉네임 검사 트리거
         checkSubmitButtonState();
 
+        // 약관 날짜
+        if (dateElement) {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0'); // 월은 0부터 시작하므로 +1
+            const day = String(today.getDate()).padStart(2, '0');
+
+            dateElement.textContent = `${year}년 ${month}월 ${day}일`;
+        }
 
         // ⭐️ 폼 제출 ⭐️
         registerForm.addEventListener('submit', async (e) => {
