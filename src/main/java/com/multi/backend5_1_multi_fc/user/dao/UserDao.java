@@ -61,6 +61,7 @@ public class UserDao {
         String sql = "SELECT * FROM User WHERE username = ?";
         try {
             // queryForObject는 결과가 1개일 때 사용합니다.
+            // BeanPropertyRowMapper가 DB의 snake_case(user_id)를 DTO의 camelCase(userId)로 자동 변환해줍니다.
             return jdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(UserDto.class), username);
         } catch (EmptyResultDataAccessException e) {
             // 일치하는 유저가 없으면 null을 반환합니다.

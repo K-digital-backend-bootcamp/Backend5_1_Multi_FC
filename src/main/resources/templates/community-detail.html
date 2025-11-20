@@ -3,213 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="'게시글 상세 (' + ${postId} + ') - MULTI FC'">MULTI FC - 게시글 상세</title>
+    <title th:text="'게시글 상세 (' + ${postId} + ') - FUTSAL MATCH'">FUTSAL MATCH - 게시글 상세</title>
 
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
-    <style>
-        .community-main {
-            padding: 100px 40px 40px 40px;
-            background-color: #f7f7f7;
-            min-height: 100vh;
-        }
-        .board-container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-
-        .detail-header {
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-        }
-        .detail-header h1 {
-            font-size: 26px;
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-        .detail-meta {
-            font-size: 14px;
-            color: #777;
-        }
-        .detail-meta span:not(:last-child)::after {
-            content: " | ";
-            color: #ccc;
-        }
-
-        .detail-content {
-            min-height: 200px;
-            padding: 20px 0;
-            line-height: 1.6;
-            font-size: 16px;
-            color: #333;
-            border-bottom: 1px solid #eee;
-        }
-
-        /* 액션 버튼 그룹 */
-        .post-actions {
-            display: flex;
-            justify-content: space-between; /* ⭐⭐ 목록 버튼을 왼쪽 끝, 수정/삭제 버튼을 오른쪽 끝에 배치 ⭐⭐ */
-            align-items: center;
-            margin-top: 15px;
-        }
-        .detail-controls button, .detail-controls a {
-            padding: 8px 15px;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            text-decoration: none;
-            margin-left: 5px;
-            border: 1px solid #ddd;
-        }
-        /* 수정/삭제 버튼 스타일 */
-        .btn-edit { background-color: #4a90e2; color: white; border: none; }
-        .btn-delete { background-color: #e74c3c; color: white; border: none; }
-
-        /* ⭐⭐ 댓글 섹션 상단 마진 조정 ⭐⭐ */
-        .comments-section {
-            margin-top: 35px; /* 여백 확보 */
-        }
-        .comment-item {
-            border-bottom: 1px dotted #ddd;
-            padding: 15px 0;
-            font-size: 15px;
-            position: relative; /* 답글 버튼 위치 지정용 */
-        }
-        /* 댓글 헤더 및 액션 버튼 그룹 */
-        .comment-header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 5px;
-        }
-        .comment-meta {
-            display: flex;
-            font-size: 13px;
-            color: #999;
-            gap: 15px;
-        }
-        .comment-writer {
-            font-weight: 700;
-            color: #6c5ce7;
-            margin-right: 10px;
-        }
-        .comment-date {
-            font-size: 13px;
-            color: #999;
-        }
-        .comment-content {
-            color: #333;
-            line-height: 1.5;
-            margin-left: 0;
-        }
-        /* ⭐⭐ 댓글 액션 버튼 그룹 스타일 ⭐⭐ */
-        .comment-actions {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .comment-actions button {
-            background: none;
-            border: none;
-            color: #999;
-            font-size: 12px;
-            cursor: pointer;
-            padding: 0;
-            transition: color 0.2s;
-            font-weight: 500;
-        }
-        .comment-actions button:hover {
-            color: #4a90e2;
-        }
-        .comment-actions .delete {
-            color: #e74c3c;
-        }
-        .comment-actions .reply {
-            color: #2ecc71;
-            font-weight: 600;
-        }
-        /* ⭐⭐ 대댓글 시각적 구분 ⭐⭐ */
-        .comment-item.reply {
-            margin-left: 30px; /* 들여쓰기 */
-            border-left: 3px solid #f0f0f0; /* 시각적 구분선 */
-            padding-left: 10px;
-            margin-bottom: 5px;
-        }
-        /* ⭐⭐ 대댓글 폼 스타일 ⭐⭐ */
-        .reply-form-container {
-            margin-top: 10px;
-            padding: 15px;
-            background: #fcfcfc;
-            border: 1px solid #eee;
-            border-radius: 8px;
-            margin-left: 20px;
-        }
-        .reply-form-container textarea {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            resize: vertical;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-        .reply-form-container button {
-            float: right;
-            padding: 8px 15px;
-            font-size: 14px;
-            margin-left: 10px;
-            background-color: #6c5ce7;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .reply-form-container .btn-reply-cancel {
-            background-color: #aaa;
-            color: white;
-            border: none;
-        }
-        .reply-form-container::after {
-            content: "";
-            display: table;
-            clear: both;
-        }
-        /* ⭐⭐ 댓글 섹션 스타일 끝 ⭐⭐ */
-        .comment-form textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            resize: vertical;
-            margin-bottom: 10px;
-        }
-        .comment-form button {
-            float: right;
-            padding: 10px 18px;
-            background-color: #6c5ce7;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 5px;
-        }
-        .comment-form::after {
-            content: "";
-            display: table;
-            clear: both;
-        }
-    </style>
 </head>
-<body>
+<body class="community-page">
 
 <header class="quick-menu">
     <div class="logo"><a href="/">Multi FC</a></div>
@@ -219,10 +20,7 @@
             <span id="notification-badge" class="notification-badge"></span>
         </button>
         <div id="profile-menu" class="user-menu">
-            <div class="user-info">
-                <strong><span id="user-menu-username">사용자</span>님</strong>
-                <p>환영합니다!</p>
-            </div>
+            <div class="user-info"> <strong><span id="user-menu-username">사용자</span>님</strong> <p>환영합니다!</p> </div>
             <ul>
                 <li><a href="/notifications" id="nav-notifications-link"><i class="fas fa-bell"></i> 알림 목록</a></li>
                 <li><a href="/mypage"><i class="fas fa-user"></i> 마이페이지</a></li>
@@ -235,12 +33,11 @@
 
     <nav id="main-menu" class="main-nav">
         <ul>
-            <li><a href="/" class="active"><i class="fas fa-home"></i> 메인 (Home)</a></li>
+            <li><a href="/"><i class="fas fa-home"></i> 메인 (Home)</a></li>
             <li><a href="/fields"><i class="fas fa-search"></i> 구장검색</a></li>
-            <li><a href="/community" ><i class="fas fa-users"></i> 커뮤니티</a></li>
-            <li id="nav-chat-link-li"><a href="/chat" id="nav-chat-link"><i class="fas fa-comments"></i> 실시간채팅</a></li>
-            <li><a href="/login" id="nav-login-link"><i class="fas fa-sign-in-alt"></i> 로그인</a></li>
-            <li><a href="#" id="nav-logout-link"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
+            <li><a href="/community" class="active"><i class="fas fa-users"></i> 커뮤니티</a></li>
+            <li><a href="/chat"><i class="fas fa-comments"></i> 실시간채팅</a></li>
+            <li><a href="/schedule"><i class="fas fa-calendar-alt"></i> 일정</a></li>
         </ul>
     </nav>
 </header>
@@ -289,415 +86,379 @@
 </main>
 
 <script>
-    /* ============================
-       (1) 공통 퀵메뉴 / 로그아웃 로직
-       ============================ */
-    const menuToggle = document.getElementById('menu-toggle');
-    const mainMenu = document.getElementById('main-menu');
-    const profileMenuToggle = document.getElementById('profile-menu-toggle');
-    const profileMenu = document.getElementById('profile-menu');
-    const logoutButton = document.getElementById('logout-button');
-    const navNotificationsLink = document.getElementById('nav-notifications-link');
-
-    const navLoginLink = document.getElementById('nav-login-link');
-    const navLogoutLink = document.getElementById('nav-logout-link');
-    const navChatLinkElement = document.getElementById('nav-chat-link'); // 필요하면 채팅 제한용
-
-    // 햄버거 버튼 → 메인 메뉴 토글
-    if (menuToggle) {
-        menuToggle.addEventListener('click', () => {
-            if (mainMenu) mainMenu.classList.toggle('show');
-            if (profileMenu) profileMenu.classList.remove('show');
-        });
-    }
-
-    // 프로필 아이콘 → 프로필 메뉴 토글
-    if (profileMenuToggle) {
-        profileMenuToggle.addEventListener('click', () => {
-            if (profileMenu) profileMenu.classList.toggle('show');
-            if (mainMenu) mainMenu.classList.remove('show');
-        });
-    }
-
-    // 헤더 밖 클릭 시 메뉴/프로필 닫기
-    document.addEventListener('click', (event) => {
-        const header = document.querySelector('header');
-        if (!header.contains(event.target)) {
-            if (mainMenu) mainMenu.classList.remove('show');
-            if (profileMenu) profileMenu.classList.remove('show');
-        }
-    });
-
-    // 프로필 메뉴의 로그아웃
-    if (logoutButton) {
-        logoutButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('hasReadReviews');
-            localStorage.removeItem('hasReadSchedules');
-            window.location.href = '/login';
-        });
-    }
-
-    // nav 영역 로그아웃 (있을 때만)
-    if (navLogoutLink) {
-        navLogoutLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('hasReadReviews');
-            localStorage.removeItem('hasReadSchedules');
-            window.location.href = '/login';
-        });
-    }
-
-    // 알림 아이콘 클릭
-    if (navNotificationsLink) {
-        navNotificationsLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.setItem('hasReadReviews', 'true');
-            localStorage.setItem('hasReadSchedules', 'true');
-            window.location.href = '/notifications';
-        });
-    }
-
-    // 알림 배지 (필요시 사용)
-    function updateGlobalBadge() {
-        const hasNew = localStorage.getItem('hasNewNotification') === 'true';
-        const badge = document.getElementById('notification-badge');
-        if (badge) badge.style.display = hasNew ? 'block' : 'none';
-    }
-    updateGlobalBadge();
-
-
-    /* ============================
-       (2) 게시글 / 댓글 더미 데이터
-       ============================ */
-    const MOCK_POSTS = [
-        {
-            postId: 10,
-            title: '[필독] 공지사항 및 매너 점수 안내',
-            writer: '관리자',
-            writerId: 1000,
-            content: '안녕하세요. MULTI FC입니다. 원활하고 공정한 경기 매칭을 위해 매너 점수(Manner Score) 시스템을 다음과 같이 개편합니다. 모든 사용자는 변경된 규정을 숙지하여 주시기 바랍니다. - 변경 사항 요약 - 1. 경기 종료 후 의무적으로 팀원 평가를 진행해야 합니다. 2. 평가 미참여시 다음 경기 매칭에 불이익이 발생할 수 있습니다.',
-            category: 'notice',
-            date: '2025-10-25',
-            viewCount: 1200,
-            comments: [
-                { id: 1, writer: 'UserA', writerId: 1001, date: '2025-10-25', content: '운영진님, 매너 시스템 도입 찬성합니다! 기대돼요.', parentCommentId: null },
-                { id: 2, writer: 'UserB', writerId: 1002, date: '2025-10-26', content: '좋은 취지인데, 평가가 너무 주관적이지 않도록 관리 부탁드립니다.', parentCommentId: null },
-                { id: 3, writer: '관리자', writerId: 1000, date: '2025-11-06', content: '댓글 작성 테스트.', parentCommentId: null },
-                { id: 4, writer: '관리자', writerId: 1000, date: '2025-11-06', content: '@UserB 답글 테스트.', parentCommentId: 2 }
-            ]
-        },
-        {
-            postId: 11,
-            title: '자유게시판에서 작성된 글입니다.',
-            writer: 'UserB',
-            writerId: 1001,
-            content: '이것이 자유게시판의 글 내용입니다!',
-            category: 'free',
-            date: '2025-11-01',
-            viewCount: 50,
-            comments: [
-                { id: 5, writer: 'UserC', writerId: 1003, date: '2025-11-01', content: '자유글 댓글.', parentCommentId: null }
-            ]
-        },
-        {
-            postId: 12,
-            title: '팀원 모집합니다!',
-            writer: '캡틴손',
-            writerId: 1002,
-            content: '팀원 모집 내용',
-            category: 'team',
-            date: '2025-11-02',
-            viewCount: 20,
-            comments: []
-        },
-    ];
+    // [수정] 더 이상 MOCK_POSTS / community_posts 를 쓰지 않고,
+    // 서버에서 받아온 닉네임 + 댓글 정보만 사용
+    let CURRENT_USER_NICKNAME = '';
     let POST_DATA = null;
 
-    const CURRENT_USER_ID = 1000;         // 로그인 유저 ID (mock)
-    const CURRENT_USER_WRITER_NAME = '관리자'; // 로그인 유저 이름 (mock)
+    // [대댓글] 현재 어떤 댓글에 답글을 달고 있는지 (null이면 일반 댓글)
+    let CURRENT_PARENT_COMMENT_ID = null;
 
-
-    /* ============================
-       (3) 페이지 로드 시 초기화
-       ============================ */
+    // ===== 공통 메뉴/로그아웃 =====
     document.addEventListener('DOMContentLoaded', () => {
+        const menuToggle = document.getElementById('menu-toggle');
+        const mainMenu = document.getElementById('main-menu');
+        const profileMenuToggle = document.getElementById('profile-menu-toggle');
+        const profileMenu = document.getElementById('profile-menu');
+        const logoutButton = document.getElementById('logout-button');
+        const userMenuName = document.getElementById('user-menu-username');
+
         const accessToken = localStorage.getItem('accessToken');
 
-        // 로그인/비로그인에 따른 헤더 UI 토글
-        if (accessToken) {
-            if (profileMenuToggle) profileMenuToggle.style.display = 'block';
-            if (navLoginLink && navLoginLink.parentElement) navLoginLink.parentElement.style.display = 'none';
-            if (navLogoutLink && navLogoutLink.parentElement) navLogoutLink.parentElement.style.display = 'list-item';
+        // ✅ 로그인 때 저장해 둔 값만 사용 (로그인 페이지에서 localStorage.setItem('username', data.user.nickname))
+        const storedName = (localStorage.getItem('username') || '').trim();
+        if (storedName) {
+            CURRENT_USER_NICKNAME = storedName;
+            if (userMenuName) {
+                userMenuName.textContent = storedName;
+            }
         } else {
-            if (profileMenuToggle) profileMenuToggle.style.display = 'none';
-            if (navLoginLink && navLoginLink.parentElement) navLoginLink.parentElement.style.display = 'list-item';
-            if (navLogoutLink && navLogoutLink.parentElement) navLogoutLink.parentElement.style.display = 'none';
+            // 저장된 게 없으면 기본값
+            if (userMenuName) {
+                userMenuName.textContent = '사용자';
+            }
         }
 
-        // 필요하면: 비회원일 때 상세도 막고 로그인 보내고 싶다면 여기서 처리
-        // if (!accessToken) {
-        //     alert("❌ 회원 전용 페이지입니다.\n로그인 후 이용 가능합니다.");
-        //     localStorage.setItem('redirectAfterLogin', window.location.pathname);
-        //     window.location.href = '/login';
-        //     return;
-        // }
+        // 프로필 아이콘/메뉴 토글, 로그아웃 처리 등 기존 코드 그대로
+        if (menuToggle) {
+            menuToggle.addEventListener('click', (event) => {
+                event.stopPropagation();
+                if (mainMenu) mainMenu.classList.toggle('show');
+                if (profileMenu) profileMenu.classList.remove('show');
+            });
+        }
+        if (profileMenuToggle) {
+            profileMenuToggle.addEventListener('click', (event) => {
+                event.stopPropagation();
+                if (profileMenu) profileMenu.classList.toggle('show');
+                if (mainMenu) mainMenu.classList.remove('show');
+            });
+        }
+        document.addEventListener('click', (event) => {
+            const header = document.querySelector('header');
+            if (header && !header.contains(event.target)) {
+                if (mainMenu) mainMenu.classList.remove('show');
+                if (profileMenu) profileMenu.classList.remove('show');
+            }
+        });
+        if (logoutButton) {
+            logoutButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('hasReadReviews');
+                localStorage.removeItem('hasReadSchedules');
+                localStorage.removeItem('username');
+                window.location.href = '/login';
+            });
+        }
 
-        // URL에서 postId 추출
-        const urlParams = new URLSearchParams(window.location.search);
-        const postIdFromParam = urlParams.get('postId');
+        if (accessToken && profileMenuToggle) {
+            profileMenuToggle.style.display = 'flex';
+        }
 
+        // URL 에서 postId 추출 후 상세 조회
         const pathSegments = window.location.pathname.split('/');
-        const postIdFromPath = pathSegments.pop() || pathSegments.pop(); // /community/detail/10 같은 경우
-
-        const targetPostId =
-            postIdFromParam ||
-            (postIdFromPath && !isNaN(parseInt(postIdFromPath))
-                ? parseInt(postIdFromPath)
-                : 10);
-
-        loadPostDetail(targetPostId);
+        const postId = pathSegments.pop() || pathSegments.pop();
+        loadPostDetail(postId);
     });
 
+    // ===== 상세 조회 =====
+    async function loadPostDetail(postId) {
+        try {
+            const res = await fetch(`/api/community/posts/${postId}`);
+            if (!res.ok) {
+                throw new Error('게시글을 불러오지 못했습니다.');
+            }
+            const post = await res.json();
+            POST_DATA = post;
 
-    /* ============================
-       (4) 게시글 상세 로딩
-       ============================ */
-    function loadPostDetail(postId) {
-        const post = MOCK_POSTS.find(p => p.postId === parseInt(postId));
-        window.POST_DATA = post;
+            document.getElementById('post-title').textContent = post.title;
+            document.getElementById('detail-writer').textContent = `작성자: ${post.writerNickname}`;
+            document.getElementById('detail-date').textContent = post.createdAt ?? '';
+            document.getElementById('detail-views').textContent = `조회: ${post.viewCount ?? 0}`;
+            document.getElementById('detail-comments').textContent = `댓글: ${post.commentCount ?? 0}`;
 
-        if (!post) {
-            document.getElementById('post-title').textContent = '오류: 게시글을 찾을 수 없습니다.';
-            document.getElementById('post-content').textContent = '존재하지 않는 게시글입니다.';
-            return;
+            const contentDiv = document.getElementById('post-content');
+
+            // [수정] 이미지가 있으면 상단에 이미지 태그를 먼저 붙이고, 그 아래에 본문(content) 출력
+            let html = '';
+
+            if (post.imageUrl) {
+                html += `
+                <div class="post-image-wrapper">
+                    <img src="${post.imageUrl}"
+                         alt="게시글 이미지"
+                         style="max-width:100%; height:auto; display:block; margin-bottom:16px; border-radius:8px;">
+                </div>
+            `;
+            }
+            // XSS 방어
+            let safeContent = post.content || '';
+            safeContent = safeContent.replace(/\n/g, '<br>'); // 줄바꿈만 처리
+
+            html += safeContent;
+            contentDiv.innerHTML = html;
+
+            document.getElementById('comment-count').textContent = post.commentCount ?? 0;
+
+            setupAuthorButtons(post);
+            renderComments(post.comments || []);
+        } catch (err) {
+            console.error(err);
+            document.getElementById('post-title').textContent = '게시글을 불러오는 중 오류가 발생했습니다.';
+            document.getElementById('post-content').textContent = '잠시 후 다시 시도해주세요.';
         }
+    }
 
-        document.getElementById('post-title').textContent = post.title;
-        document.getElementById('detail-writer').textContent = `작성자: ${post.writer}`;
-        document.getElementById('detail-date').textContent = post.date;
-        document.getElementById('detail-views').textContent = `조회: ${post.viewCount}`;
-        document.getElementById('detail-comments').textContent = `댓글: ${post.comments.length}`;
-        document.getElementById('post-content').innerHTML = post.content.replace(/\n/g, '<br>');
-        document.getElementById('comment-count').textContent = post.comments.length;
-
+    // 작성자만 수정/삭제 버튼 보이게
+    function setupAuthorButtons(post) {
         const editBtn = document.getElementById('btn-edit-post');
         const deleteBtn = document.getElementById('btn-delete-post');
 
-        if (post.writerId === CURRENT_USER_ID) {
+        if (CURRENT_USER_NICKNAME && CURRENT_USER_NICKNAME === post.writerNickname) {
             if (editBtn) {
                 editBtn.style.display = 'inline-block';
-                editBtn.onclick = handleEditPost;
+                editBtn.onclick = () => {
+                    window.location.href = `/community/write?edit=${post.postId}`;
+                };
             }
             if (deleteBtn) {
                 deleteBtn.style.display = 'inline-block';
                 deleteBtn.onclick = handleDeletePost;
             }
-        } else {
-            if (editBtn) editBtn.style.display = 'none';
-            if (deleteBtn) deleteBtn.style.display = 'none';
         }
-
-        renderComments(post.comments);
     }
 
+    async function handleDeletePost() {
+        if (!confirm('정말 이 게시글을 삭제하시겠습니까?')) return;
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+            alert('로그인이 필요합니다.');
+            window.location.href = '/login';
+            return;
+        }
+        const res = await fetch(`/api/community/posts/${POST_DATA.postId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (res.ok) {
+            alert('게시글이 삭제되었습니다.');
+            window.location.href = '/community';
+        } else {
+            const msg = await res.text();
+            alert('삭제 실패: ' + msg);
+        }
+    }
 
-    /* ============================
-       (5) 댓글 렌더링/CRUD/대댓글
-       ============================ */
-
-    // 댓글 리스트 렌더링
     function renderComments(comments) {
         const commentsList = document.getElementById('comments-list');
         commentsList.innerHTML = '';
 
         if (!comments || comments.length === 0) {
             commentsList.innerHTML =
-                '<p style="color: #999; padding: 10px 0; text-align: center;">아직 댓글이 없습니다. 첫 댓글을 남겨보세요!</p>';
+                '<p style="color:#999; text-align:center; padding:10px 0;">아직 댓글이 없습니다.</p>';
             return;
         }
 
-        const commentMap = {};
+        // 1) 부모별로 children 모으기 (null/undefined 는 0으로 통일해서 최상위로 사용)
+        const childrenMap = {};
+        comments.forEach(c => {
+            const parentKey = (c.parentCommentId === null || c.parentCommentId === undefined)
+                ? 0
+                : c.parentCommentId;
 
-        comments.forEach(comment => {
-            const isMyComment = comment.writerId === CURRENT_USER_ID;
-            const isReply = comment.parentCommentId !== null;
-
-            let actions = `<button onclick="handleReply(${comment.id}, '${comment.writer}', event)" class="reply">답글</button>`;
-
-            if (isMyComment) {
-                actions += `
-                    <button onclick="handleCommentEdit(${comment.id}, '${comment.content}')">수정</button>
-                    <button onclick="handleCommentDelete(${comment.id})">삭제</button>
-                `;
+            if (!childrenMap[parentKey]) {
+                childrenMap[parentKey] = [];
             }
+            childrenMap[parentKey].push(c);
+        });
 
-            const item = document.createElement('div');
-            item.className = `comment-item ${isReply ? 'reply' : ''}`;
-            item.dataset.commentId = comment.id;
+        // (선택) 정렬: commentId 기준으로 오래된 순서대로
+        Object.values(childrenMap).forEach(list => {
+            list.sort((a, b) => a.commentId - b.commentId);
+        });
 
-            item.innerHTML = `
+        // 2) 공통 렌더 함수 (depth 로 들여쓰기)
+        function renderTree(parentId, depth) {
+            const list = childrenMap[parentId] || [];
+            list.forEach(c => {
+                const item = document.createElement('div');
+                item.className = depth > 0 ? 'comment-item reply' : 'comment-item';
+                item.dataset.commentId = c.commentId;
+
+                // depth 에 따라 들여쓰기 조금씩 증가
+                if (depth > 0) {
+                    item.style.marginLeft = (depth * 20) + 'px';
+                }
+
+                const writerNick = (c.commentWriterNickname || '').trim();
+                const isMine = CURRENT_USER_NICKNAME !== '' && writerNick === CURRENT_USER_NICKNAME;
+
+                // 디버그: 여기 안에서만 사용해야 함
+                console.log(
+                    'CURRENT_USER_NICKNAME=', CURRENT_USER_NICKNAME,
+                    'writerNick=', writerNick,
+                    'isMine=', isMine,
+                    'commentId=', c.commentId
+                );
+
+                // XSS 방어
+                let safeContent = c.content || '';
+                safeContent = safeContent.replace(/\n/g, '<br>');
+
+                let actionsHtml = '';
+
+                // 로그인 되어 있으면 누구나 "답글" 버튼
+                if (localStorage.getItem('accessToken')) {
+                    const safeWriterNickname = (c.commentWriterNickname || '').replace(/'/g, "\\'");
+                    actionsHtml += `
+                    <button type="button"
+                            class="reply"
+                            onclick="prepareReply(${c.commentId}, '${safeWriterNickname}')">
+                        답글
+                    </button>
+                `;
+                }
+
+                // 내 댓글이면 수정/삭제 버튼
+                if (isMine) {
+                    const escapedContent = (c.content || '')
+                        .replace(/'/g, "\\'")
+                        .replace(/\n/g, '\\n');
+
+                    actionsHtml += `
+                    <button type="button"
+                            onclick="editComment(${c.commentId}, '${escapedContent}')">
+                        수정
+                    </button>
+                    <button type="button"
+                            class="delete"
+                            onclick="deleteComment(${c.commentId})">
+                        삭제
+                    </button>
+                `;
+                }
+
+                item.innerHTML = `
                 <div class="comment-header-row">
                     <div class="comment-meta">
-                        <span class="comment-writer">${comment.writer} ${isMyComment ? '(나)' : ''}</span>
-                        <span class="comment-date">${comment.date}</span>
+                        <span class="comment-writer">
+                            ${c.commentWriterNickname}${isMine ? ' (나)' : ''}
+                        </span>
+                        <span class="comment-date">${c.createdAt ?? ''}</span>
                     </div>
                     <div class="comment-actions">
-                        ${actions}
+                        ${actionsHtml}
                     </div>
                 </div>
-                <div class="comment-content">${comment.content}</div>
+                <div class="comment-content">${safeContent}</div>
             `;
 
-            commentMap[comment.id] = item;
-        });
+                commentsList.appendChild(item);
+                // 🔁 이 댓글의 자식(대댓글들) 재귀 렌더링
+                renderTree(c.commentId, depth + 1);
+            });
+        }
 
-        // 계층 구조에 따라 DOM에 삽입
-        comments.forEach(comment => {
-            const commentElement = commentMap[comment.id];
-
-            if (comment.parentCommentId === null) {
-                commentsList.appendChild(commentElement);
-            } else {
-                const parentElement = commentMap[comment.parentCommentId];
-                if (parentElement) {
-                    parentElement.insertAdjacentElement('afterend', commentElement);
-                } else {
-                    commentsList.appendChild(commentElement);
-                }
-            }
-        });
+        // parentId = 0 인 최상위 댓글부터 시작
+        renderTree(0, 0);
     }
 
-    // 댓글 작성
-    function submitComment() {
-        const commentInput = document.getElementById('comment-input');
-        const content = commentInput.value.trim();
 
+
+
+    async function submitComment() {
+        const content = document.getElementById('comment-input').value.trim();
         if (!content) {
             alert('댓글 내용을 입력해주세요.');
             return;
         }
 
-        const newComment = {
-            id: Date.now(),
-            writer: CURRENT_USER_WRITER_NAME,
-            writerId: CURRENT_USER_ID,
-            date: new Date().toISOString().slice(0, 10),
-            content,
-            parentCommentId: null
-        };
-
-        if (window.POST_DATA) {
-            window.POST_DATA.comments.push(newComment);
-            renderComments(window.POST_DATA.comments);
-            commentInput.value = '';
-            document.getElementById('comment-count').textContent = window.POST_DATA.comments.length;
-            document.getElementById('detail-comments').textContent = `댓글: ${window.POST_DATA.comments.length}`;
-        }
-    }
-
-    // 댓글 수정
-    function handleCommentEdit(commentId, currentContent) {
-        const newContent = prompt(`댓글 ${commentId}번 수정:`, currentContent);
-        if (newContent && newContent.trim().length > 0) {
-            const commentToUpdate = window.POST_DATA.comments.find(c => c.id === commentId);
-            if (commentToUpdate) {
-                commentToUpdate.content = newContent.trim();
-                commentToUpdate.date = new Date().toISOString().slice(0, 10) + ' (수정됨)';
-                renderComments(window.POST_DATA.comments);
-            }
-            alert("댓글이 수정되었습니다.");
-        } else if (newContent !== null) {
-            alert("수정할 댓글 내용을 입력해주세요.");
-        }
-    }
-
-    // 댓글 삭제
-    function handleCommentDelete(commentId) {
-        if (confirm('댓글을 정말로 삭제하시겠습니까?')) {
-            const initialLength = window.POST_DATA.comments.length;
-            window.POST_DATA.comments = window.POST_DATA.comments.filter(c => c.id !== commentId);
-
-            if (window.POST_DATA.comments.length < initialLength) {
-                renderComments(window.POST_DATA.comments);
-                document.getElementById('comment-count').textContent = window.POST_DATA.comments.length;
-                document.getElementById('detail-comments').textContent = `댓글: ${window.POST_DATA.comments.length}`;
-                alert('댓글이 삭제되었습니다.');
-            }
-        }
-    }
-
-    // 대댓글 폼 제거
-    function removeReplyForm(targetCommentId) {
-        const form = document.querySelector(`.reply-form-container[data-parent-id="${targetCommentId}"]`);
-        if (form) form.remove();
-    }
-
-    // 대댓글 폼 생성
-    function handleReply(commentId, writerName, event) {
-        const parentComment = event.target.closest('.comment-item');
-        document.querySelectorAll('.reply-form-container').forEach(form => form.remove());
-
-        const replyFormHTML = `
-            <div class="reply-form-container" data-parent-id="${commentId}">
-                <h4 style="font-size: 14px; margin-bottom: 8px;">${writerName}님에게 답글 작성:</h4>
-                <textarea id="reply-input-${commentId}" placeholder="답글을 입력하세요..." rows="2"></textarea>
-
-                <button class="btn-reply-cancel" onclick="removeReplyForm(${commentId})" style="float: right;">취소</button>
-                <button onclick="submitReply(${commentId}, '${writerName}')" style="float: right; margin-right: 10px; background-color: #6c5ce7; color: white;">등록</button>
-                <div style="clear: both;"></div>
-            </div>
-        `;
-
-        parentComment.insertAdjacentHTML('afterend', replyFormHTML);
-
-        const replyTextarea = document.getElementById(`reply-input-${commentId}`);
-        if (replyTextarea) replyTextarea.focus();
-    }
-
-    // 대댓글 등록
-    function submitReply(parentCommentId, writerName) {
-        const replyInput = document.getElementById(`reply-input-${parentCommentId}`);
-        const content = replyInput.value.trim();
-
-        if (!content) {
-            alert('답글 내용을 입력해주세요.');
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+            alert('로그인 후 댓글을 작성할 수 있습니다.');
+            window.location.href = '/login';
             return;
         }
 
-        const newComment = {
-            id: Date.now(),
-            writer: CURRENT_USER_WRITER_NAME,
-            writerId: CURRENT_USER_ID,
-            date: new Date().toISOString().slice(0, 10),
-            content,
-            parentCommentId
-        };
+        const res = await fetch(`/api/community/posts/${POST_DATA.postId}/comments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                parentCommentId: CURRENT_PARENT_COMMENT_ID,
+                content: content
+            })
+        });
 
-        if (window.POST_DATA) {
-            window.POST_DATA.comments.push(newComment);
-            removeReplyForm(parentCommentId);
-            loadPostDetail(window.POST_DATA.postId);
-            alert(`[답글 등록 완료] ${writerName}님에게 답글이 등록되었습니다.`);
+        if (res.ok) {
+            document.getElementById('comment-input').value = '';
+            // [대댓글] 한 번 보내고 나면 다시 일반 댓글 모드로 초기화
+            CURRENT_PARENT_COMMENT_ID = null;
+            await loadPostDetail(POST_DATA.postId); // 새로고침 대신 재로딩
+        } else {
+            const msg = await res.text();
+            alert('댓글 등록 실패: ' + msg);
         }
     }
 
-    // 게시글 삭제
-    function handleDeletePost() {
-        if (confirm(`정말로 게시글 [${window.POST_DATA.title}]을 삭제하시겠습니까?`)) {
-            alert('게시글이 삭제되었습니다. 목록으로 돌아갑니다. (시뮬레이션)');
-            location.href = '/community';
+    function prepareReply(parentCommentId, writerNickname) {
+        CURRENT_PARENT_COMMENT_ID = parentCommentId;  // 이제부터 이 댓글의 대댓글로 저장
+        const input = document.getElementById('comment-input');
+        input.value = `@${writerNickname} `;         // 선택: 멘션 느낌
+        input.focus();
+    }
+
+    async function editComment(commentId, currentContent) {
+        const newContent = prompt('댓글 수정', currentContent);
+        if (!newContent || !newContent.trim()) return;
+
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+            alert('로그인이 필요합니다.');
+            return;
+        }
+
+        const res = await fetch(`/api/community/comments/${commentId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ content: newContent.trim() })
+        });
+
+        if (res.ok) {
+            await loadPostDetail(POST_DATA.postId);
+        } else {
+            alert('댓글 수정 실패');
         }
     }
 
-    // 게시글 수정
-    function handleEditPost() {
-        alert('게시글 수정 페이지로 이동합니다. (시뮬레이션)');
-        location.href = `/community/write?edit=${window.POST_DATA.postId}`;
+    async function deleteComment(commentId) {
+        if (!confirm('댓글을 삭제하시겠습니까?')) return;
+
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+            alert('로그인이 필요합니다.');
+            return;
+        }
+
+        const res = await fetch(`/api/community/comments/${commentId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (res.ok) {
+            await loadPostDetail(POST_DATA.postId);
+        } else {
+            alert('댓글 삭제 실패');
+        }
     }
 </script>
-</body>
-</html>

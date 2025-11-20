@@ -3,6 +3,7 @@ package com.multi.backend5_1_multi_fc.schedule.dao;
 import com.multi.backend5_1_multi_fc.schedule.dto.ScheduleDto;
 import com.multi.backend5_1_multi_fc.schedule.mapper.ScheduleMapper;
 import lombok.RequiredArgsConstructor;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -49,5 +50,13 @@ public class ScheduleDao {
 
     public int upsertApprovedMatches(Long userId) {
         return mapper.upsertApprovedMatches(userId);
+    }
+
+    public List<ScheduleDto.DayItem> findAllBetween(
+            Long userId,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        return mapper.findAllBetween(userId, startDate, endDate);
     }
 }

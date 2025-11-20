@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.List;
 
@@ -47,6 +48,14 @@ public class ScheduleService {
         if (!ok) throw new ScheduleException("일정이 없거나 삭제 권한이 없습니다.");
     }
 
+    //이번달 일정
+    public List<ScheduleDto.DayItem> allByMonth(String username, YearMonth yearMonth) {
+        Long userId = userIdOf(username);
+        LocalDate start = yearMonth.atDay(1);
+        LocalDate end   = yearMonth.atEndOfMonth();
+        return repo.findAllBetween(userId, start, end);
+    }
+
     //달력 칸에 빠른 일정 2개 표시
     public List<ScheduleDto.DayItem> top2ByDate(String username, LocalDate date) {
         return repo.findTop2ByDate(userIdOf(username), date);
@@ -72,4 +81,6 @@ public class ScheduleService {
     public int syncApprovedMatches(String username) {
         return repo.upsertApprovedMatches(userIdOf(username));
     }
+
+
 }
