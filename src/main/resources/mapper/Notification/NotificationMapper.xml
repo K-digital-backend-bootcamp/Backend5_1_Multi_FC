@@ -2,13 +2,13 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.multi.backend5_1_multi_fc.Notification.dao.NotificationDao">
+<mapper namespace="com.multi.backend5_1_multi_fc.notification.dao.NotificationDao">
     <insert id="insert" parameterType="NotificationDto" useGeneratedKeys="true" keyProperty="notificationId">
         INSERT INTO Notification (
             user_id, content, type, is_read, created_at, redirect_url, related_id
-            ) values (
-                      #{userId}, #{content}, #{type}, #{isRead}, NOW(), #{redirectUrl}, #{relatedId}
-            )
+        ) values (
+                     #{userId}, #{content}, #{type}, #{isRead}, NOW(), #{redirectUrl}, #{relatedId}
+                 )
     </insert>
 
     <select id="findByUserId" parameterType="long" resultType="NotificationDto">

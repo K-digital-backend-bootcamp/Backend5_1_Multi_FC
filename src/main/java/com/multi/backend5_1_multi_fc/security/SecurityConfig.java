@@ -3,10 +3,10 @@ package com.multi.backend5_1_multi_fc.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -16,37 +16,67 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
                 .authorizeHttpRequests(auth -> auth
-                        // (1) API: 인증 없이 허용 (기존과 동일)
+
+                        /*  =============================
+                         *   1) 인증 없이 허용되는 API
+                         *  ============================= */
+
+                        // User API permitAll
                         .requestMatchers("/api/users/login", "/api/users/signup").permitAll()
                         .requestMatchers("/api/users/check-username", "/api/users/check-email", "/api/users/check-nickname").permitAll()
                         .requestMatchers("/api/users/find-id", "/api/users/reset-password/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/community/posts", "/api/community/posts/**").permitAll()
 
-                        // (2) 정적 리소스: 인증 없이 허용 (기존과 동일)
-                        .requestMatchers("/css/**", "/images/**", "/js/**").permitAll()
+                        // match 모듈에서 허용해야 하는 API들
+                        .requestMatchers("/api/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
 
-                        // (3) HTML 페이지: '공개' 페이지만 허용하도록 수정
+                        /* =============================
+                         *   2) 정적 리소스
+                         * ============================= */
+                        .requestMatchers("/css/**", "/images/**", "/js/**", "/favicon.ico").permitAll()
+
+                        /* =============================
+                         *   3) HTML 페이지 허용
+                         * ============================= */
                         .requestMatchers(
                                 "/", "/login", "/register", "/forgot-password",
-                                "/fields", "/reviews/**", "/community", "/community/**"
-                                // (주의! /mypage, /schedule 등 로그인 후 페이진 '제거'해야 합니다)
+                                "/mypage", "/profile/edit", "/friends", "/chat",
+                                "/fields", "/stadium/detail",
+                                "/schedule", "/schedule/add", "/schedule/detail/**", "/schedule/private/detail",
+                                "/community", "/community/write", "/community/detail/**",
+                                "/reviews/write",
+                                "/team/create", "/team/manage", "/team/invite", "/team-edit"
                         ).permitAll()
 
-                        // (4) 그 외 모든 요청 (예: /mypage, /schedule, /api/mypage/** 등)은 인증 필요
+                        //[추가] 준호님 요청
+                        .requestMatchers("/chat", "/chat/**").permitAll()
+                        .requestMatchers("/chatroom/**").permitAll()
+                        .requestMatchers("/api/chat/**").permitAll()
+                        .requestMatchers("/notifications","/notifications/**").permitAll()
+                        .requestMatchers("/api/notifications/**").permitAll()
+                        .requestMatchers("/api/users/me", "/api/user/**").permitAll()
+
+                        /* =============================
+                         *   4) 나머지는 인증 필요
+                         * ============================= */
                         .anyRequest().authenticated()
                 )
+
 
                 // (⭐️ 5. [신규 기능] OAuth2 소셜 로그인 설정 추가)
                 .oauth2Login(oauth2 -> oauth2
@@ -62,7 +92,7 @@ public class SecurityConfig {
                         .failureUrl("/login?error=true")
                 )
 
-                // (⭐️ 6. JWT 필터는 계속 사용)
+                /* JWT 필터 적용 */
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

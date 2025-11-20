@@ -575,10 +575,12 @@
             color: white;
             font-size: 11px;
             font-weight: 700;
-            border-radius: 10px;
+            border-radius: 40px;
             padding: 3px 8px;
             flex-shrink: 0;
+            display: inline-block;
             min-width: 24px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.07);
             text-align: center;
         }
         /* ⭐⭐ 보강 끝 ⭐⭐ */
@@ -1253,8 +1255,6 @@
     }
 
     function displayMessage(message) {
-        const welcomeMessageDiv = document.getElementById('chat-welcome-message');
-        if(welcomeMessageDiv) welcomeMessageDiv.style.display = 'none';
         const isMine = message.sender === myUsername;
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble ' + (isMine ? 'mine' : 'other');
@@ -1356,38 +1356,55 @@
                 typeIcon = '<i class="fas fa-users" style="color:#00b894; margin-right:5px;"></i>';
             }
 
-            // ★채팅방 정보 영역
+            // ====== 방 구조 시작 ======
             const roomInfo = document.createElement('div');
             roomInfo.className = 'room-info';
-            roomInfo.innerHTML = `
-                       <div class="room-name">${room.roomName}</div>
-                       <div style="font-size: 11px; color: #aaa; margin-top: 2px;">
-                           참여자: ${room.memberCount}명
-                       </div>
-                   `;
+
+            // 제목과 뱃지 한 줄
+            const titleRow = document.createElement('div');
+            titleRow.style.display = 'flex';
+            titleRow.style.justifyContent = 'space-between';
+            titleRow.style.alignItems = 'center';
+
+            const roomNameDiv = document.createElement('div');
+            roomNameDiv.className = 'room-name';
+            roomNameDiv.innerHTML = `${typeIcon}<span>${room.roomName}</span>`;
+
+            // 뱃지(안읽은 메시지 개수)
+            let badge = null;
+            if (room.unreadCount && room.unreadCount > 0) {
+                badge = document.createElement('span');
+                badge.className = 'unread-badge';
+                badge.textContent = room.unreadCount;
+            }
+
+            titleRow.appendChild(roomNameDiv);
+            if (badge) titleRow.appendChild(badge);
+
+            // 참여자 수 (아래 줄)
+            const partDiv = document.createElement('div');
+            partDiv.className = 'room-participants';
+            partDiv.style.color = '#aaa';
+            partDiv.style.fontSize = '11px';
+            partDiv.style.marginTop = '2px';
+            partDiv.textContent = `참여자: ${room.memberCount}명`;
+
+            // 조립
+            roomInfo.appendChild(titleRow);
+            roomInfo.appendChild(partDiv);
 
             roomInfo.addEventListener('click', () => selectRoom(room));
 
-            // ⭐⭐ 보강: 뱃지와 삭제 버튼 컨테이너 ⭐⭐
-            const actionContainer = document.createElement('div');
-            actionContainer.className = 'room-item-actions';
-
-            // 안 읽은 메시지 뱃지 추가
-            if (room.unreadCount > 0) {
-                actionContainer.innerHTML += `<span class="unread-badge">${room.unreadCount}</span>`;
-            }
-
             item.appendChild(roomInfo);
-            item.appendChild(actionContainer);
             roomListContainer.appendChild(item);
         });
 
-        // ⭐⭐ 보강: 채팅방 자동 선택 로직 제거 후, 초기 화면 메시지 표시 (유지) ⭐⭐
         if (!currentRoomId) {
             document.getElementById('current-chat-room').style.display = 'none';
             document.getElementById('chat-welcome-message').style.display = 'flex';
         }
     }
+
 
     // ★새로운 함수: 채팅방 삭제 로직
     async function leaveChatRoom(roomId) {
@@ -1425,7 +1442,11 @@
     }
 
     async function loadRoomHistory(roomId) {
-        chatContainer.innerHTML = '<div style="text-align:center; padding:30px; color:#999;">메시지를 불러오는 중...</div>';
+        if(chatContainer.children.length > 0){
+            chatContainer.innerHTML = '';
+        } else {
+            chatContainer.innerHTML = '<div style="text-align:center; padding:30px; color:#999;">메시지를 불러오는 중...</div>';
+        }
 
         try {
             const response = await fetch(`/chatroom/${roomId}/messages`,{
@@ -1438,17 +1459,13 @@
             const messages = await response.json();
             chatContainer.innerHTML = '';
 
-            if(messages.length === 0){
-                chatContainer.innerHTML = '<div style="text-align:center; color:#999; margin-top:50px;">새로운 채팅을 시작하세요.</div>';
-            } else {
-                messages.forEach(msg => {
-                    displayMessage({
-                        sender : msg.senderNickname,
-                        content : msg.content,
-                        timestamp: formatTimestamp(msg.sentAt)
-                    });
+            messages.forEach(msg => {
+                displayMessage({
+                    sender : msg.senderNickname,
+                    content : msg.content,
+                    timestamp: formatTimestamp(msg.sentAt)
                 });
-            }
+            });
             chatContainer.scrollTop = chatContainer.scrollHeight;
         } catch (e) {
             console.error('메세지 로드 실패:',e);
@@ -1476,6 +1493,19 @@
             const badge = newActiveItem.querySelector('.unread-badge');
             if(badge) badge.remove();
             room.unreadCount = 0;
+        }
+
+        try {
+            await fetch(`/chatroom/${room.roomId}/mark-read`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+        } catch (e) {
+            console.error('읽음 상태 갱신 실패:', e);
         }
 
         currentRoomId = room.roomId;
