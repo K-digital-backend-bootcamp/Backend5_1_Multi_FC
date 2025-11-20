@@ -72,8 +72,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            // 토큰 파싱/검증 중 오류 발생 시 (예: 만료, 서명 오류)
-            System.err.println("JWT 검증 중 오류 발생: " + e.getMessage());
+            // 토큰이 유효하지 않다면 SecurityContext
+            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);
