@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* 원래 CSS 복구 */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.6); display: flex;
@@ -22,6 +23,18 @@
         .modal-content h2 { font-size: 24px; color: #2c3e50; margin-bottom: 15px; }
         .modal-content p { font-size: 16px; color: #555; margin-bottom: 25px; line-height: 1.5; }
         .modal-content .login-button { width: 100%; margin-top: 10px; }
+
+        /* 로그인 폼 스타일 보강 */
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .input-with-icon { position: relative; }
+        .input-with-icon input { width: 100%; padding: 10px 10px 10px 35px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .input-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #888; }
+        .toggle-password { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #888; }
+        .login-button { width: 100%; padding: 12px; background-color: #333; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        .login-button:hover { background-color: #111; }
+        .social-login { display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
+        .social-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #ddd; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -29,19 +42,7 @@
 <header class="quick-menu">
     <div class="logo"> <a href="/">Multi FC</a> </div>
     <div class="header-icons">
-        <button id="profile-menu-toggle" class="profile-icon" style="position: relative; display: none;">
-            <i class="fas fa-user-circle"></i>
-            <span id="notification-badge" class="notification-badge"></span>
-        </button>
-        <div id="profile-menu" class="user-menu">
-            <div class="user-info"> <strong><span id="user-menu-username">사용자</span>님</strong> <p>환영합니다!</p> </div>
-            <ul>
-                <li><a href="/notifications" id="nav-notifications-link"><i class="fas fa-bell"></i> 알림 목록</a></li>
-                <li><a href="/mypage"><i class="fas fa-user"></i> 마이페이지</a></li>
-                <li><a href="/profile/edit"><i class="fas fa-user-edit"></i> 프로필 수정</a></li>
-                <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
-            </ul>
-        </div>
+        <a href="/login" id="nav-login-link" class="active" style="font-weight:bold; color:#333; margin-right:10px;">로그인</a>
         <button id="menu-toggle" class="menu-toggle-btn"> <i class="fas fa-bars"></i> </button>
     </div>
     <nav id="main-menu" class="main-nav">
@@ -50,21 +51,17 @@
             <li><a href="/fields"><i class="fas fa-search"></i> 구장검색</a></li>
             <li><a href="/community"><i class="fas fa-users"></i> 커뮤니티</a></li>
             <li><a href="/chat"><i class="fas fa-comments"></i> 실시간채팅</a></li>
-
-            <li><a href="/login" id="nav-login-link" class="active"><i class="fas fa-sign-in-alt"></i> 로그인</a></li>
-            <li style="display:none;"><a href="#" id="nav-logout-link"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
         </ul>
     </nav>
 </header>
 
 <main class="login-page-main">
-    <div class="main-wrapper">
+    <div class="main-wrapper" style="display: flex; justify-content: center; padding-top: 50px;">
         <div class="login-section">
-            <div class="login-container">
-                <h1 class="title-login">Login</h1>
-                <p id="error-message" class="error-message" style="display:none;">
-                    Error message here.
-                </p>
+            <div class="login-container" style="width: 400px; background: #fff; padding: 40px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1);">
+                <h1 class="title-login" style="text-align: center; margin-bottom: 30px;">Login</h1>
+                <p id="error-message" class="error-message" style="display:none; color:red; margin-bottom:15px; text-align:center;"></p>
+
                 <form id="login-form">
                     <div class="input-group">
                         <label for="username">User name</label>
@@ -81,23 +78,20 @@
                             <i class="fas fa-eye-slash toggle-password"></i>
                         </div>
                     </div>
-                    <div class="forgot-remember">
-                        <a href="/forgot-password" class="forgot-password">Forgot?</a>
+                    <div class="forgot-remember" style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 14px;">
                         <div class="remember-me">
                             <input type="checkbox" id="remember-me">
                             <label for="remember-me">Remember me</label>
                         </div>
+                        <a href="/forgot-password" class="forgot-password" style="color: #6c5ce7;">Forgot?</a>
                     </div>
                     <button type="submit" class="login-button">Login</button>
-                    <div class="signup-link">
-                        Don't have an account? <a href="/register">Sign up</a>
+                    <div class="signup-link" style="text-align: center; margin-top: 15px; font-size: 14px;">
+                        Don't have an account? <a href="/register" style="color: #6c5ce7; font-weight: bold;">Sign up</a>
                     </div>
                 </form>
 
-                <p style="text-align: center; font-size: 14px; color: #555; font-weight: 500; margin-top: 30px; margin-bottom: -20px;">
-                    Social Login
-                </p>
-
+                <p style="text-align: center; font-size: 14px; color: #555; font-weight: 500; margin-top: 30px;">Social Login</p>
                 <div class="social-login">
                     <a href="/oauth2/authorization/google" class="social-btn google">
                         <i class="fab fa-google"></i>
@@ -106,7 +100,6 @@
                         <i class="fas fa-comment"></i>
                     </a>
                 </div>
-
             </div>
         </div>
     </div>
@@ -116,86 +109,31 @@
     <div class="modal-content">
         <h2>로그인 성공</h2>
         <p>환영합니다! ⚽<br>메인 페이지로 이동합니다.</p>
-        <button id="modal-confirm-btn" class="login-button" style="margin-top: 10px;">확인</button>
+        <button id="modal-confirm-btn" class="login-button">확인</button>
     </div>
 </div>
+
 <script>
-    // --- (★공통★) 메뉴 토글 및 로그아웃 로직 (기존 유지) ---
+    // 메뉴 토글
     const menuToggle = document.getElementById('menu-toggle');
     const mainMenu = document.getElementById('main-menu');
-    const profileMenuToggle = document.getElementById('profile-menu-toggle');
-    const profileMenu = document.getElementById('profile-menu');
-    const logoutButton = document.getElementById('logout-button');
-    const navNotificationsLink = document.getElementById('nav-notifications-link');
-    const navLoginLink = document.getElementById('nav-login-link');
-    const navLogoutLink = document.getElementById('nav-logout-link');
-
     if (menuToggle) {
-        menuToggle.addEventListener('click', () => {
-            mainMenu.classList.toggle('show');
-            if (profileMenu) profileMenu.classList.remove('show');
-        });
-    }
-    if (profileMenuToggle) {
-        profileMenuToggle.addEventListener('click', () => {
-            profileMenu.classList.toggle('show');
-            if (mainMenu) mainMenu.classList.remove('show');
-        });
-    }
-    document.addEventListener('click', (event) => {
-        const header = document.querySelector('header');
-        if (header && !header.contains(event.target)) {
-            mainMenu.classList.remove('show');
-            if (profileMenu) profileMenu.classList.remove('show');
-        }
-    });
-    if (logoutButton) {
-        logoutButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('username');
-            window.location.href = '/login';
-        });
-    }
-    if (navLogoutLink) {
-        navLogoutLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('username');
-            window.location.href = '/login';
-        });
+        menuToggle.addEventListener('click', () => mainMenu.classList.toggle('show'));
     }
 
-
-    // (★페이지별★) 로그인 상태 확인 (기존 유지)
-    // (★페이지별★) 로그인 상태 확인 및 리다이렉션 및 메뉴 표시 제어
+    // Remember me
     document.addEventListener('DOMContentLoaded', () => {
-        // 1. 저장된 아이디(username)가 있는지 확인
         const savedUsername = localStorage.getItem('saved_username');
-        const usernameInput = document.getElementById('username');
-        const rememberMeCheckbox = document.getElementById('remember-me');
-
-        if (savedUsername && usernameInput && rememberMeCheckbox) {
-            // 2. 아이디가 있으면, 입력창에 채우고 체크박스도 체크
-            usernameInput.value = savedUsername;
-            rememberMeCheckbox.checked = true;
-        }
-
-        const accessToken = localStorage.getItem('accessToken');
-        if (accessToken) {
-            // 이미 로그인했으면 메인으로 이동
-            window.location.href = '/';
-        } else {
-            // [비회원일 때]
-            // (생략)
+        if (savedUsername) {
+            document.getElementById('username').value = savedUsername;
+            document.getElementById('remember-me').checked = true;
         }
     });
 
-
-    // 비밀번호 토글 로직
+    // 비밀번호 보기/숨기기
     document.querySelectorAll('.toggle-password').forEach(icon => {
         icon.addEventListener('click', function() {
-            const passwordInput = this.parentElement.querySelector('input[type="password"], input[type="text"]');
+            const passwordInput = this.parentElement.querySelector('input');
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordInput.setAttribute('type', type);
             this.classList.toggle('fa-eye');
@@ -203,7 +141,7 @@
         });
     });
 
-    // 로그인 폼 제출
+    // 로그인 로직 (수정됨)
     const loginForm = document.getElementById('login-form');
     const errorMsg = document.getElementById('error-message');
     const successModal = document.getElementById('login-success-modal');
@@ -215,12 +153,6 @@
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value.trim();
 
-        if (!username || !password) {
-            errorMsg.textContent = '❌ 아이디와 비밀번호를 모두 입력해주세요.';
-            errorMsg.style.display = 'block';
-            return;
-        }
-
         try {
             const response = await fetch('/api/users/login', {
                 method: 'POST',
@@ -229,60 +161,39 @@
             });
 
             if (response.ok) {
-                // --- 로그인 성공
-                const data = await response.json(); // { "accessToken": "...", "user": {...} }
+                const data = await response.json();
 
-                if (data.accessToken) {
-
-                    // "Remember me" 체크박스 상태 확인
-                    const rememberMeCheckbox = document.getElementById('remember-me');
-                    if (rememberMeCheckbox.checked) {
-                        // 1. 체크됨: 아이디(username) 저장
+                if (data.accessToken && data.user) {
+                    // Remember Me 저장
+                    if (document.getElementById('remember-me').checked) {
                         localStorage.setItem('saved_username', username);
                     } else {
-                        // 2. 체크 안됨: 저장된 아이디 삭제
                         localStorage.removeItem('saved_username');
                     }
 
-
-                    // localStorage에 토큰과 닉네임 저장 (로그인 상태 유지)
+                    // ★★★ 핵심: 데이터 저장 (이름 통일) ★★★
                     localStorage.setItem('accessToken', data.accessToken);
-                    localStorage.setItem('username', data.user.nickname);
+                    localStorage.setItem('userId', data.user.userId);         // 숫자 ID
+                    localStorage.setItem('userNickname', data.user.nickname); // 닉네임
 
-                    // 성공 모달 띄우기
                     successModal.style.display = 'flex';
-
-                    // [수정] 'modal' -> 'successModal'
                     document.getElementById('modal-confirm-btn').onclick = function() {
-                        successModal.style.display = 'none';
-                        window.location.href = '/'; // 메인 페이지로 이동
+                        window.location.href = '/';
                     };
                 } else {
-                    throw new Error('로그인에 성공했으나 토큰을 받지 못했습니다.');
+                    errorMsg.textContent = '회원 정보를 불러올 수 없습니다.';
+                    errorMsg.style.display = 'block';
                 }
             } else {
-                // --- 로그인 실패 (버그 1 수정) ---
-                let errorMessage = '❌ 아이디 또는 비밀번호가 올바르지 않습니다.'; // 기본 메시지
-                try {
-                    // [수정] 응답 본문을 텍스트로 먼저 1번만 읽음
-                    const errorText = await response.text();
-
-                    if (errorText) {
-                        errorMessage = `❌ ${errorText}`;
-                    }
-                } catch (e) {
-                    console.error("에러 메시지 파싱 실패:", e);
-                }
-                errorMsg.textContent = errorMessage;
+                errorMsg.textContent = '아이디 또는 비밀번호가 일치하지 않습니다.';
                 errorMsg.style.display = 'block';
             }
         } catch (error) {
-            console.error("로그인 요청 에러:", error);
-            errorMsg.textContent = '❌ 로그인 요청 중 오류가 발생했습니다. (서버 연결 확인)';
+            console.error(error);
+            errorMsg.textContent = '서버 오류 발생';
             errorMsg.style.display = 'block';
         }
     });
 </script>
-
 </body>
 </html>
