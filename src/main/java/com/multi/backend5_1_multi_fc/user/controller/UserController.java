@@ -191,6 +191,7 @@ public class UserController {
 
         // 보안을 위해 비밀번호는 제외하고 필요한 정보만 Map으로 반환
         Map<String, Object> response = new HashMap<>();
+        response.put("userId", user.getUserId());
         response.put("username", user.getUsername());
         response.put("nickname", user.getNickname());
         response.put("email", user.getEmail());
