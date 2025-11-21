@@ -1216,25 +1216,18 @@
 
         const chatMessage = {
             roomId: currentRoomId,
-            sender: myUserId,
+            sender: currentNickname,
             senderNickname: myUsername,
             content: messageContent,
         };
 
-        console.log(chatMessage);
+        console.log("chatMessage :", chatMessage);
 
         // 1. 서버로 전송 (실시간 웹소켓)
         stompClient.send(`/app/chatroom/${currentRoomId}/send`, {}, JSON.stringify(chatMessage));
 
         // 2. 입력 필드 초기화
         inputArea.value = '';
-
-        // // 3. 화면에 즉시 표시 (UX 개선)
-        // displayMessage({
-        //     sender: myUsername,
-        //     content: messageContent,
-        //     timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
-        // });
 
         // 4. 목록의 마지막 메시지 업데이트
         updateLastMessage(currentRoomId, messageContent);
@@ -1255,7 +1248,10 @@
     }
 
     function displayMessage(message) {
-        const isMine = message.sender === myUsername;
+        console.log("메세지 sender" ,message.sender)
+        const isMine = message.senderId === myUserId;
+
+        console.log("sender tf : ",isMine);
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble ' + (isMine ? 'mine' : 'other');
 
@@ -1735,7 +1731,7 @@
         }
 
         try {
-            const token = localStorage.getItem('accessToken');
+            //const token = localStorage.getItem('accessToken');
             let apiUrl = '';
             let requestOptions = {
                 method: 'POST',
