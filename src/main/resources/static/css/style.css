@@ -4506,3 +4506,71 @@ body, html {
     flex-grow: 1;
     min-width: 200px;
 }
+
+.user-row {
+    display: flex;
+    justify-content: space-between; /* 🔥 왼쪽(닉네임) ↔ 오른쪽(버튼) */
+    align-items: center;
+    width: 100%;
+}
+
+.manage-btns {
+    display: flex;
+    gap: 6px; /* 버튼 사이 여백 */
+}
+
+.btn-sm {
+    padding: 5px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-approve {
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+}
+
+.btn-reject {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+}
+
+.btn-cancel,
+.btn-join {
+    background-color: #6c5ce7 !important;
+    color: #ffffff !important;
+    border: none;
+    border-radius: 8px; /* ← 둥근 테두리 */
+    padding: 12px 18px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+}
+
+/* 선택: 마우스 올릴 때 */
+.btn-cancel:hover,
+.btn-join:hover{
+    background-color: #5847c2;
+}
+
+.btn-close,.btn-disabled{
+    background-color: #e74c3c !important;
+    color: #ffffff !important;
+    border: none;
+    border-radius: 8px; /* ← 둥근 테두리 */
+    padding: 12px 18px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+}
+
+.btn-close:hover,.btn-disabled:hover{
+    background-color: #a10000;
+}

@@ -227,8 +227,7 @@
             li.innerHTML = `
                 <div class="user-row">
                     <div>${nameHtml}</div>
-                    ${btnHtml}
-                </div>
+                        ${btnHtml}</div>
                 <div class="user-meta">포지션: ${userPosition}</div>
             `;
             listEl.appendChild(li);
@@ -252,7 +251,11 @@
         }
         // 2. 내가 방장인 경우 -> [경기 확정(마감)] 버튼
         if (amIHost) {
-            container.innerHTML = `<button class="join-button btn-close" onclick="closeMatch()">📢 모집 마감 (경기 확정)</button>`;
+            container.innerHTML = `
+            <button class="join-button btn-close" onclick="closeMatch()">
+            📢 모집 마감 (경기 확정)
+            </button>
+            `;
             return;
         }
         // 3. 일반 참가자
