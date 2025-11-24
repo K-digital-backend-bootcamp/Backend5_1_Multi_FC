@@ -20,7 +20,7 @@
         .map-area { flex: 7; height: 500px; background-color: #eee; border-radius: 10px; }
         .field-list-area { flex: 3; max-height: 500px; overflow-y: auto; background: #fff; padding: 15px; border-radius: 10px; }
         #field-list { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
-        .field-card { background: #ffffff; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); padding: 10px 12px; border-left: 5px solid #2ecc71; cursor: pointer; }
+        .field-card { background: #ffffff; border-radius: 10px; padding: 10px 8px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); border-left: 5px solid #2ecc71; cursor: pointer; }
         .field-card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
         .field-card h3 { font-size: 16px; color: #2c3e50; }
 
@@ -100,21 +100,21 @@
         const userSpan = document.getElementById('user-menu-username');
 
         if (token) {
-            if(loginBtn) loginBtn.style.display = 'none';
-            if(profileIcon) profileIcon.style.display = 'block';
-            if(userSpan) userSpan.textContent = nickname || '회원';
+            if (loginBtn) loginBtn.style.display = 'none';
+            if (profileIcon) profileIcon.style.display = 'block';
+            if (userSpan) userSpan.textContent = nickname || '회원';
         } else {
-            if(loginBtn) loginBtn.style.display = 'block';
-            if(profileIcon) profileIcon.style.display = 'none';
+            if (loginBtn) loginBtn.style.display = 'block';
+            if (profileIcon) profileIcon.style.display = 'none';
         }
 
         // 2. 메뉴 이벤트
         const profileMenu = document.getElementById('profile-menu');
-        if(profileIcon) profileIcon.addEventListener('click', () => profileMenu.classList.toggle('show'));
+        if (profileIcon) profileIcon.addEventListener('click', () => profileMenu.classList.toggle('show'));
 
         const menuToggle = document.getElementById('menu-toggle');
         const mainMenu = document.getElementById('main-menu');
-        if(menuToggle) menuToggle.addEventListener('click', () => mainMenu.classList.toggle('show'));
+        if (menuToggle) menuToggle.addEventListener('click', () => mainMenu.classList.toggle('show'));
 
         document.getElementById('logout-button').addEventListener('click', (e) => {
             e.preventDefault();
@@ -127,42 +127,118 @@
         // 3. 지도 및 초기 목록 로드
         initMap();
 
-        // ⭐ 초기 목록 로드 및 렌더링 (마커 없이) ⭐
+        // ⭐ 초기 목록 로드 및 렌더링 (마커 없이)
         const list = await fetchStadiums("");
-        renderFieldList(list, false); // false를 전달하여 마커 업데이트를 건너뜁니다.
+        renderFieldList(list, false); // false: 초기에는 마커 안 그리기
 
         document.getElementById("search-btn").addEventListener("click", performSearch);
     });
 
     let kakaoMap = null;
-    let kakaoMarkers = [];
+    let kakaoMarkers = [];               // 생성된 마커들
+    let markerInfoById = new Map();      // stadiumId -> { marker, data }
+    let kakaoInfoWindow = null;         // 현재 열려 있는 인포윈도우
 
     function initMap(lat = 37.5665, lng = 126.9780) {
         // 서울 시청을 기본 중심으로 설정하여 마커 없이 지도만 초기화
         if (!(window.kakao && window.kakao.maps)) return;
-        kakaoMap = new kakao.maps.Map(document.getElementById('map'), { center: new kakao.maps.LatLng(lat, lng), level: 5 });
+        kakaoMap = new kakao.maps.Map(document.getElementById('map'), {
+            center: new kakao.maps.LatLng(lat, lng),
+            level: 5
+        });
+    }
+
+    function showStadiumInfo(marker, stadium) {
+        if (!kakaoMap || !marker || !stadium) return;
+
+        // 이전 인포윈도우 닫기
+        if (kakaoInfoWindow) {
+            kakaoInfoWindow.close();
+        }
+
+        // 인포윈도우 내용 (이름 / 주소 / 상세보기 버튼)
+        const content = `
+    <div style="
+        box-sizing: border-box;
+        padding: 10px;
+        width: 230px;              /* 🔹 고정 폭으로 맞추기 */
+        white-space: normal;
+        word-break: break-all;      /* 🔹 영어/긴 단어도 강제 줄바꿈 */
+    ">
+        <div style="font-weight:600; margin-bottom:6px; font-size:14px;">
+            ${stadium.name}
+        </div>
+        <div style="font-size:12px; color:#555; margin-bottom:10px;">
+            ${stadium.address}
+        </div>
+        <button
+            style="
+                padding: 8px 10px;
+                font-size: 12px;
+                border: none;
+                border-radius: 4px;
+                background-color:#6c5ce7;
+                color:#fff;
+                cursor:pointer;
+            "
+            onclick="location.href='/stadium/detail?id=${stadium.stadiumId}'"
+        >
+            상세보기
+        </button>
+    </div>
+`;
+
+
+
+        kakaoInfoWindow = new kakao.maps.InfoWindow({
+            content: content
+        });
+
+        kakaoInfoWindow.open(kakaoMap, marker);
+        kakaoMap.panTo(marker.getPosition());
     }
 
     function updateMapMarkers(list) {
-        // 기존 마커 제거
+        if (!kakaoMap) return;
+
+        // 기존 마커 제거 및 정보 초기화
         kakaoMarkers.forEach(m => m.setMap(null));
         kakaoMarkers = [];
+        markerInfoById.clear();
+
+        if (kakaoInfoWindow) {
+            kakaoInfoWindow.close();
+            kakaoInfoWindow = null;
+        }
+
         const bounds = new kakao.maps.LatLngBounds();
 
         list.forEach(s => {
             if (!s.latitude || !s.longitude) return;
             const pos = new kakao.maps.LatLng(s.latitude, s.longitude);
             const marker = new kakao.maps.Marker({ position: pos, map: kakaoMap });
-            kakao.maps.event.addListener(marker, 'click', () => location.href = `/stadium/detail?id=${s.stadiumId}`);
+
+            // 마커 클릭 시 인포윈도우 + 지도 이동
+            kakao.maps.event.addListener(marker, 'click', () => {
+                showStadiumInfo(marker, s);
+            });
+
             kakaoMarkers.push(marker);
             bounds.extend(pos);
+
+            // stadiumId 기준으로 marker / 데이터 저장
+            const id = s.stadiumId || s.id || s.stadium_id;
+            if (id != null) {
+                markerInfoById.set(String(id), { marker, data: s });
+            }
         });
 
-        // 마커가 있을 경우에만 지도의 경계를 조정
-        if (kakaoMarkers.length > 0) kakaoMap.setBounds(bounds);
+        if (kakaoMarkers.length > 0) {
+            kakaoMap.setBounds(bounds);
+        }
     }
 
-    // ⭐ [수정] renderFieldList 함수에 updateMapMarkers 호출 로직을 분리 ⭐
+    // ⭐ renderFieldList: 카드 클릭 시 지도 이동 + 인포윈도우 열기
     function renderFieldList(fields, updateMap = true) {
         const list = document.getElementById("field-list");
         const noMsg = document.getElementById("no-results-message");
@@ -182,25 +258,41 @@
         fields.forEach(field => {
             const card = document.createElement("div");
             card.className = "field-card";
-            card.innerHTML = `<h3>${field.name}</h3><div class="field-meta"><p><i class="fas fa-map-marker-alt"></i> ${field.address}</p></div>`;
+            card.innerHTML = `
+                <h3>${field.name}</h3>
+            `;
+
             card.addEventListener('click', () => {
                 const id = field.stadiumId || field.id || field.stadium_id;
-                if(id) location.href = `/stadium/detail?id=${id}`;
+                if (!id || !kakaoMap) return;
+
+                const info = markerInfoById.get(String(id));
+                if (info && info.marker) {
+                    // 지도 이동 + 인포윈도우 표시
+                    showStadiumInfo(info.marker, info.data);
+                } else {
+                    // 혹시 아직 마커가 없으면 마커를 새로 그림
+                    updateMapMarkers([field]);
+                    const info2 = markerInfoById.get(String(id));
+                    if (info2 && info2.marker) {
+                        showStadiumInfo(info2.marker, info2.data);
+                    }
+                }
             });
+
             list.appendChild(card);
         });
 
-        // ⭐ updateMap이 true일 때만 마커를 업데이트합니다. (검색 버튼 눌렀을 때)
+        // 검색 버튼 눌렀을 때만 마커 업데이트
         if (updateMap) {
             updateMapMarkers(fields);
         }
     }
 
     async function fetchStadiums(keyword) {
-        // 키워드가 없으면 (초기 로드 시) 전체 목록 API를 호출
-        const url = keyword ?
-            `/api/stadiums/search?keyword=${encodeURIComponent(keyword)}` :
-            `/api/stadiums`;
+        const url = keyword
+            ? `/api/stadiums/search?keyword=${encodeURIComponent(keyword)}`
+            : `/api/stadiums`;
 
         try {
             const response = await fetch(url);
@@ -218,17 +310,17 @@
         // 키워드가 비어 있으면 전체 목록을 다시 로드
         const stadiums = await fetchStadiums(keyword);
 
-        // ⭐ 검색 버튼을 눌렀을 때는 반드시 마커를 업데이트해야 합니다. ⭐
+        // 검색 버튼을 눌렀을 때는 반드시 마커를 업데이트해야 합니다.
         renderFieldList(stadiums, true);
 
         // 검색 결과가 없을 경우 지도를 서울 중심으로 리셋
         if (stadiums.length === 0 && kakaoMap) {
-            // 기존 마커를 지우고 중앙으로 이동 (initMap과 유사)
             updateMapMarkers([]);
             kakaoMap.setCenter(new kakao.maps.LatLng(37.5665, 126.9780));
             kakaoMap.setLevel(5);
         }
     }
 </script>
+
 </body>
 </html>
