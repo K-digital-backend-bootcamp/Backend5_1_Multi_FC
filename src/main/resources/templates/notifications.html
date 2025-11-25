@@ -233,12 +233,14 @@
                             location.href = `/chat?roomId=${notif.referenceId}`;
                         }
                     };
-                } else if ( notif.type === '친구요청'){
+                } else if ( notif.type === '친구신청'){
                     iconHtml = '<i class="fas fa-user-friends icon-friend"></i>';
                     actionHtml = `
                         <div class="notification-actions">
-                            <button class="btn-accept" onclick="handleFriendAction(${notif.referenceId}, 'accept', event)">수락</button>
-                            <button class="btn-reject" onclick="handleFriendAction(${notif.referenceId}, 'reject', event)">거절</button>
+                            <button class="btn-accept"
+                                onclick="handleFriendAction(${notif.referenceId}, ${notif.notificationId}, 'accept', event)">수락</button>
+                            <button class="btn-reject"
+                                onclick="handleFriendAction(${notif.referenceId}, ${notif.notificationId}, 'reject', event)">거절</button>
                         </div>
                     `;
                     isClickable = false;
@@ -312,13 +314,14 @@
 
 
     // ⭐⭐ 보강: 친구 요청 처리 함수 (ERD: Notification.friend_id 반영) ⭐⭐
-    async function handleFriendAction(friendId, action, event) {
+    async function handleFriendAction(requesterUserId, notificationId, action, event) {
         event.stopPropagation();
 
         const accessToken = localStorage.getItem('accessToken');
 
         try {
-            const endpoint = action === 'accept' ? `/api/friends/accept/${friendId}` : `/api/friends/reject/${friendId}`;
+            //api수정
+            const endpoint = action === 'accept' ? `/api/friends/requests/${requesterUserId}/accept` : `/api/friends/requests/${requesterUserId}/reject`;
 
             const response = await fetch(endpoint, {
                 method: 'POST',
@@ -333,13 +336,14 @@
                 throw new Error('친구 요청 처리 실패');
             }
 
+            await markAsRead(notificationId);
+
             if (action === 'accept') {
                 alert('✅ 친구 요청을 수락했습니다.');
             } else {
                 alert('❌ 친구 요청을 거절했습니다.');
             }
 
-            loadNotifications();
         } catch (error){
             console.error('친구 요청 처리 실패:', error);
             alert('친구 요청 처리 중 오류가 발생했습니다.');
