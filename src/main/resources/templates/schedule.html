@@ -5,15 +5,183 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MULTI FC - 일정 검색</title>
 
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css?v=219}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <!-- 🔥 Flatpickr (범위 달력) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
+
+    <style>
+        .schedule-search-main {
+            padding: 100px 40px 40px 40px;
+            background-color: #f7f7f7;
+            min-height: 100vh;
+        }
+        .search-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .search-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #6c5ce7;
+            padding-bottom: 10px;
+        }
+        .filter-section {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-section input,
+        .filter-section select,
+        .filter-section button {
+            padding: 12px 15px;
+            font-size: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: #f9f9f9;
+            font-family: inherit;
+        }
+        .filter-section input[type="text"] {
+            min-width: 220px;
+        }
+        .filter-section > button#search-btn {
+            background-color: #6c5ce7;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+
+        .match-list-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .match-item-card {
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-left: 5px solid #6c5ce7;
+        }
+        .match-item-card.closed {
+            border-left-color: #aaa;
+        }
+        .match-item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        }
+        .match-item-header {
+            padding: 15px 20px;
+            background: #fdfdfd;
+            border-bottom: 1px solid #eee;
+        }
+        .match-item-header .date {
+            font-size: 18px;
+            font-weight: 700;
+            color: #6c5ce7;
+        }
+        .match-item-card.closed .match-item-header .date {
+            color: #555;
+        }
+        .match-item-body {
+            padding: 20px;
+        }
+        .match-item-body .location,
+        .match-item-body .status {
+            display: flex;
+            align-items: center;
+            font-size: 15px;
+            color: #555;
+            margin-bottom: 12px;
+        }
+        .match-item-body .location i,
+        .match-item-body .status i {
+            margin-right: 10px;
+            color: #6c5ce7;
+            width: 16px;
+        }
+        .match-item-body p i.fa-crown {
+            color: #f39c12;
+        }
+        .match-item-card.closed .match-item-body .location i,
+        .match-item-card.closed .match-item-body .status i {
+            color: #aaa;
+        }
+        .match-item-body .status {
+            margin-bottom: 20px;
+        }
+        .status-badge {
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 5px;
+            color: white;
+            margin-right: 8px;
+        }
+        .status-badge.open {
+            background-color: #28a745;
+        }
+        .status-badge.closed {
+            background-color: #888;
+        }
+        .details-button {
+            display: block;
+            width: 100%;
+            text-align: center;
+            padding: 10px;
+            text-decoration: none;
+            background-color: #6c5ce7;
+            color: white;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+        .details-button:hover {
+            background-color: #8e44ad;
+        }
+        .details-button.disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+        .details-button.disabled:hover {
+            background: #aaa;
+        }
+
+        /* 🔧 flatpickr: 연도 → 월 순서로 보이게 */
+        .flatpickr-current-month {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .flatpickr-current-month .numInputWrapper { /* 연도 */
+            order: 1;
+            margin-right: 4px;
+        }
+        .flatpickr-current-month .flatpickr-monthDropdown-months { /* 월 */
+            order: 2;
+        }
+    </style>
 </head>
-<body class="match-search-page">
+<body>
+
 <header class="quick-menu">
     <div class="logo"><a href="/">Multi FC</a></div>
     <div class="header-icons">
-        <button id="profile-menu-toggle" class="profile-icon" style="position: relative; display: none;">
+        <button id="profile-menu-toggle" class="profile-icon" style="position: relative;">
             <i class="fas fa-user-circle"></i>
             <span id="notification-badge" class="notification-badge"></span>
         </button>
@@ -31,27 +199,39 @@
         </div>
         <button id="menu-toggle" class="menu-toggle-btn"><i class="fas fa-bars"></i></button>
     </div>
+
     <nav id="main-menu" class="main-nav">
         <ul>
-            <li><a href="/"><i class="fas fa-home"></i> 메인 (Home)</a></li>
+            <li><a href="/" ><i class="fas fa-home"></i> 메인 (Home)</a></li>
             <li><a href="/fields"><i class="fas fa-search"></i> 구장검색</a></li>
             <li><a href="/community"><i class="fas fa-users"></i> 커뮤니티</a></li>
             <li id="nav-chat-link-li"><a href="/chat" id="nav-chat-link"><i class="fas fa-comments"></i> 실시간채팅</a></li>
-            <li><a href="/login" id="nav-login-link"><i class="fas fa-sign-in-alt"></i> 로그인</a></li>
-            <li style="display:none;"><a href="#" id="nav-logout-link"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
+            <li><a href="/schedule?stadium" class="active"><i class="fas fa-calendar-check"></i> 경기 일정</a></li>
         </ul>
     </nav>
 </header>
 
 <main class="schedule-search-main">
     <div class="search-container">
-        <h1 class="search-title">📅 경기일정 검색</h1>
+        <h1 class="search-title">📅 경기일정 검색 (내가 참가한 경기)</h1>
 
         <div class="filter-section">
-            <input type="date" id="filter-date">
+            <!-- 🔥 실제 필터용 값 (숨김) -->
+            <input type="hidden" id="filter-date-start">
+            <input type="hidden" id="filter-date-end">
 
-            <select id="filter-region">
-                <option value="전체지역">전체지역</option>
+            <!-- 🔥 유저가 클릭해서 범위 선택하는 달력 -->
+            <input type="text" id="filter-date-range" placeholder="날짜 범위를 선택하세요">
+
+            <!-- 🔥 기간 선택 셀렉트 (종료일 = 오늘 고정, 시작일 자동 계산) -->
+            <select id="filter-period">
+                <option value="">기간 선택(직접선택)</option>
+                <option value="today">오늘</option>
+                <option value="1w">지난주(7일)</option>
+                <option value="2w">2주전(14일)</option>
+                <option value="1m">한달전</option>
+                <option value="6m">6개월전</option>
+                <option value="1y">1년전</option>
             </select>
 
             <select id="filter-status">
@@ -60,17 +240,22 @@
                 <option value="closed">모집완료</option>
             </select>
 
+            <!-- 🔥 정렬 기준 -->
+            <select id="sort-order">
+                <option value="desc">최신순</option>
+                <option value="asc">오래된순</option>
+            </select>
+
             <button id="search-btn">검색</button>
         </div>
 
-        <div class="match-list-container" id="match-list-container">
-        </div>
+        <div class="match-list-container" id="match-list-container"></div>
         <p id="no-results-message" style="color: #666; text-align: center; margin-top: 30px; display: none;">검색 결과가 없습니다.</p>
     </div>
 </main>
 
 <script>
-    // --- (★공통★) 메뉴 토글 로직 (유지) ---
+    // --- 공통 메뉴 토글 로직 ---
     const menuToggle = document.getElementById('menu-toggle');
     const mainMenu = document.getElementById('main-menu');
     const profileMenuToggle = document.getElementById('profile-menu-toggle');
@@ -126,8 +311,6 @@
             window.location.href = '/login';
         });
     }
-    // --- (★공통★) 메뉴 토글 로직 끝 ---
-
 
     const badge = document.getElementById('notification-badge');
     let hasReviewNotif = false;
@@ -167,27 +350,12 @@
         } catch (error) { console.error("일정 요청 중 오류 발생:", error); }
     }
 
-    // --- JS 데이터 구조 정의 ---
-    const METRO_CITIES = [
-        { value: '서울특별시', text: '서울특별시' },
-        { value: '부산광역시', text: '부산광역시' },
-        { value: '대구광역시', text: '대구광역시' },
-        { value: '인천광역시', text: '인천광역시' },
-        { value: '광주광역시', text: '광주광역시' },
-        { value: '대전광역시', text: '대전광역시' },
-        { value: '울산광역시', text: '울산광역시' }
-    ];
+    let allMySchedules = [];
+    let currentUserId = null;
+    let currentUserName = null;
+    let dateRangePicker = null; // flatpickr 인스턴스
 
-    // ⭐⭐ ERD 반영: 더미 매치 데이터 (특별시/광역시 위치로 재정의) ⭐⭐
-    const MOCK_MATCHES = [
-        { id: 1, date: "2025-11-01 (토) 19:00", location: "서울특별시 강남 풋살장", creator: "캡틴손", current: 8, max: 10, status: "open", type: "팀 매칭", skill: "중급", amenities: ["샤워 가능", "주차 가능"] },
-        { id: 2, date: "2025-11-03 (월) 20:00", location: "부산광역시 서면 풋살장", creator: "운영진", current: 12, max: 12, status: "closed", type: "개인 매칭", skill: "고급", amenities: ["주차 가능"] },
-        { id: 3, date: "2025-11-05 (수) 21:00", location: "인천광역시 연수구 풋살파크", creator: "구원투수", current: 5, max: 12, status: "open", type: "팀 매칭", skill: "초급", amenities: ["샤워 가능"] },
-        { id: 4, date: "2025-11-10 (월) 19:00", location: "대전광역시 유성구 풋살장", creator: "테스터", current: 8, max: 10, status: "open", type: "팀 매칭", skill: "중급", amenities: ["샤워 가능", "주차 가능"] },
-    ];
-
-
-    // ⭐⭐ 매치 목록 렌더링 함수 ⭐⭐
+    // 카드 렌더링
     function renderMatchList(matches) {
         const listContainer = document.getElementById('match-list-container');
         const noResults = document.getElementById('no-results-message');
@@ -207,18 +375,20 @@
             card.className = `match-item-card ${statusClass}`;
             card.dataset.matchId = match.id;
 
-            // ⭐⭐ 유형/실력/편의 시설 문구 제거 ⭐⭐
+            const isHost = match.creator === currentUserName;
+            const creatorDisplay = isHost ? '나 (Host)' : match.creator;
+
             card.innerHTML = `
                 <div class="match-item-header">
                     <span class="date">${match.date}</span>
                 </div>
                 <div class="match-item-body">
                     <p style="font-size: 14px; color: #6c5ce7; font-weight: 600; margin-bottom: 12px;">
-                        <i class="fas fa-crown" style="margin-right: 5px;"></i> 생성자: ${match.creator}
+                        <i class="fas fa-crown" style="margin-right: 5px;"></i> 생성자: ${creatorDisplay}
                     </p>
                     <p class="location">
                         <i class="fas fa-map-marker-alt"></i>
-                        ${match.location}
+                        ${match.stadiumName} (${match.location})
                     </p>
 
                     <p class="status">
@@ -234,40 +404,173 @@
         });
     }
 
-    // ⭐⭐ 수정: 검색 실행 함수 (단일 지역/상태 필터링) ⭐⭐
+    // 내 스케줄 불러오기
+    async function fetchMySchedules() {
+        const userId = localStorage.getItem('userId');
+        const userName = localStorage.getItem('userNickname');
+
+        if (!userId) {
+            console.error("User ID not found in localStorage.");
+            return [];
+        }
+        currentUserId = Number(userId);
+        currentUserName = userName;
+
+        try {
+            const response = await fetch(`/api/matchrooms/my-schedules?userId=${userId}`);
+
+            if (!response.ok) {
+                console.error("Failed to fetch schedules:", response.statusText);
+                document.getElementById('match-list-container').innerHTML =
+                    `<p style="color:red; text-align:center;">경기 목록을 불러오는 중 오류가 발생했습니다. (API ${response.status})</p>`;
+                return [];
+            }
+
+            const rawMatches = await response.json();
+
+            allMySchedules = rawMatches.map(match => {
+                // 🔥 시분만 추출 (HH:mm)
+                const timeOnly = match.matchTime
+                    ? String(match.matchTime).split(':').slice(0, 2).join(':')
+                    : '';
+
+                return {
+                    id: match.roomId,
+                    // 화면 표시용: "2025-11-25 (12:30)"
+                    date: `${match.matchDate}${timeOnly ? ` (${timeOnly})` : ''}`,
+                    // 필터/정렬용
+                    matchDate: match.matchDate,   // YYYY-MM-DD
+                    matchTime: timeOnly,          // HH:mm
+                    location: match.stadiumAddress || '주소 정보 없음',
+                    stadiumName: match.stadiumName || '구장 정보 없음',
+                    creator: match.hostNickname || ('Host ID: ' + match.hostId),
+                    current: match.currentPlayers || 0,
+                    max: match.maxPlayers,
+                    status: match.status.toLowerCase() === 'closed' ? 'closed' : 'open',
+                };
+            });
+
+            return allMySchedules;
+
+        } catch (error) {
+            console.error("API call error:", error);
+            document.getElementById('match-list-container').innerHTML =
+                `<p style="color:red; text-align:center;">네트워크 연결 중 오류 발생.</p>`;
+            return [];
+        }
+    }
+
+    // 필터 + 정렬
     function performSearch() {
-        const date = document.getElementById('filter-date').value;
-        const region = document.getElementById('filter-region').value; // 특별시/광역시 값
-        const status = document.getElementById('filter-status').value; // 상태 값
+        const startDateValue = document.getElementById('filter-date-start').value;
+        const endDateValue = document.getElementById('filter-date-end').value;
+        const status = document.getElementById('filter-status').value;
+        const sortOrderSelect = document.getElementById('sort-order');
+        const sortOrder = sortOrderSelect ? sortOrderSelect.value : 'desc'; // 기본 최신순
 
-        let filtered = MOCK_MATCHES;
+        let filtered = allMySchedules;
 
-        // 1. 날짜 필터
-        if (date) {
-            filtered = filtered.filter(match => match.date.includes(date));
+        // 1. 날짜 범위 필터
+        if (startDateValue || endDateValue) {
+            const start = startDateValue ? new Date(startDateValue) : null;
+            const end = endDateValue ? new Date(endDateValue) : null;
+
+            filtered = filtered.filter(match => {
+                if (!match.matchDate) return true;
+
+                const matchDate = new Date(match.matchDate);
+
+                if (start && matchDate < start) return false;
+                if (end && matchDate > end) return false;
+                return true;
+            });
         }
 
-        // 2. 지역 (특별시/광역시) 필터
-        if (region && region !== '전체지역') {
-            // location이 '서울특별시' 등으로 시작하는지 확인
-            filtered = filtered.filter(match => match.location.startsWith(region));
-        }
-
-        // 3. 상태 필터
+        // 2. 상태 필터
         if (status) {
             filtered = filtered.filter(match => match.status === status);
         }
 
+        // 3. 🔥 정렬 (날짜 + 시간 기준)
+        filtered.sort((a, b) => {
+            const aKey = new Date(`${a.matchDate}T${a.matchTime || '00:00'}`);
+            const bKey = new Date(`${b.matchDate}T${b.matchTime || '00:00'}`);
+
+            if (sortOrder === 'asc') {
+                return aKey - bKey; // 오래된순
+            } else {
+                return bKey - aKey; // 최신순
+            }
+        });
+
+        // 4. 렌더링
         renderMatchList(filtered);
     }
 
+    // 🔥 기간 select → 시작/종료일 + 달력 반영
+    function setupPeriodSelect() {
+        const periodSelect = document.getElementById('filter-period');
+        const dateStartHidden = document.getElementById('filter-date-start');
+        const dateEndHidden = document.getElementById('filter-date-end');
 
-    // --- (★페이지별★) 로직 실행 ---
+        if (!periodSelect) return;
+
+        periodSelect.addEventListener('change', () => {
+            const range = periodSelect.value;
+
+            // "직접 선택"이면 날짜 초기화만 하고 끝
+            if (!range) {
+                dateStartHidden.value = "";
+                dateEndHidden.value = "";
+                if (dateRangePicker) {
+                    dateRangePicker.clear();
+                }
+                return;
+            }
+
+            const today = new Date();
+            const end = new Date(today.getFullYear(), today.getMonth(), today.getDate()); // 오늘 00시
+            const start = new Date(end); // 복사
+
+            switch (range) {
+                case 'today':
+                    // start = today 그대로
+                    break;
+                case '1w':
+                    start.setDate(start.getDate() - 7);
+                    break;
+                case '2w':
+                    start.setDate(start.getDate() - 14);
+                    break;
+                case '1m':
+                    start.setMonth(start.getMonth() - 1);
+                    break;
+                case '6m':
+                    start.setMonth(start.getMonth() - 6);
+                    break;
+                case '1y':
+                    start.setFullYear(start.getFullYear() - 1);
+                    break;
+            }
+
+            const fmt = d => d.toISOString().slice(0, 10);
+
+            // hidden 값 세팅
+            dateStartHidden.value = fmt(start);
+            dateEndHidden.value = fmt(end);
+
+            // flatpickr에도 범위 세팅
+            if (dateRangePicker) {
+                dateRangePicker.setDate([start, end], false); // false: onChange 다시 안 부름
+            }
+        });
+    }
+
+    // --- 페이지 로드 ---
     document.addEventListener('DOMContentLoaded', async () => {
         const accessToken = localStorage.getItem('accessToken');
         const currentPath = window.location.pathname;
 
-        // ⭐⭐ 회원 전용 페이지 접근 차단 로직 ⭐⭐
         if (!accessToken) {
             alert("❌ 회원 전용 페이지입니다.\n로그인 후에 이용하실 수 있습니다.");
             localStorage.setItem('redirectAfterLogin', currentPath);
@@ -278,43 +581,69 @@
         if (accessToken) {
             if (profileMenuToggle) profileMenuToggle.style.display = 'block';
 
-            // 로그인/로그아웃 메뉴 상태 설정
-            if (navLoginLink) navLoginLink.parentElement.style.display = 'none';
-            if (navLogoutLink) navLogoutLink.parentElement.style.display = 'list-item';
+            if (navLoginLink && navLoginLink.parentElement) navLoginLink.parentElement.style.display = 'none';
+            if (navLogoutLink && navLogoutLink.parentElement) navLogoutLink.parentElement.style.display = 'list-item';
 
             await checkPendingReviews();
             await checkUpcomingSchedules();
             updateGlobalBadge();
         } else {
-            // 비회원 상태일 경우 메뉴 설정
-            if (navLoginLink) navLoginLink.parentElement.style.display = 'list-item';
-            if (navLogoutLink) navLogoutLink.parentElement.style.display = 'none';
+            if (navLoginLink && navLoginLink.parentElement) navLoginLink.parentElement.style.display = 'list-item';
+            if (navLogoutLink && navLogoutLink.parentElement) navLogoutLink.parentElement.style.display = 'none';
         }
 
-        // 검색 필터 초기화 및 이벤트 바인딩
-        const dateFilter = document.getElementById('filter-date');
-        if (dateFilter) {
-            dateFilter.valueAsDate = new Date();
+        const schedules = await fetchMySchedules();
+
+        // 🔥 범위 달력 초기화
+        const dateRangeInput = document.getElementById('filter-date-range');
+        const dateStartHidden = document.getElementById('filter-date-start');
+        const dateEndHidden = document.getElementById('filter-date-end');
+        const periodSelect = document.getElementById('filter-period');
+
+        if (dateRangeInput) {
+            dateRangePicker = flatpickr(dateRangeInput, {
+                mode: "range",          // 범위 선택
+                dateFormat: "Y-m-d",
+                locale: flatpickr.l10ns.ko, // 한국어
+                onChange(selectedDates, dateStr) {
+                    // 사용자가 달력에서 직접 선택했을 때 hidden 값 동기화
+                    if (selectedDates.length === 0) {
+                        dateStartHidden.value = "";
+                        dateEndHidden.value = "";
+                    } else if (selectedDates.length === 1) {
+                        const start = selectedDates[0];
+                        dateStartHidden.value = flatpickr.formatDate(start, "Y-m-d");
+                        dateEndHidden.value = "";
+                    } else if (selectedDates.length === 2) {
+                        const [start, end] = selectedDates;
+                        dateStartHidden.value = flatpickr.formatDate(start, "Y-m-d");
+                        dateEndHidden.value = flatpickr.formatDate(end, "Y-m-d");
+                    }
+
+                    // 달력을 직접 건드렸으면 기간 select는 "직접 선택"으로 리셋
+                    if (periodSelect) {
+                        periodSelect.value = "";
+                    }
+                }
+            });
         }
 
+        // 검색 버튼 이벤트
         const searchBtn = document.getElementById('search-btn');
         if (searchBtn) {
             searchBtn.addEventListener('click', performSearch);
         }
 
-        const regionFilter = document.getElementById('filter-region');
+        // 기간 select 세팅
+        setupPeriodSelect();
 
-        // 1. 지역 옵션을 채웁니다. (중복 방지)
-        // HTML에 '전체지역' 옵션이 이미 있으므로, JS는 METRO_CITIES만 추가합니다.
-        METRO_CITIES.forEach(city => {
-            const option = document.createElement('option');
-            option.value = city.value;
-            option.textContent = city.text;
-            regionFilter.appendChild(option);
-        });
-
-        // 초기 로드 시 전체 목록 표시
-        renderMatchList(MOCK_MATCHES);
+        // 초기 전체 목록 (정렬 기본값: 최신순)
+        renderMatchList(
+            [...schedules].sort((a, b) =>
+                new Date(`${b.matchDate}T${b.matchTime || '00:00'}`) -
+                new Date(`${a.matchDate}T${a.matchTime || '00:00'}`)
+            )
+        );
     });
 </script>
 </body>

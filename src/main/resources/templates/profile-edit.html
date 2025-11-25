@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MULTI FC - 프로필 수정</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css?v=219}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
 
 <header class="quick-menu">
-    <div class="logo"><a href="/">MULTI FC</a></div>
+    <div class="logo"><a href="/">Multi FC</a></div>
     <div class="header-icons">
-        <button id="profile-menu-toggle" class="profile-icon" style="position: relative; display: none;">
+        <button id="profile-menu-toggle" class="profile-icon" style="position: relative;">
             <i class="fas fa-user-circle"></i>
             <span id="notification-badge" class="notification-badge"></span>
         </button>
@@ -31,12 +31,14 @@
         </div>
         <button id="menu-toggle" class="menu-toggle-btn"><i class="fas fa-bars"></i></button>
     </div>
+
     <nav id="main-menu" class="main-nav">
         <ul>
-            <li><a href="/"><i class="fas fa-home"></i> 메인 (Home)</a></li>
+            <li><a href="/" ><i class="fas fa-home"></i> 메인 (Home)</a></li>
             <li><a href="/fields"><i class="fas fa-search"></i> 구장검색</a></li>
             <li><a href="/community"><i class="fas fa-users"></i> 커뮤니티</a></li>
-            <li><a href="/chat"><i class="fas fa-comments"></i> 실시간채팅</a></li>
+            <li id="nav-chat-link-li"><a href="/chat" id="nav-chat-link"><i class="fas fa-comments"></i> 실시간채팅</a></li>
+            <li><a href="/schedule?stadium"><i class="fas fa-calendar-check"></i> 경기 일정</a></li>
             <li><a href="/login" id="nav-login-link"><i class="fas fa-sign-in-alt"></i> 로그인</a></li>
             <li><a href="#" id="nav-logout-link"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
         </ul>
@@ -424,41 +426,6 @@
     let isNicknameChecked = true;
     let originalNickname = "";
 
-    // // 🔹 내 정보 불러오기 (더미 → 나중에 실제 API로 교체)
-    // async function fetchMyEditInfo() {
-    //     await new Promise(r => setTimeout(r, 100));
-    //     const myInfo = {
-    //         email: "real.user@example.com",
-    //         nickname: "리얼유저",
-    //         position: "FIXO",      // 풋살 포지션
-    //         location: "서울시 서초구",
-    //         skillLevel: "intermediate", // beginner / intermediate / advanced
-    //         profilePicUrl: null
-    //     };
-    //
-    //     // 폼에 데이터 채우기
-    //     emailInput.value = myInfo.email;
-    //     nicknameInput.value = myInfo.nickname;
-    //     document.getElementById('position').value = myInfo.position;
-    //     document.getElementById('location').value = myInfo.location;
-    //
-    //     if (myInfo.skillLevel) {
-    //         skillLevelSelect.value = myInfo.skillLevel;
-    //     } else {
-    //         skillLevelSelect.value = "";
-    //     }
-    //
-    //     if (myInfo.profilePicUrl) {
-    //         profilePreview.src = myInfo.profilePicUrl;
-    //     }
-    //
-    //     originalNickname = myInfo.nickname;
-    //     isNicknameChecked = true;
-    //
-    //     profileSubmitBtn.disabled = false;
-    //     profileSubmitBtn.textContent = '정보 저장';
-    // }
-
     async function fetchMyEditInfo() {
         const token = localStorage.getItem('accessToken');
         if (!token) {
@@ -560,44 +527,6 @@
             isNicknameChecked = false;
         }
     });
-
-    // // --- 프로필 정보 수정 폼 제출 ---
-    // profileForm.addEventListener('submit', async function(e) {
-    //     e.preventDefault();
-    //     profileSuccessMsg.style.display = 'none';
-    //     profileErrorMsg.style.display = 'none';
-    //
-    //     if (!isNicknameChecked) {
-    //         profileErrorMsg.textContent = '❌ 닉네임 중복 확인을 완료해주세요.';
-    //         profileErrorMsg.style.display = 'block';
-    //         return;
-    //         return;
-    //     }
-    //
-    //     const formData = new FormData(profileForm);
-    //     try {
-    //         const response = await fetch('/profile/update', {
-    //             method: 'POST',
-    //             body: formData,
-    //             headers: {
-    //                 'Authorization': 'Bearer ' + localStorage.getItem('accessToken')
-    //             }
-    //         });
-    //         const data = await response.json();
-    //         if (response.ok) {
-    //             profileSuccessMsg.textContent = '✅ ' + data.message;
-    //             profileSuccessMsg.style.display = 'block';
-    //             originalNickname = nicknameInput.value;
-    //             checkNicknameBtn.disabled = true;
-    //         } else {
-    //             profileErrorMsg.textContent = '❌ ' + data.message;
-    //             profileErrorMsg.style.display = 'block';
-    //         }
-    //     } catch (error) {
-    //         profileErrorMsg.textContent = '❌ 요청 중 오류가 발생했습니다.';
-    //         profileErrorMsg.style.display = 'block';
-    //     }
-    // });
 
     // --- 프로필 정보 수정 폼 제출 (백엔드 MyPage 연동 버전) ---
     profileForm.addEventListener('submit', async function(e) {
