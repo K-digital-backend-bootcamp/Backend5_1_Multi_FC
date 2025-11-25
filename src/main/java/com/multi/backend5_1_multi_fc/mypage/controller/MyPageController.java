@@ -122,4 +122,14 @@ public class MyPageController {
     public ResponseEntity<String> handleMyPageException(MyPageException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
     }
+
+    // 회원탈퇴
+    @DeleteMapping("/delete")
+    public ResponseEntity<?> deleteAccount(
+            @RequestHeader( value = "Authorization", required = false) String authHeader
+    ){
+        String username =  getCurrentUsername();
+        myPageService.deleteAccount(username);
+        return ResponseEntity.ok(Map.of("message", "회원탈퇴가 완료되었습니다."));
+    }
 }

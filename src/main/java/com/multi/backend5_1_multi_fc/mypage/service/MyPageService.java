@@ -76,4 +76,15 @@ public class MyPageService {
         String newEncoded = passwordEncoder.encode(request.getNewPassword());
         myPageRepo.updatePasswordByUserId(userId, newEncoded);
     }
+
+    // 회원탈퇴
+    @Transactional
+    public void deleteAccount(String username) {
+        Long userId = getUserIdByUsername(username);
+
+        int deleted = myPageRepo.deleteUserById(userId);
+        if (deleted == 0) {
+            throw new MyPageException("회원탈퇴에 실패했습니다. 다시 시도해주세요.");
+        }
+    }
 }
