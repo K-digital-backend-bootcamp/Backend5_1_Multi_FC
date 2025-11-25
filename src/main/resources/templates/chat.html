@@ -1942,14 +1942,15 @@
                 return;
             }
 
-            friends.forEach(friend => {
+            availableFriends.forEach(friend => {
                 const item = document.createElement('div');
                 item.className = 'invite-friend-item';
                 item.innerHTML = `
                 <input type="checkbox" class="friend-checkbox" value="${friend.userId}">
                 <span>${friend.nickname}</span>`;
                 friendListToInvite.appendChild(item);
-            })
+            });
+
         } catch (e) {
             console.error('친구 목록 로드 실패:', e);
             friendListToInvite.innerHTML = '<p style="text-align:center; padding:20px; color:#e74c3c;">친구 목록을 불러올 수 없습니다.</p>';
@@ -1957,7 +1958,7 @@
     }
 
     /**
-     * 최종 초대 전송 (더미 로직)
+     * 최종 초대 전송
      */
     async function sendInvite() {
         const checkboxes = document.querySelectorAll('.friend-checkbox:checked');
@@ -1969,13 +1970,15 @@
         }
 
         try {
+            console.log("초대한 사용자 리스트",invitedUserIds);
             const response = await fetch(`/chatroom/${currentRoomId}/invite`,{
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
                 },
-                body: JSON.stringify({ invitedUserIds:invitedUserIds })
+                body: JSON.stringify(invitedUserIds),
+                credentials: 'include'
             });
 
             if(!response.ok) throw new Error('초대 실패');
@@ -1983,6 +1986,7 @@
             alert('초대 메세지를 성공적으로 보냈습니다.');
             openInviteModal(false);
             loadParticipantList(currentRoomId);
+            loadRoomList(currentChatType);
         } catch (e) {
             console.error('초대 실패:', e);
             alert('초대에 실패했습니다.');
