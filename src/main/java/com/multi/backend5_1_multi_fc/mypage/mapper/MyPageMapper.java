@@ -23,4 +23,7 @@ public interface MyPageMapper {
     // userId 기준 비밀번호 변경
     int updatePasswordByUserId(@Param("userId") Long userId,
                                @Param("encodedPassword") String encodedPassword);
+
+    // 회원탈퇴
+    int deleteUserById(@Param("userId") Long userId);
 }

@@ -30,5 +30,10 @@ public class MyPageDao {
     public int updatePasswordByUserId(Long userId, String encodedPassword) {
         return myPageMapper.updatePasswordByUserId(userId, encodedPassword);
     }
+
+    // 회원탈퇴
+    public int deleteUserById(Long userId) {
+        return myPageMapper.deleteUserById(userId);
+    }
 }
 

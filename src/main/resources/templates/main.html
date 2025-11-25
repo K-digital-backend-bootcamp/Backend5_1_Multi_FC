@@ -110,52 +110,49 @@
                 <p>현재 위치와 활동 반경에 맞춘 정교한 구장 검색으로 이동 시간을 최소화합니다.</p>
             </div>
         </div>
-    </section>  <!-- ✅ value-section 닫기 -->
+    </section>  <section id="features-section">
+    <h2 style="font-size: 36px; margin-bottom: 60px; font-weight:900;">
+        MULTI FC, 주요 서비스
+    </h2>
 
-    <section id="features-section">
-        <h2 style="font-size: 36px; margin-bottom: 60px; font-weight:900;">
-            MULTI FC, 주요 서비스
-        </h2>
-
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="icon-wrapper">
-                    <i class="fas fa-map-marked-alt"></i>
-                </div>
-                <h3>최적의 구장 검색</h3>
-                <p>위치, 인원, 시간대별 맞춤형 필터로 주변 풋살장을 빠르게 찾아보세요.<br>지도 연동으로 접근성을 높입니다.</p>
-                <a href="/fields" class="card-link">구장 찾기</a>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="icon-wrapper">
+                <i class="fas fa-map-marked-alt"></i>
             </div>
-
-            <div class="feature-card">
-                <div class="icon-wrapper">
-                    <i class="fas fa-calendar-alt"></i>
-                </div>
-                <h3>실시간 매칭방</h3>
-                <p>경기 개설 또는 참여 신청을 하고,<br>남은 인원을 확인하세요.<br>경기일정 탭을 통헤 일정을 확인합니다.</p>
-                <a href="/schedule" class="card-link">일정 확인</a>
-            </div>
-
-            <div class="feature-card">
-                <div class="icon-wrapper">
-                    <i class="fas fa-users"></i>
-                </div>
-                <h3>커뮤니티 소통</h3>
-                <p>자유게시판을 통해 정보를 공유해보세요. 다른 사용자와 활발하게 소통합니다.</p>
-                <a href="/community" class="card-link">커뮤니티 바로가기</a>
-            </div>
-
-            <!-- ✅ 실시간 소통 채널을 4번째 카드로 -->
-            <div class="feature-card">
-                <div class="icon-wrapper">
-                    <i class="fas fa-comments"></i>
-                </div>
-                <h3>실시간 채팅</h3>
-                <p>1:1 또는 그룹 채팅으로 다른 유저들과<br>실시간으로 소통합니다.</p>
-                <a href="/chat" class="card-link">실시간 채팅 바로가기</a>
-            </div>
+            <h3>최적의 구장 검색</h3>
+            <p>위치, 인원, 시간대별 맞춤형 필터로 주변 풋살장을 빠르게 찾아보세요.<br>지도 연동으로 접근성을 높입니다.</p>
+            <a href="/fields" class="card-link">구장 찾기</a>
         </div>
-    </section>
+
+        <div class="feature-card">
+            <div class="icon-wrapper">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <h3>실시간 매칭방</h3>
+            <p>경기 개설 또는 참여 신청을 하고,<br>남은 인원을 확인하세요.<br>경기일정 탭을 통헤 일정을 확인합니다.</p>
+            <a href="/schedule" class="card-link">일정 확인</a>
+        </div>
+
+        <div class="feature-card">
+            <div class="icon-wrapper">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3>커뮤니티 소통</h3>
+            <p>자유게시판을 통해 정보를 공유해보세요. 다른 사용자와 활발하게 소통합니다.</p>
+            <a href="/community" class="card-link">커뮤니티 바로가기</a>
+        </div>
+
+        <div class="feature-card">
+            <div class="icon-wrapper">
+                <i class="fas fa-comments"></i>
+            </div>
+            <h3>실시간 채팅</h3>
+            <p>1:1 또는 그룹 채팅으로 다른 유저들과<br>실시간으로 소통합니다.</p>
+            <a href="/chat" class="card-link">실시간 채팅 바로가기</a>
+        </div>
+    </div>
+</section>
 </main>
 
 <footer class="project-footer">
@@ -225,6 +222,7 @@
     if (navNotificationsLink) {
         navNotificationsLink.addEventListener('click', (e) => {
             e.preventDefault();
+            // 알림 목록으로 이동할 때는 '읽음' 처리 플래그를 설정하여 배지를 제거합니다. (글로벌 배지용)
             localStorage.setItem('hasReadReviews', 'true');
             localStorage.setItem('hasReadSchedules', 'true');
             window.location.href = '/notifications';
@@ -244,17 +242,25 @@
 
     function updateGlobalBadge() {
         if (pendingReviewStadiumIds.length > 0 || hasScheduleNotif) {
-            if (badge) badge.style.display = 'block';
+            // hasReviewNotif이 true더라도, 알림 목록을 통해 hasReadReviews를 true로 설정했으면
+            // 글로벌 배지는 숨깁니다. (알림을 확인했다는 가정)
+            if (localStorage.getItem('hasReadReviews') !== 'true') {
+                if (badge) badge.style.display = 'block';
+            } else {
+                if (badge) badge.style.display = 'none';
+            }
         } else {
             if (badge) badge.style.display = 'none';
         }
     }
 
     async function checkPendingReviews() {
-        if (localStorage.getItem('hasReadReviews') === 'true') {
-            hasReviewNotif = false;
-            return;
-        }
+        // ⛔ [수정된 부분]: hasReadReviews 플래그가 true더라도, 실제 알림 상태가 필요하므로
+        // 이 조건문은 제거합니다. 이렇게 해야 후기 작성 후 메인으로 돌아와도 알림 배너가 다시 표시됩니다.
+        // if (localStorage.getItem('hasReadReviews') === 'true') {
+        //     hasReviewNotif = false;
+        //     return;
+        // }
 
         const currentUserId = localStorage.getItem('userId');
         if (!currentUserId) return; // 로그인 안 했으면 통과
@@ -503,14 +509,7 @@
                 `;
                 reviewSection.style.display = 'flex';
 
-                const mainReviewLink = document.getElementById('main-review-link');
-                mainReviewLink.addEventListener('click', (e) => {
-                    localStorage.setItem('hasReadReviews', 'true');
-                    reviewSection.style.display = 'none';
-                    // 알림을 읽었으므로 배열 초기화
-                    pendingReviewStadiumIds = [];
-                    updateGlobalBadge();
-                });
+                // ⛔ [이전 수정에서 제거됨]: mainReviewLink에 불필요한 이벤트 리스너를 제거했습니다.
 
             } else if (reviewSection) {
                 reviewSection.style.display = 'none';
@@ -637,3 +636,5 @@
         }
     });
 </script>
+</body>
+</html>

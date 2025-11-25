@@ -34,4 +34,8 @@ public class MyPageRepo {
             throw new MyPageException("비밀번호 변경에 실패했습니다.");
         }
     }
+
+    public int deleteUserById(Long userId) {
+        return myPageDao.deleteUserById(userId);
+    }
 }
