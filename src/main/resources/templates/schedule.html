@@ -429,18 +429,15 @@
             const rawMatches = await response.json();
 
             allMySchedules = rawMatches.map(match => {
-                // 🔥 시분만 추출 (HH:mm)
                 const timeOnly = match.matchTime
                     ? String(match.matchTime).split(':').slice(0, 2).join(':')
                     : '';
 
                 return {
                     id: match.roomId,
-                    // 화면 표시용: "2025-11-25 (12:30)"
                     date: `${match.matchDate}${timeOnly ? ` (${timeOnly})` : ''}`,
-                    // 필터/정렬용
-                    matchDate: match.matchDate,   // YYYY-MM-DD
-                    matchTime: timeOnly,          // HH:mm
+                    matchDate: match.matchDate,
+                    matchTime: timeOnly,
                     location: match.stadiumAddress || '주소 정보 없음',
                     stadiumName: match.stadiumName || '구장 정보 없음',
                     creator: match.hostNickname || ('Host ID: ' + match.hostId),
@@ -466,102 +463,71 @@
         const endDateValue = document.getElementById('filter-date-end').value;
         const status = document.getElementById('filter-status').value;
         const sortOrderSelect = document.getElementById('sort-order');
-        const sortOrder = sortOrderSelect ? sortOrderSelect.value : 'desc'; // 기본 최신순
+        const sortOrder = sortOrderSelect ? sortOrderSelect.value : 'desc';
 
         let filtered = allMySchedules;
 
-        // 1. 날짜 범위 필터
         if (startDateValue || endDateValue) {
             const start = startDateValue ? new Date(startDateValue) : null;
             const end = endDateValue ? new Date(endDateValue) : null;
 
             filtered = filtered.filter(match => {
                 if (!match.matchDate) return true;
-
                 const matchDate = new Date(match.matchDate);
-
                 if (start && matchDate < start) return false;
                 if (end && matchDate > end) return false;
                 return true;
             });
         }
 
-        // 2. 상태 필터
         if (status) {
             filtered = filtered.filter(match => match.status === status);
         }
 
-        // 3. 🔥 정렬 (날짜 + 시간 기준)
         filtered.sort((a, b) => {
             const aKey = new Date(`${a.matchDate}T${a.matchTime || '00:00'}`);
             const bKey = new Date(`${b.matchDate}T${b.matchTime || '00:00'}`);
-
-            if (sortOrder === 'asc') {
-                return aKey - bKey; // 오래된순
-            } else {
-                return bKey - aKey; // 최신순
-            }
+            return (sortOrder === 'asc') ? (aKey - bKey) : (bKey - aKey);
         });
 
-        // 4. 렌더링
         renderMatchList(filtered);
     }
 
-    // 🔥 기간 select → 시작/종료일 + 달력 반영
     function setupPeriodSelect() {
         const periodSelect = document.getElementById('filter-period');
         const dateStartHidden = document.getElementById('filter-date-start');
         const dateEndHidden = document.getElementById('filter-date-end');
-
         if (!periodSelect) return;
 
         periodSelect.addEventListener('change', () => {
             const range = periodSelect.value;
 
-            // "직접 선택"이면 날짜 초기화만 하고 끝
             if (!range) {
                 dateStartHidden.value = "";
                 dateEndHidden.value = "";
-                if (dateRangePicker) {
-                    dateRangePicker.clear();
-                }
+                if (dateRangePicker) dateRangePicker.clear();
                 return;
             }
 
             const today = new Date();
-            const end = new Date(today.getFullYear(), today.getMonth(), today.getDate()); // 오늘 00시
-            const start = new Date(end); // 복사
+            const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const start = new Date(end);
 
             switch (range) {
-                case 'today':
-                    // start = today 그대로
-                    break;
-                case '1w':
-                    start.setDate(start.getDate() - 7);
-                    break;
-                case '2w':
-                    start.setDate(start.getDate() - 14);
-                    break;
-                case '1m':
-                    start.setMonth(start.getMonth() - 1);
-                    break;
-                case '6m':
-                    start.setMonth(start.getMonth() - 6);
-                    break;
-                case '1y':
-                    start.setFullYear(start.getFullYear() - 1);
-                    break;
+                case 'today': break;
+                case '1w': start.setDate(start.getDate() - 7); break;
+                case '2w': start.setDate(start.getDate() - 14); break;
+                case '1m': start.setMonth(start.getMonth() - 1); break;
+                case '6m': start.setMonth(start.getMonth() - 6); break;
+                case '1y': start.setFullYear(start.getFullYear() - 1); break;
             }
 
             const fmt = d => d.toISOString().slice(0, 10);
-
-            // hidden 값 세팅
             dateStartHidden.value = fmt(start);
             dateEndHidden.value = fmt(end);
 
-            // flatpickr에도 범위 세팅
             if (dateRangePicker) {
-                dateRangePicker.setDate([start, end], false); // false: onChange 다시 안 부름
+                dateRangePicker.setDate([start, end], false);
             }
         });
     }
@@ -576,6 +542,16 @@
             localStorage.setItem('redirectAfterLogin', currentPath);
             window.location.href = '/login';
             return;
+        }
+
+        // ✅✅✅ [핵심 수정] 프로필 닉네임으로 "사용자" 교체 ✅✅✅
+        const userMenuName = document.getElementById('user-menu-username');
+        if (userMenuName) {
+            const nickname =
+                localStorage.getItem('username') ||
+                localStorage.getItem('userNickname') ||
+                '회원';
+            userMenuName.textContent = nickname;
         }
 
         if (accessToken) {
@@ -594,7 +570,6 @@
 
         const schedules = await fetchMySchedules();
 
-        // 🔥 범위 달력 초기화
         const dateRangeInput = document.getElementById('filter-date-range');
         const dateStartHidden = document.getElementById('filter-date-start');
         const dateEndHidden = document.getElementById('filter-date-end');
@@ -602,11 +577,10 @@
 
         if (dateRangeInput) {
             dateRangePicker = flatpickr(dateRangeInput, {
-                mode: "range",          // 범위 선택
+                mode: "range",
                 dateFormat: "Y-m-d",
-                locale: flatpickr.l10ns.ko, // 한국어
-                onChange(selectedDates, dateStr) {
-                    // 사용자가 달력에서 직접 선택했을 때 hidden 값 동기화
+                locale: flatpickr.l10ns.ko,
+                onChange(selectedDates) {
                     if (selectedDates.length === 0) {
                         dateStartHidden.value = "";
                         dateEndHidden.value = "";
@@ -620,24 +594,16 @@
                         dateEndHidden.value = flatpickr.formatDate(end, "Y-m-d");
                     }
 
-                    // 달력을 직접 건드렸으면 기간 select는 "직접 선택"으로 리셋
-                    if (periodSelect) {
-                        periodSelect.value = "";
-                    }
+                    if (periodSelect) periodSelect.value = "";
                 }
             });
         }
 
-        // 검색 버튼 이벤트
         const searchBtn = document.getElementById('search-btn');
-        if (searchBtn) {
-            searchBtn.addEventListener('click', performSearch);
-        }
+        if (searchBtn) searchBtn.addEventListener('click', performSearch);
 
-        // 기간 select 세팅
         setupPeriodSelect();
 
-        // 초기 전체 목록 (정렬 기본값: 최신순)
         renderMatchList(
             [...schedules].sort((a, b) =>
                 new Date(`${b.matchDate}T${b.matchTime || '00:00'}`) -
