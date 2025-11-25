@@ -1939,6 +1939,7 @@
 
             if (availableFriends.length === 0) {
                 friendListToInvite.innerHTML = '<p style="text-align:center; padding:20px; color:#999;">초대 가능한 친구가 없습니다.</p>';
+                selectedInviteCountElement.textContent = 0;
                 return;
             }
 
@@ -1951,9 +1952,18 @@
                 friendListToInvite.appendChild(item);
             });
 
+            function updateSelectedInviteCount() {
+                const checkedCount = document.querySelectorAll('.friend-checkbox:checked').length;
+                selectedInviteCountElement.textContent = checkedCount;
+            }
+            const checkboxes = friendListToInvite.querySelectorAll('.friend-checkbox');
+            checkboxes.forEach(checkbox => checkbox.addEventListener('change', updateSelectedInviteCount));
+
+            updateSelectedInviteCount();
         } catch (e) {
             console.error('친구 목록 로드 실패:', e);
             friendListToInvite.innerHTML = '<p style="text-align:center; padding:20px; color:#e74c3c;">친구 목록을 불러올 수 없습니다.</p>';
+            selectedInviteCountElement.textContent = 0;
         }
     }
 
