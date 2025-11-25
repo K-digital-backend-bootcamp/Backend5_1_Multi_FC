@@ -43,6 +43,7 @@
         .notification-item .icon-review { color: #faad14; }
         .notification-item .icon-schedule { color: #6c5ce7; }
         .notification-item .icon-friend { color: #2ecc71; } /* 친구 요청 아이콘 색상 */
+        .notification-item .icon-comment { color: #3498db; } /* 댓글/대댓글 아이콘 색상 */
 
         .notification-content {
             /* ⭐ 변경: flex-grow 제거, 그리드에서 공간 할당 ⭐ */
@@ -259,6 +260,15 @@
                         if (isClickable) {
                             markAsRead(notif.notificationId);
                             location.href = '/reviews/write';
+                        }
+                    };
+                    // 댓글 / 대댓글 알림 추가
+                } else if (notif.type === '댓글' || notif.type === '대댓글') {
+                    iconHtml = '<i class="fas fa-comment-dots icon-comment"></i>';
+                    item.onclick = () => {
+                        if (isClickable) {
+                            markAsRead(notif.notificationId);
+                            location.href = `/community/detail/${notif.referenceId}`;
                         }
                     };
                 } else {

@@ -135,5 +135,41 @@
         WHERE username = #{username}
     </select>
 
+    <!--게시글 작성자 찾기-->
+    <select id="findWriterIdByPostId" resultType="long">
+        SELECT user_id
+        FROM Post
+        WHERE post_id = #{postId}
+    </select>
+
+    <!--current_comment_id 업데이트-->
+    <update id="updatePostCurrentCommentId">
+        UPDATE Post
+        SET current_comment_id = #{commentId}
+        WHERE post_id = #{postId}
+    </update>
+
+    <!--last_checked_comment_id 조회-->
+    <select id="findLastCheckedCommentId" resultType="long">
+        SELECT last_checked_comment_id
+        FROM Post
+        WHERE post_id = #{postId}
+    </select>
+
+    <!--current_comment_id 조회-->
+    <select id="findCurrentCommentId" resultType="long">
+        SELECT current_comment_id
+        FROM Post
+        WHERE post_id = #{postId}
+    </select>
+
+    <!--last_checked_comment_id 갱신-->
+    <update id="updateLastCheckedCommentId">
+        UPDATE Post
+        SET last_checked_comment_id = #{commentId}
+        WHERE post_id = #{postId}
+    </update>
+
+
 </mapper>
 
