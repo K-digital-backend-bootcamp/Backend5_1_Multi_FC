@@ -64,6 +64,7 @@
             border: none;
         }
 
+        /* 카드 그리드 (한 페이지 안에서 최대 6개) */
         .match-list-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -174,6 +175,64 @@
         .flatpickr-current-month .flatpickr-monthDropdown-months { /* 월 */
             order: 2;
         }
+
+        /* 🔥 슬라이더 레이아웃 */
+        .match-slider-wrapper {
+            position: relative;
+            margin-top: 10px;
+        }
+        .match-slider-viewport {
+            overflow: hidden;
+            width: 100%;
+        }
+        .match-slider-track {
+            display: flex;
+            width: 100%;
+            transition: transform 0.4s ease;
+        }
+        .match-slider-page {
+            flex: 0 0 100%;
+            box-sizing: border-box;
+            padding: 5px 0;
+        }
+
+        /* 좌우 화살표 */
+        .schedule-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0,0,0,0.25);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 5;
+        }
+        .schedule-arrow.left {
+            left: -10px;
+        }
+        .schedule-arrow.right {
+            right: -10px;
+        }
+        .schedule-arrow:disabled {
+            opacity: 0.3;
+            cursor: default;
+        }
+
+        /* 모바일에서 화살표 조금 안쪽으로 */
+        @media (max-width: 768px) {
+            .schedule-arrow.left {
+                left: 0;
+            }
+            .schedule-arrow.right {
+                right: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -249,7 +308,23 @@
             <button id="search-btn">검색</button>
         </div>
 
-        <div class="match-list-container" id="match-list-container"></div>
+        <!-- 🔥 카드 슬라이더 -->
+        <div class="match-slider-wrapper">
+            <button class="schedule-arrow left" id="prev-slide">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+
+            <div class="match-slider-viewport">
+                <div class="match-slider-track" id="match-slider-track">
+                    <!-- JS에서 페이지 단위로 채움 -->
+                </div>
+            </div>
+
+            <button class="schedule-arrow right" id="next-slide">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+
         <p id="no-results-message" style="color: #666; text-align: center; margin-top: 30px; display: none;">검색 결과가 없습니다.</p>
     </div>
 </main>
@@ -355,53 +430,118 @@
     let currentUserName = null;
     let dateRangePicker = null; // flatpickr 인스턴스
 
-    // 카드 렌더링
-    function renderMatchList(matches) {
-        const listContainer = document.getElementById('match-list-container');
-        const noResults = document.getElementById('no-results-message');
-        listContainer.innerHTML = '';
+    // 🔥 슬라이더 상태
+    const PAGE_SIZE = 6;
+    let filteredSchedules = [];
+    let pages = [];
+    let currentPage = 0;
 
-        if (matches.length === 0) {
+    function buildPages(matches) {
+        pages = [];
+        if (!matches) matches = [];
+        for (let i = 0; i < matches.length; i += PAGE_SIZE) {
+            pages.push(matches.slice(i, i + PAGE_SIZE));
+        }
+    }
+
+    // 카드 + 슬라이더 렌더링
+    function renderMatchList(matches) {
+        filteredSchedules = matches || [];
+        buildPages(filteredSchedules);
+        currentPage = 0;
+        updateSlider();
+    }
+
+    function updateSlider() {
+        const track = document.getElementById('match-slider-track');
+        const noResults = document.getElementById('no-results-message');
+        const prevBtn = document.getElementById('prev-slide');
+        const nextBtn = document.getElementById('next-slide');
+
+        if (!track) return;
+
+        track.innerHTML = '';
+
+        const totalPages = pages.length;
+
+        if (totalPages === 0) {
             noResults.style.display = 'block';
+            if (prevBtn) prevBtn.style.display = 'none';
+            if (nextBtn) nextBtn.style.display = 'none';
             return;
         }
+
         noResults.style.display = 'none';
 
-        matches.forEach(match => {
-            const card = document.createElement('div');
-            const statusClass = match.status === 'closed' ? 'closed' : 'open';
-            const buttonDisabled = match.status === 'closed' ? 'disabled' : '';
+        // 각 페이지별로 그리드 생성
+        pages.forEach(pageItems => {
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'match-slider-page';
 
-            card.className = `match-item-card ${statusClass}`;
-            card.dataset.matchId = match.id;
+            const grid = document.createElement('div');
+            grid.className = 'match-list-container';
 
-            const isHost = match.creator === currentUserName;
-            const creatorDisplay = isHost ? '나 (Host)' : match.creator;
+            pageItems.forEach(match => {
+                const card = document.createElement('div');
+                const statusClass = match.status === 'closed' ? 'closed' : 'open';
+                const buttonDisabled = match.status === 'closed' ? 'disabled' : '';
 
-            card.innerHTML = `
-                <div class="match-item-header">
-                    <span class="date">${match.date}</span>
-                </div>
-                <div class="match-item-body">
-                    <p style="font-size: 14px; color: #6c5ce7; font-weight: 600; margin-bottom: 12px;">
-                        <i class="fas fa-crown" style="margin-right: 5px;"></i> 생성자: ${creatorDisplay}
-                    </p>
-                    <p class="location">
-                        <i class="fas fa-map-marker-alt"></i>
-                        ${match.stadiumName} (${match.location})
-                    </p>
+                card.className = `match-item-card ${statusClass}`;
+                card.dataset.matchId = match.id;
 
-                    <p class="status">
-                        <i class="fas fa-users"></i>
-                        <span class="status-badge ${statusClass}">${match.status === 'open' ? '모집중' : '모집완료'}</span> ( ${match.current} / ${match.max}명 )
-                    </p>
-                    <a href="/schedule/detail/${match.id}" class="details-button ${buttonDisabled}" ${buttonDisabled ? 'onclick="return false;"' : ''}>
-                        ${match.status === 'closed' ? '마감 (상세보기)' : '상세보기'}
-                    </a>
-                </div>
-            `;
-            listContainer.appendChild(card);
+                const isHost = match.creator === currentUserName;
+                const creatorDisplay = isHost ? '나 (Host)' : match.creator;
+
+                card.innerHTML = `
+                    <div class="match-item-header">
+                        <span class="date">${match.date}</span>
+                    </div>
+                    <div class="match-item-body">
+                        <p style="font-size: 14px; color: #6c5ce7; font-weight: 600; margin-bottom: 12px;">
+                            <i class="fas fa-crown" style="margin-right: 5px;"></i> 생성자: ${creatorDisplay}
+                        </p>
+                        <p class="location">
+                            <i class="fas fa-map-marker-alt"></i>
+                            ${match.stadiumName} (${match.location})
+                        </p>
+
+                        <p class="status">
+                            <i class="fas fa-users"></i>
+                            <span class="status-badge ${statusClass}">${match.status === 'open' ? '모집중' : '모집완료'}</span> ( ${match.current} / ${match.max}명 )
+                        </p>
+                        <a href="/schedule/detail/${match.id}" class="details-button ${buttonDisabled}" ${buttonDisabled ? 'onclick="return false;"' : ''}>
+                            ${match.status === 'closed' ? '마감 (상세보기)' : '상세보기'}
+                        </a>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            pageDiv.appendChild(grid);
+            track.appendChild(pageDiv);
         });
+
+        // 현재 페이지 범위 보정
+        if (currentPage >= totalPages) currentPage = totalPages - 1;
+        if (currentPage < 0) currentPage = 0;
+
+        // 슬라이드 이동 애니메이션
+        track.style.transform = `translateX(-${currentPage * 100}%)`;
+
+        // 화살표 표시/상태
+        if (totalPages <= 1) {
+            if (prevBtn) prevBtn.style.display = 'none';
+            if (nextBtn) nextBtn.style.display = 'none';
+        } else {
+            if (prevBtn) {
+                prevBtn.style.display = 'flex';
+                prevBtn.disabled = currentPage === 0;
+            }
+            if (nextBtn) {
+                nextBtn.style.display = 'flex';
+                nextBtn.disabled = currentPage === totalPages - 1;
+            }
+        }
     }
 
     // 내 스케줄 불러오기
@@ -421,8 +561,11 @@
 
             if (!response.ok) {
                 console.error("Failed to fetch schedules:", response.statusText);
-                document.getElementById('match-list-container').innerHTML =
-                    `<p style="color:red; text-align:center;">경기 목록을 불러오는 중 오류가 발생했습니다. (API ${response.status})</p>`;
+                const track = document.getElementById('match-slider-track');
+                if (track) {
+                    track.innerHTML =
+                        `<p style="color:red; text-align:center; width:100%;">경기 목록을 불러오는 중 오류가 발생했습니다. (API ${response.status})</p>`;
+                }
                 return [];
             }
 
@@ -433,6 +576,13 @@
                     ? String(match.matchTime).split(':').slice(0, 2).join(':')
                     : '';
 
+                // 백엔드에서 내려준 현재 인원 (방장/본인 제외일 가능성 있어서 0 처리)
+                const baseCurrent = typeof match.currentPlayers === 'number'
+                    ? match.currentPlayers
+                    : 0;
+
+                const displayCurrent = baseCurrent + 1;   // ➕ 방장 1명 포함
+
                 return {
                     id: match.roomId,
                     date: `${match.matchDate}${timeOnly ? ` (${timeOnly})` : ''}`,
@@ -441,7 +591,7 @@
                     location: match.stadiumAddress || '주소 정보 없음',
                     stadiumName: match.stadiumName || '구장 정보 없음',
                     creator: match.hostNickname || ('Host ID: ' + match.hostId),
-                    current: match.currentPlayers || 0,
+                    current: displayCurrent,
                     max: match.maxPlayers,
                     status: match.status.toLowerCase() === 'closed' ? 'closed' : 'open',
                 };
@@ -451,8 +601,11 @@
 
         } catch (error) {
             console.error("API call error:", error);
-            document.getElementById('match-list-container').innerHTML =
-                `<p style="color:red; text-align:center;">네트워크 연결 중 오류 발생.</p>`;
+            const track = document.getElementById('match-slider-track');
+            if (track) {
+                track.innerHTML =
+                    `<p style="color:red; text-align:center; width:100%;">네트워크 연결 중 오류 발생.</p>`;
+            }
             return [];
         }
     }
@@ -544,7 +697,7 @@
             return;
         }
 
-        // ✅✅✅ [핵심 수정] 프로필 닉네임으로 "사용자" 교체 ✅✅✅
+        // ✅ 프로필 닉네임 세팅 (localStorage 사용)
         const userMenuName = document.getElementById('user-menu-username');
         if (userMenuName) {
             const nickname =
@@ -604,6 +757,29 @@
 
         setupPeriodSelect();
 
+        // 슬라이더 화살표 이벤트
+        const prevBtn = document.getElementById('prev-slide');
+        const nextBtn = document.getElementById('next-slide');
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                if (currentPage > 0) {
+                    currentPage--;
+                    updateSlider();
+                }
+            });
+        }
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                const totalPages = pages.length;
+                if (currentPage < totalPages - 1) {
+                    currentPage++;
+                    updateSlider();
+                }
+            });
+        }
+
+        // 초기 전체 목록 (정렬 기본값: 최신순)
         renderMatchList(
             [...schedules].sort((a, b) =>
                 new Date(`${b.matchDate}T${b.matchTime || '00:00'}`) -
