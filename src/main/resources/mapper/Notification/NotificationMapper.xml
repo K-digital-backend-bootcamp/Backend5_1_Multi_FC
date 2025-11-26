@@ -57,4 +57,24 @@
         delete from Notification
         where notification_id = #{notificationId}
     </delete>
+
+    <!--미읽음 댓글 알림 찾기-->
+    <select id="findUnreadCommentNotification"
+            parameterType="map"
+            resultType="com.multi.backend5_1_multi_fc.notification.dto.NotificationDto">
+        SELECT *
+        FROM Notification
+        WHERE user_id = #{userId}
+          AND type = '댓글'
+          AND reference_id = #{postId}
+          AND is_read = false
+            LIMIT 1
+    </select>
+
+    <!-- 알림 내용 수정 -->
+    <update id="updateContent" parameterType="map">
+        UPDATE Notification
+        SET content = #{content}
+        WHERE notification_id = #{notificationId}
+    </update>
 </mapper>

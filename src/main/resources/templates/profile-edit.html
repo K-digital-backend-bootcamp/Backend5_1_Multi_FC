@@ -19,6 +19,7 @@
         </button>
         <div id="profile-menu" class="user-menu">
             <div class="user-info">
+                <!-- ✅ 여기 span id 유지 (JS에서 닉네임으로 바꿀거라서) -->
                 <strong><span id="user-menu-username">사용자</span>님</strong>
                 <p>환영합니다!</p>
             </div>
@@ -171,7 +172,7 @@
                         </div>
                         <button type="submit" class="login-button" style="margin-top: 15px;">비밀번호 변경</button>
 
-<!--                        회퉌탈퇴 버튼 추가-->
+                        <!--                        회퉌탈퇴 버튼 추가-->
                         <button id="delete-account-btn"
                                 style="margin-top: 40px; background:#ff4b4b; color:#fff; padding:12px; border:none; border-radius:8px; cursor:pointer;">
                             회원탈퇴
@@ -282,6 +283,31 @@
         } catch (error) { console.error("일정 요청 중 오류 발생:", error); }
     }
 
+    // ✅ [추가] 메뉴 닉네임 세팅 함수
+    async function fetchAndSetUserMenuNickname() {
+        const token = localStorage.getItem('accessToken');
+        if (!token) return;
+
+        try {
+            const res = await fetch('/api/mypage/me', {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            });
+
+            if (!res.ok) return;
+
+            const myInfo = await res.json();
+            const usernameSpan = document.getElementById('user-menu-username');
+            if (usernameSpan) {
+                usernameSpan.textContent = myInfo.nickname || '사용자';
+            }
+        } catch (e) {
+            console.error("메뉴 닉네임 로드 실패:", e);
+        }
+    }
+
     // --- (★페이지별★) 로직 실행 ---
     document.addEventListener('DOMContentLoaded', async () => {
         const accessToken = localStorage.getItem('accessToken');
@@ -291,6 +317,9 @@
             if (profileMenuToggle) profileMenuToggle.style.display = 'block';
             if (navLoginLink) navLoginLink.parentElement.style.display = 'none';
             if (navLogoutLink) navLogoutLink.parentElement.style.display = 'list-item';
+
+            // ✅ 로그인 상태면 메뉴 닉네임 바로 반영
+            await fetchAndSetUserMenuNickname();
 
             // (★) 글로벌 알림 배지 체크
             await checkPendingReviews();
@@ -368,14 +397,6 @@
         confirmButton.textContent = '확인 중...';
 
         try {
-            // const response = await fetch('/profile/confirm-password', {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/json',
-            //         'Authorization': 'Bearer ' + localStorage.getItem('accessToken')
-            //     },
-            //     body: JSON.stringify({ currentPassword: password })
-            // });
             const response = await fetch('/api/mypage/confirm-password', {
                 method: 'POST',
                 headers: {
@@ -472,6 +493,11 @@
             }
 
             originalNickname = myInfo.nickname || '';
+
+            // ✅ 비밀번호 확인 후에도 메뉴 닉네임 바로 동기화
+            const usernameSpan = document.getElementById('user-menu-username');
+            if (usernameSpan) usernameSpan.textContent = originalNickname || '사용자';
+
             isNicknameChecked = true;
             profileSubmitBtn.disabled = false;
             profileSubmitBtn.textContent = '정보 저장';
@@ -557,10 +583,9 @@
         formData.append('email', emailInput.value);
         formData.append('nickname', nicknameInput.value);
         formData.append('position', document.getElementById('position').value);
-        formData.append('skillLevel', skillLevelSelect.value);  // 지금 사용 중인 값 그대로
+        formData.append('skillLevel', skillLevelSelect.value);
         formData.append('location', document.getElementById('location').value);
 
-        //  파일이 있으면 같이 전송
         if (profilePicInput.files && profilePicInput.files[0]) {
             formData.append('profilePic', profilePicInput.files[0]);
         }
@@ -580,7 +605,6 @@
                 profileSuccessMsg.textContent = '✅ ' + (data.message || '프로필이 성공적으로 수정되었습니다.');
                 profileSuccessMsg.style.display = 'block';
 
-                // 🔽 1~1.5초 뒤 마이페이지로 이동
                 setTimeout(() => {
                     window.location.href = "/mypage";
                 }, 100);
@@ -635,7 +659,6 @@
                 passwordSuccessMsg.style.display = 'block';
                 passwordForm.reset();
 
-                // 🔽 1초 후 마이페이지 이동
                 setTimeout(() => {
                     window.location.href = "/mypage";
                 }, 100);
@@ -648,6 +671,7 @@
             passwordErrorMsg.style.display = 'block';
         }
     });
+
     const deleteBtn = document.getElementById('delete-account-btn');
 
     if (deleteBtn) {
@@ -667,7 +691,7 @@
                 if (response.ok) {
                     alert("회원탈퇴가 완료되었습니다.");
                     localStorage.clear();
-                    window.location.href = "/"; // 메인 페이지로 이동
+                    window.location.href = "/";
                 } else {
                     alert("❌ " + data.message);
                 }
