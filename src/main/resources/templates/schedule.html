@@ -13,262 +13,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
-
-    <style>
-        .schedule-search-main {
-            padding: 100px 40px 40px 40px;
-            background-color: #f7f7f7;
-            min-height: 100vh;
-        }
-        .search-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-        .search-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 25px;
-            border-bottom: 2px solid #6c5ce7;
-            padding-bottom: 10px;
-        }
-        .filter-section {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .filter-section input,
-        .filter-section select,
-        .filter-section button {
-            padding: 12px 15px;
-            font-size: 15px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            background: #f9f9f9;
-            font-family: inherit;
-        }
-        .filter-section input[type="text"] {
-            min-width: 220px;
-        }
-        .filter-section > button#search-btn {
-            background-color: #6c5ce7;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-        }
-
-        /* 카드 그리드 (한 페이지 안에서 최대 6개) */
-        .match-list-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
-        .match-item-card {
-            background: white;
-            border: 1px solid #eee;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            overflow: hidden;
-            transition: transform 0.3s, box-shadow 0.3s;
-            border-left: 5px solid #6c5ce7;
-        }
-        .match-item-card.closed {
-            border-left-color: #aaa;
-        }
-        .match-item-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
-        }
-        .match-item-header {
-            padding: 15px 20px;
-            background: #fdfdfd;
-            border-bottom: 1px solid #eee;
-        }
-        .match-item-header .date {
-            font-size: 18px;
-            font-weight: 700;
-            color: #6c5ce7;
-        }
-        .match-item-card.closed .match-item-header .date {
-            color: #555;
-        }
-        .match-item-body {
-            padding: 20px;
-        }
-        .match-item-body .location,
-        .match-item-body .status {
-            display: flex;
-            align-items: center;
-            font-size: 15px;
-            color: #555;
-            margin-bottom: 12px;
-        }
-        .match-item-body .location i,
-        .match-item-body .status i {
-            margin-right: 10px;
-            color: #6c5ce7;
-            width: 16px;
-        }
-        .match-item-body p i.fa-crown {
-            color: #f39c12;
-        }
-        .match-item-card.closed .match-item-body .location i,
-        .match-item-card.closed .match-item-body .status i {
-            color: #aaa;
-        }
-        .match-item-body .status {
-            margin-bottom: 20px;
-        }
-        .status-badge {
-            font-weight: 600;
-            padding: 4px 8px;
-            border-radius: 5px;
-            color: white;
-            margin-right: 8px;
-        }
-        .status-badge.open {
-            background-color: #28a745;
-        }
-        .status-badge.closed {
-            background-color: #888;
-        }
-        .details-button {
-            display: block;
-            width: 100%;
-            text-align: center;
-            padding: 10px;
-            text-decoration: none;
-            background-color: #6c5ce7;
-            color: white;
-            font-weight: 600;
-            border-radius: 8px;
-            transition: background-color 0.3s;
-        }
-        .details-button:hover {
-            background-color: #8e44ad;
-        }
-        .details-button.disabled {
-            background: #aaa;
-            cursor: not-allowed;
-        }
-        .details-button.disabled:hover {
-            background: #aaa;
-        }
-
-        /* 🔧 flatpickr: 연도 → 월 순서로 보이게 */
-        .flatpickr-current-month {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .flatpickr-current-month .numInputWrapper { /* 연도 */
-            order: 1;
-            margin-right: 4px;
-        }
-        .flatpickr-current-month .flatpickr-monthDropdown-months { /* 월 */
-            order: 2;
-        }
-
-        /* 🔥 슬라이더 레이아웃 */
-        .match-slider-wrapper {
-            position: relative;
-            margin-top: 10px;
-        }
-        .match-slider-viewport {
-            overflow: hidden;
-            width: 100%;
-        }
-        .match-slider-track {
-            display: flex;
-            width: 100%;
-            transition: transform 0.4s ease;
-        }
-        .match-slider-page {
-            flex: 0 0 100%;
-            box-sizing: border-box;
-            padding: 5px 0;
-        }
-
-        /* 좌우 화살표 */
-        .schedule-arrow {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            border: none;
-            background: rgba(0,0,0,0.25);
-            color: #fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            z-index: 5;
-        }
-        .schedule-arrow.left {
-            left: -10px;
-        }
-        .schedule-arrow.right {
-            right: -10px;
-        }
-        .schedule-arrow:disabled {
-            opacity: 0.3;
-            cursor: default;
-        }
-
-        /* 모바일에서 화살표 조금 안쪽으로 */
-        @media (max-width: 768px) {
-            .schedule-arrow.left {
-                left: 0;
-            }
-            .schedule-arrow.right {
-                right: 0;
-            }
-        }
-    </style>
 </head>
 <body>
 
-<header class="quick-menu">
-    <div class="logo"><a href="/">Multi FC</a></div>
-    <div class="header-icons">
-        <button id="profile-menu-toggle" class="profile-icon" style="position: relative;">
-            <i class="fas fa-user-circle"></i>
-            <span id="notification-badge" class="notification-badge"></span>
-        </button>
-        <div id="profile-menu" class="user-menu">
-            <div class="user-info">
-                <strong><span id="user-menu-username">사용자</span>님</strong>
-                <p>환영합니다!</p>
-            </div>
-            <ul>
-                <li><a href="/notifications" id="nav-notifications-link"><i class="fas fa-bell"></i> 알림 목록</a></li>
-                <li><a href="/mypage"><i class="fas fa-user"></i> 마이페이지</a></li>
-                <li><a href="/profile/edit"><i class="fas fa-user-edit"></i> 프로필 수정</a></li>
-                <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
-            </ul>
-        </div>
-        <button id="menu-toggle" class="menu-toggle-btn"><i class="fas fa-bars"></i></button>
-    </div>
-
-    <nav id="main-menu" class="main-nav">
-        <ul>
-            <li><a href="/" ><i class="fas fa-home"></i> 메인 (Home)</a></li>
-            <li><a href="/fields"><i class="fas fa-search"></i> 구장검색</a></li>
-            <li><a href="/community"><i class="fas fa-users"></i> 커뮤니티</a></li>
-            <li id="nav-chat-link-li"><a href="/chat" id="nav-chat-link"><i class="fas fa-comments"></i> 실시간채팅</a></li>
-            <li><a href="/schedule?stadium" class="active"><i class="fas fa-calendar-check"></i> 경기 일정</a></li>
-        </ul>
-    </nav>
-</header>
+<div th:replace="~{fragments/header :: siteHeader}"></div>
 
 <main class="schedule-search-main">
     <div class="search-container">
@@ -325,106 +73,13 @@
             </button>
         </div>
 
-        <p id="no-results-message" style="color: #666; text-align: center; margin-top: 30px; display: none;">검색 결과가 없습니다.</p>
+        <p id="no-results-message" style="color: #666; text-align: center; margin-top: 30px; display: none;">
+            검색 결과가 없습니다.
+        </p>
     </div>
 </main>
 
 <script>
-    // --- 공통 메뉴 토글 로직 ---
-    const menuToggle = document.getElementById('menu-toggle');
-    const mainMenu = document.getElementById('main-menu');
-    const profileMenuToggle = document.getElementById('profile-menu-toggle');
-    const profileMenu = document.getElementById('profile-menu');
-    const logoutButton = document.getElementById('logout-button');
-    const navNotificationsLink = document.getElementById('nav-notifications-link');
-    const navChatLinkElement = document.getElementById('nav-chat-link-li');
-    const navLoginLink = document.getElementById('nav-login-link');
-    const navLogoutLink = document.getElementById('nav-logout-link');
-
-    if (menuToggle) {
-        menuToggle.addEventListener('click', () => {
-            mainMenu.classList.toggle('show');
-            profileMenu.classList.remove('show');
-        });
-    }
-    if (profileMenuToggle) {
-        profileMenuToggle.addEventListener('click', () => {
-            profileMenu.classList.toggle('show');
-            mainMenu.classList.remove('show');
-        });
-    }
-    document.addEventListener('click', (event) => {
-        if (!mainMenu.contains(event.target) && !menuToggle.contains(event.target) &&
-            !profileMenu.contains(event.target) && !profileMenuToggle.contains(event.target)) {
-            mainMenu.classList.remove('show');
-            profileMenu.classList.remove('show');
-        }
-    });
-    if (logoutButton) {
-        logoutButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('hasReadReviews');
-            localStorage.removeItem('hasReadSchedules');
-            window.location.href = '/login';
-        });
-    }
-    if (navNotificationsLink) {
-        navNotificationsLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.setItem('hasReadReviews', 'true');
-            localStorage.setItem('hasReadSchedules', 'true');
-            window.location.href = '/notifications';
-        });
-    }
-    if (navLogoutLink) {
-        navLogoutLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('hasReadReviews');
-            localStorage.removeItem('hasReadSchedules');
-            window.location.href = '/login';
-        });
-    }
-
-    const badge = document.getElementById('notification-badge');
-    let hasReviewNotif = false;
-    let hasScheduleNotif = false;
-
-    function updateGlobalBadge() {
-        if (hasReviewNotif || hasScheduleNotif) {
-            if (badge) badge.style.display = 'block';
-        } else {
-            if (badge) badge.style.display = 'none';
-        }
-    }
-    async function checkPendingReviews() {
-        if (localStorage.getItem('hasReadReviews') === 'true') {
-            hasReviewNotif = false;
-            return;
-        }
-        try {
-            await new Promise(r => setTimeout(r, 200));
-            const mockReviews = { "count": 1 };
-            if (mockReviews.count > 0) {
-                hasReviewNotif = true;
-            }
-        } catch (error) { console.error("후기 알림 요청 중 오류:", error); }
-    }
-    async function checkUpcomingSchedules() {
-        if (localStorage.getItem('hasReadSchedules') === 'true') {
-            hasScheduleNotif = false;
-            return;
-        }
-        try {
-            await new Promise(r => setTimeout(r, 500));
-            const mockSchedules = [ { id: 1, date: "2025-11-01" } ];
-            if (mockSchedules.length > 0) {
-                hasScheduleNotif = true;
-            }
-        } catch (error) { console.error("일정 요청 중 오류 발생:", error); }
-    }
-
     let allMySchedules = [];
     let currentUserId = null;
     let currentUserName = null;
@@ -507,9 +162,12 @@
 
                         <p class="status">
                             <i class="fas fa-users"></i>
-                            <span class="status-badge ${statusClass}">${match.status === 'open' ? '모집중' : '모집완료'}</span> ( ${match.current} / ${match.max}명 )
+                            <span class="status-badge ${statusClass}">
+                                ${match.status === 'open' ? '모집중' : '모집완료'}
+                            </span> ( ${match.current} / ${match.max}명 )
                         </p>
-                        <a href="/schedule/detail/${match.id}" class="details-button ${buttonDisabled}" ${buttonDisabled ? 'onclick="return false;"' : ''}>
+                        <a href="/schedule/detail/${match.id}" class="details-button ${buttonDisabled}"
+                           ${buttonDisabled ? 'onclick="return false;"' : ''}>
                             ${match.status === 'closed' ? '마감 (상세보기)' : '상세보기'}
                         </a>
                     </div>
@@ -576,12 +234,11 @@
                     ? String(match.matchTime).split(':').slice(0, 2).join(':')
                     : '';
 
-                // 백엔드에서 내려준 현재 인원 (방장/본인 제외일 가능성 있어서 0 처리)
                 const baseCurrent = typeof match.currentPlayers === 'number'
                     ? match.currentPlayers
                     : 0;
 
-                const displayCurrent = baseCurrent + 1;   // ➕ 방장 1명 포함
+                const displayCurrent = baseCurrent + 1;
 
                 return {
                     id: match.roomId,
@@ -685,7 +342,6 @@
         });
     }
 
-    // --- 페이지 로드 ---
     document.addEventListener('DOMContentLoaded', async () => {
         const accessToken = localStorage.getItem('accessToken');
         const currentPath = window.location.pathname;
@@ -697,29 +353,30 @@
             return;
         }
 
-        // ✅ 프로필 닉네임 세팅 (localStorage 사용)
         const userMenuName = document.getElementById('user-menu-username');
         if (userMenuName) {
             const nickname =
-                localStorage.getItem('username') ||
                 localStorage.getItem('userNickname') ||
+                localStorage.getItem('username') ||
                 '회원';
             userMenuName.textContent = nickname;
         }
 
-        if (accessToken) {
-            if (profileMenuToggle) profileMenuToggle.style.display = 'block';
-
-            if (navLoginLink && navLoginLink.parentElement) navLoginLink.parentElement.style.display = 'none';
-            if (navLogoutLink && navLogoutLink.parentElement) navLogoutLink.parentElement.style.display = 'list-item';
-
-            await checkPendingReviews();
-            await checkUpcomingSchedules();
-            updateGlobalBadge();
-        } else {
-            if (navLoginLink && navLoginLink.parentElement) navLoginLink.parentElement.style.display = 'list-item';
-            if (navLogoutLink && navLogoutLink.parentElement) navLogoutLink.parentElement.style.display = 'none';
+        // ✅✅✅ 여기만 핵심 수정 (배지 갱신 window. 로 통일) ✅✅✅
+        try {
+            if (typeof window.checkPendingReviews === 'function') {
+                await window.checkPendingReviews();
+            }
+            if (typeof window.checkUpcomingSchedules === 'function') {
+                await window.checkUpcomingSchedules();
+            }
+            if (typeof window.updateGlobalBadge === 'function') {
+                window.updateGlobalBadge();
+            }
+        } catch (e) {
+            console.error('알림/일정 배지 업데이트 중 오류:', e);
         }
+        // ✅✅✅ 수정 끝 ✅✅✅
 
         const schedules = await fetchMySchedules();
 
@@ -757,7 +414,6 @@
 
         setupPeriodSelect();
 
-        // 슬라이더 화살표 이벤트
         const prevBtn = document.getElementById('prev-slide');
         const nextBtn = document.getElementById('next-slide');
 
@@ -779,7 +435,6 @@
             });
         }
 
-        // 초기 전체 목록 (정렬 기본값: 최신순)
         renderMatchList(
             [...schedules].sort((a, b) =>
                 new Date(`${b.matchDate}T${b.matchTime || '00:00'}`) -

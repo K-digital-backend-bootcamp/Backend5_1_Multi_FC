@@ -11,43 +11,7 @@
 </head>
 <body>
 
-<header class="quick-menu">
-    <div class="logo"><a href="/">Multi FC</a></div>
-    <div class="header-icons">
-        <button id="profile-menu-toggle" class="profile-icon" style="position: relative; display: none;">
-            <i class="fas fa-user-circle"></i>
-            <span id="notification-badge" class="notification-badge"></span>
-        </button>
-
-        <div id="profile-menu" class="user-menu">
-            <!-- ✅ "닉네임님 환영합니다!" 한 줄 표시 -->
-            <div class="user-info">
-                <p>
-                    <strong><span id="user-menu-username">사용자</span>님</strong>
-                    환영합니다!
-                </p>
-            </div>
-            <ul>
-                <li><a href="/notifications" id="nav-notifications-link"><i class="fas fa-bell"></i> 알림 목록</a></li>
-                <li><a href="/mypage"><i class="fas fa-user"></i> 마이페이지</a></li>
-                <li><a href="/profile/edit"><i class="fas fa-user-edit"></i> 프로필 수정</a></li>
-                <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
-            </ul>
-        </div>
-
-        <button id="menu-toggle" class="menu-toggle-btn"><i class="fas fa-bars"></i></button>
-    </div>
-
-    <nav id="main-menu" class="main-nav">
-        <ul>
-            <li><a href="/"><i class="fas fa-home"></i> 메인 (Home)</a></li>
-            <li><a href="/fields"><i class="fas fa-search"></i> 구장검색</a></li>
-            <li class="active"><a href="/community" class="active"><i class="fas fa-users"></i> 커뮤니티</a></li>
-            <li><a href="/chat"><i class="fas fa-comments"></i> 실시간채팅</a></li>
-            <li><a href="/schedule?stadium"><i class="fas fa-calendar-alt"></i> 경기 일정</a></li>
-        </ul>
-    </nav>
-</header>
+<div th:replace="~{fragments/header :: siteHeader}"></div>
 
 <main class="community-main">
     <div class="community-board-container">
@@ -70,6 +34,12 @@
             </select>
             <input type="text" id="search-keyword" placeholder="검색어를 입력하세요">
             <button id="search-exec-btn"><i class="fas fa-search"></i> 검색</button>
+            <!--새로 추가 -->
+            <select id="page-size" style="margin-left: 8px;">
+                <option value="10" selected>10개</option>
+                <option value="30">30개</option>
+                <option value="60">60개</option>
+            </select>
         </div>
 
         <table class="post-table">
@@ -93,122 +63,42 @@
 </main>
 
 <script>
-    // --- (★공통★) 메뉴 토글 및 로그아웃 로직 ---
-    const menuToggle = document.getElementById('menu-toggle');
-    const mainMenu = document.getElementById('main-menu');
-    const profileMenuToggle = document.getElementById('profile-menu-toggle');
-    const profileMenu = document.getElementById('profile-menu');
-    const logoutButton = document.getElementById('logout-button');
-    const navNotificationsLink = document.getElementById('nav-notifications-link');
-
-    const navLoginLink = document.getElementById('nav-login-link');
-    const navLogoutLink = document.getElementById('nav-logout-link');
-
-    if (menuToggle) {
-        menuToggle.addEventListener('click', () => {
-            mainMenu.classList.toggle('show');
-            if (profileMenu) profileMenu.classList.remove('show');
-        });
-    }
-
-    if (profileMenuToggle) {
-        profileMenuToggle.addEventListener('click', () => {
-            profileMenu.classList.toggle('show');
-            if (mainMenu) mainMenu.classList.remove('show');
-        });
-    }
-
-    document.addEventListener('click', (event) => {
-        const isClickInsideHeader = document.querySelector('header').contains(event.target);
-        if (!isClickInsideHeader) {
-            mainMenu.classList.remove('show');
-            if (profileMenu) profileMenu.classList.remove('show');
-        }
-    });
-
-    if (logoutButton) {
-        logoutButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('hasReadReviews');
-            localStorage.removeItem('hasReadSchedules');
-            window.location.href = '/login';
-        });
-    }
-
-    if (navLogoutLink) {
-        navLogoutLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('hasReadReviews');
-            localStorage.removeItem('hasReadSchedules');
-            window.location.href = '/login';
-        });
-    }
-
-    if (navNotificationsLink) {
-        navNotificationsLink.addEventListener('click', (e) => {
-            localStorage.setItem('hasReadReviews', 'true');
-            window.location.href = '/notifications';
-        });
-    }
-
-    // --- (★공통★) 알림 배지 ---
-    function updateGlobalBadge() {
-        const hasNew = localStorage.getItem('hasNewNotification') === 'true';
-        const badge = document.getElementById('notification-badge');
-        if (badge) badge.style.display = hasNew ? 'block' : 'none';
-    }
-    updateGlobalBadge();
-
-    // 백엔드 데이터 연동 준비
     const postListBody = document.getElementById('post-list-body');
     const tabsContainer = document.getElementById('community-tabs');
+    const writeButton = document.getElementById('write-post-btn');
     const searchExecBtn = document.getElementById('search-exec-btn');
     const paginationContainer = document.getElementById('community-pagination');
+    const pageSizeSelect = document.getElementById('page-size');   // 추가
 
-    const POSTS_PER_PAGE = 10;
     const CATEGORY_ALL = '전체';
-    let allFilteredPosts = [];
+    let currentPage = 1;
+    let currentCategory = CATEGORY_ALL;
+    let currentSearchType = 'title';
+    let currentKeyword = '';
+    let currentPageSize = 10;
 
-    // ⭐ 백엔드에서 목록 가져오기
-    async function fetchPosts(category) {
-        let url = '/api/community/posts';
+    // ⭐ 백엔드에서 목록 + totalCount 가져오기
+    async function fetchPosts(category, page = 1, searchType = 'title', keyword = '') {
+        let url =
+            `/api/community/posts` +
+            `?category=${encodeURIComponent(category)}` +
+            `&page=${page}` +
+            `&size=${currentPageSize}` +
+            `&searchType=${searchType}`;
 
-        if (category && category !== CATEGORY_ALL) {
-            url += `?category=${encodeURIComponent(category)}`;
-            const res = await fetch(url);
-            if (!res.ok) throw new Error('게시글 목록을 불러오지 못했습니다.');
-            return res.json();
-        } else {
-            const [noticeRes, freeRes] = await Promise.all([
-                fetch('/api/community/posts?category=공지'),
-                fetch('/api/community/posts?category=자유게시판')
-            ]);
-            if (!noticeRes.ok || !freeRes.ok) {
-                throw new Error('게시글 목록을 불러오지 못했습니다.');
-            }
-            const notice = await noticeRes.json();
-            const free = await freeRes.json();
-            return [...notice, ...free];
+        if (keyword) {
+            url += `&keyword=${encodeURIComponent(keyword)}`;
         }
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('게시글 목록을 불러오지 못했습니다.');
+
+        return res.json();   // { posts: [...], totalCount: n }
     }
 
-    // ✅✅ 최신순 정렬만 적용 (createdAt desc / 없으면 postId desc)
-    function sortPostsLatestFirst(posts) {
-        return posts.sort((a, b) => {
-            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            if (dateB !== dateA) return dateB - dateA;
-            return (b.postId || 0) - (a.postId || 0);
-        });
-    }
-
-    /**
-     * 페이지네이션 컨트롤 렌더링
-     */
+    // 페이지네이션 렌더링
     function renderPagination(totalPosts, currentPage) {
-        const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
+        const totalPages = Math.ceil(totalPosts / currentPageSize);
         paginationContainer.innerHTML = '';
 
         if (totalPages <= 1) return;
@@ -218,17 +108,17 @@
         const startPage = (currentGroup - 1) * pagesPerGroup + 1;
         const endPage = Math.min(startPage + pagesPerGroup - 1, totalPages);
 
-        const prevPage = currentPage > 1 ? currentPage - 1 : 1;
+        const prevGroupPage = currentPage > 1 ? currentPage - 1 : 1;
         const prevDisabled = currentPage === 1;
-        paginationContainer.innerHTML += `<a href="#" data-page="${prevPage}" class="${prevDisabled ? 'disabled' : ''}">&lt;</a>`;
+        paginationContainer.innerHTML += `<a href="#" data-page="${prevGroupPage}" class="${prevDisabled ? 'disabled' : ''}">&lt;</a>`;
 
         for (let i = startPage; i <= endPage; i++) {
             paginationContainer.innerHTML += `<a href="#" data-page="${i}" class="${i === currentPage ? 'active' : ''}">${i}</a>`;
         }
 
-        const nextPage = currentPage < totalPages ? currentPage + 1 : totalPages;
+        const nextGroupPage = currentPage < totalPages ? currentPage + 1 : totalPages;
         const nextDisabled = currentPage === totalPages;
-        paginationContainer.innerHTML += `<a href="#" data-page="${nextPage}" class="${nextDisabled ? 'disabled' : ''}">&gt;</a>`;
+        paginationContainer.innerHTML += `<a href="#" data-page="${nextGroupPage}" class="${nextDisabled ? 'disabled' : ''}">&gt;</a>`;
 
         paginationContainer.querySelectorAll('a').forEach(link => {
             if (!link.classList.contains('disabled')) {
@@ -237,9 +127,9 @@
                     const newPage = parseInt(e.target.dataset.page);
                     if (newPage > 0 && newPage <= totalPages) {
                         renderPostList(
-                            document.querySelector('.board-tabs button.active').dataset.category,
-                            document.getElementById('search-keyword').value,
-                            document.getElementById('search-type').value,
+                            currentCategory,
+                            currentKeyword,
+                            currentSearchType,
                             newPage
                         );
                     }
@@ -248,31 +138,17 @@
         });
     }
 
+    // 게시글 리스트 렌더링
     async function renderPostList(category, searchKeyword = '', searchType = 'title', page = 1) {
         try {
-            let posts = await fetchPosts(category);
+            currentCategory = category;
+            currentSearchType = searchType;
+            currentKeyword = searchKeyword;
+            currentPage = page;
 
-            // ✅ 최신순 정렬 적용
-            posts = sortPostsLatestFirst(posts);
-
-            // 검색
-            if (searchKeyword) {
-                const keyword = searchKeyword.toLowerCase();
-                posts = posts.filter(post => {
-                    if (searchType === 'title') {
-                        return post.title.toLowerCase().includes(keyword);
-                    }
-                    if (searchType === 'writer') {
-                        return (post.writerNickname || '').toLowerCase().includes(keyword);
-                    }
-                    return false;
-                });
-            }
-
-            allFilteredPosts = posts;
-            const totalPosts = allFilteredPosts.length;
-            const startIndex = (page - 1) * POSTS_PER_PAGE;
-            const postsToDisplay = allFilteredPosts.slice(startIndex, startIndex + POSTS_PER_PAGE);
+            const data = await fetchPosts(category, page, searchType, searchKeyword);
+            const posts = data.posts || [];
+            const totalPosts = data.totalCount || 0;
 
             postListBody.innerHTML = '';
 
@@ -288,7 +164,10 @@
                 return;
             }
 
-            postsToDisplay.forEach((post, index) => {
+            // 현재 페이지의 첫 번호
+            const startIndex = (page - 1) * currentPageSize;
+
+            posts.forEach((post, index) => {
                 const row = document.createElement('tr');
                 row.dataset.postId = post.postId;
 
@@ -322,6 +201,7 @@
         }
     }
 
+    // 검색 버튼
     if (searchExecBtn) {
         searchExecBtn.addEventListener('click', () => {
             const activeTab = document.querySelector('.board-tabs button.active');
@@ -333,47 +213,69 @@
         });
     }
 
-    // --- 로그인 상태 확인 + 탭/초기 로드 ---
+    // 초기화
     document.addEventListener('DOMContentLoaded', () => {
-        const accessToken = localStorage.getItem('accessToken');
-        const profileIcon = document.getElementById('profile-menu-toggle');
-        const userMenuName = document.getElementById('user-menu-username');
+    const accessToken = localStorage.getItem('accessToken');
 
-        if (accessToken) {
-            if (profileIcon) profileIcon.style.display = 'flex';
-            if (userMenuName) {
-                const nickname = localStorage.getItem('username') || '사용자';
-                userMenuName.textContent = nickname;
+    // pageSizeSelect 기본값을 currentPageSize와 동기화
+    if (pageSizeSelect) {
+        currentPageSize = parseInt(pageSizeSelect.value, 10) || 10;
+
+        pageSizeSelect.addEventListener('change', () => {
+            currentPageSize = parseInt(pageSizeSelect.value, 10) || 10;
+            // 페이지 개수 바꾸면 1페이지부터 다시 로딩
+            renderPostList(currentCategory, currentKeyword, currentSearchType, 1);
+        });
+    }
+
+    // 커뮤니티 탭/리스트 초기화
+    const tabs = tabsContainer.querySelectorAll('button');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById('search-keyword').value = '';
+            renderPostList(tab.dataset.category, '', 'title', 1);
+        });
+    });
+
+    // 첫 로딩 전체 탭
+    renderPostList(CATEGORY_ALL);
+
+    // 제목 클릭 시 상세 이동
+    document.querySelectorAll('.post-table').forEach(table => {
+        table.addEventListener('click', function (e) {
+            const titleCell = e.target.closest('.col-title');
+            if (titleCell) {
+                const postId = String(titleCell.closest('tr').dataset.postId);
+                location.href = `/community/detail/${postId}`;
             }
-            updateGlobalBadge();
-            window.addEventListener('storage', (e) => {
-                if (e.key === 'hasNewNotification') updateGlobalBadge();
-            });
-        }
-
-        const tabs = tabsContainer.querySelectorAll('button');
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                document.getElementById('search-keyword').value = '';
-                renderPostList(tab.dataset.category, '', 'title', 1);
-            });
         });
+    });
 
-        // ✅ 초기 로드 시 "전체 목록"
-        renderPostList(CATEGORY_ALL);
-
-        // ✅ 게시글 클릭 상세 이동
-        document.querySelectorAll('.post-table').forEach(table => {
-            table.addEventListener('click', function(e) {
-                const titleCell = e.target.closest('.col-title');
-                if (titleCell) {
-                    const postId = String(titleCell.closest('tr').dataset.postId);
-                    location.href = `/community/detail/${postId}`;
+    // 로그인 상태라면 알림/일정 정보 불러와서 헤더 배지 갱신
+    if (accessToken) {
+        (async () => {
+            if (!localStorage.getItem('userId')) {
+                try {
+                    const res = await fetch('/api/users/me', {
+                        headers: { 'Authorization': 'Bearer ' + accessToken }
+                    });
+                    if (res.ok) {
+                        const user = await res.json();
+                        localStorage.setItem('userId', user.userId);
+                        localStorage.setItem('username', user.nickname);
+                    }
+                } catch (e) {
+                    console.error('사용자 정보 조회 실패:', e);
                 }
-            });
-        });
+            }
+
+            if (window.checkPendingReviews) await window.checkPendingReviews();
+            if (window.checkUpcomingSchedules) await window.checkUpcomingSchedules();
+            if (window.updateGlobalBadge) window.updateGlobalBadge();
+        })();
+    }
     });
 </script>
 

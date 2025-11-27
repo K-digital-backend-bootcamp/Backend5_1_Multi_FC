@@ -54,4 +54,20 @@ public interface CommunityMapper {
     // last_checked_comment_id 갱신
     void updateLastCheckedCommentId(@Param("postId") Long postId,
                                     @Param("commentId") Long commentId);
+
+    // 페이징 + 검색
+    List<CommunityDto.PostListResponse> findPostPageByCategory(
+            @Param("category") String category,
+            @Param("offset") int offset,
+            @Param("limit") int limit,
+            @Param("searchType") String searchType,
+            @Param("keyword") String keyword
+    );
+
+    // 전체 개수 (페이지 계산용)
+    long countPostByCategory(
+            @Param("category") String category,
+            @Param("searchType") String searchType,
+            @Param("keyword") String keyword
+    );
 }
