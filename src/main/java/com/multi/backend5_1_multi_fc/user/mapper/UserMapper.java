@@ -74,7 +74,6 @@ public interface UserMapper {
      */
     UserDto findUserByEmail(String email);
 
-
     /**
      * 10. 사용자 Id로 사용자 정보 조회 (Chat 용)
      * @param userId - 이메일

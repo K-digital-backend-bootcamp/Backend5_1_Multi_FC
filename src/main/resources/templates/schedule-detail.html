@@ -4,65 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="'경기 상세 (ID: ' + ${matchId} + ') - MULTI FC'">MULTI FC - 일정 상세</title>
-
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css?v=219}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-
-    <style>
-        /* --- 기존 스타일 유지 --- */
-        .schedule-search-main { padding: 100px 40px 40px 40px; background-color: #f7f7f7; min-height: 100vh; }
-        .search-container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .search-title { font-size: 28px; font-weight: 700; color: #2c3e50; margin-bottom: 25px; border-bottom: 2px solid #6c5ce7; padding-bottom: 10px; }
-        .detail-grid { display: grid; grid-template-columns: 1fr; gap: 30px; }
-        @media (min-width: 768px) { .detail-grid { grid-template-columns: 1fr 350px; } }
-        .map-area { width: 100%; height: 300px; background-color: #eee; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #888; }
-        .detail-info-item { display: flex; font-size: 16px; color: #333; margin-bottom: 15px; align-items: center; }
-        .detail-info-item i { width: 30px; color: #6c5ce7; font-size: 18px; }
-        .status-card { background: #f9f9f9; border: 1px solid #ddd; border-radius: 10px; padding: 20px; }
-        .status-card h3 { font-size: 20px; color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 15px; }
-
-        /* --- 참가자 리스트 & 관리 버튼 스타일 (신규 추가) --- */
-        .participant-list { list-style: none; padding: 0; margin: 10px 0 20px 0; }
-        .participant-list li { padding: 10px 0; border-bottom: 1px dashed #eee; }
-        .participant-list li:last-child { border-bottom: none; }
-
-        .user-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-        .user-info { font-weight: 600; font-size: 15px; color: #333; }
-        .user-meta { font-size: 12px; color: #888; }
-
-        /* 배지 스타일 */
-        .badge { padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 5px; color: white; }
-        .badge-host { background-color: #e74c3c; } /* 방장 */
-        .badge-me { background-color: #6c5ce7; }   /* 나 */
-        .badge-waiting { background-color: #f39c12; } /* 대기 */
-        .badge-confirmed { background-color: #27ae60; } /* 확정 */
-
-        /* 관리 버튼 그룹 */
-        .manage-btns { display: flex; gap: 5px; }
-        .btn-sm { padding: 4px 8px; border: none; border-radius: 4px; font-size: 12px; cursor: pointer; color: white; }
-        .btn-approve { background-color: #27ae60; }
-        .btn-reject { background-color: #e74c3c; }
-        .btn-approve:hover { background-color: #219150; }
-        .btn-reject:hover { background-color: #c0392b; }
-
-        /* 하단 메인 버튼 */
-        .join-button { width: 100%; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 16px; border: none; cursor: pointer; margin-top: 10px; transition: 0.2s; }
-        .btn-join { background-color: #333; color: white; }
-        .btn-cancel { background-color: #e74c3c; color: white; }
-        .btn-close { background-color: #2c3e50; color: white; } /* 마감 버튼 */
-        .btn-disabled { background-color: #ccc; color: #666; cursor: not-allowed; }
-
-        .match-status-label { font-weight: 800; margin-left: 10px; }
-        .status-open { color: #27ae60; }
-        .status-closed { color: #e74c3c; }
-    </style>
+    <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=4caaf2cb0e09303d4dd13d3fb5ff15e9&libraries=services"></script>
 </head>
 <body>
-
 <header class="quick-menu">
     <div class="logo"><a href="/">MULTI FC</a></div>
     <div class="header-icons">
@@ -72,14 +21,17 @@
         </button>
         <div id="profile-menu" class="user-menu">
             <div class="user-info">
-                <strong><span id="user-menu-username">회원</span>님</strong>
+                <strong><span id="user-menu-username">사용자</span>님</strong>
                 <p>환영합니다!</p>
             </div>
             <ul>
+                <li><a href="/notifications" id="nav-notifications-link"><i class="fas fa-bell"></i> 알림 목록</a></li>
+                <li><a href="/mypage"><i class="fas fa-user"></i> 마이페이지</a></li>
+                <li><a href="/profile/edit"><i class="fas fa-user-edit"></i> 프로필 수정</a></li>
                 <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
             </ul>
         </div>
-        <button id="menu-toggle" class="menu-toggle-btn"><i class="fas fa-bars"></i></button>
+        <button id="menu-toggle" class="menu-toggle-btn"> <i class="fas fa-bars"></i> </button>
     </div>
     <nav id="main-menu" class="main-nav">
         <ul>
@@ -87,19 +39,17 @@
             <li><a href="/fields"><i class="fas fa-search"></i> 구장검색</a></li>
             <li><a href="/community"><i class="fas fa-users"></i> 커뮤니티</a></li>
             <li id="nav-chat-link-li"><a href="/chat" id="nav-chat-link"><i class="fas fa-comments"></i> 실시간채팅</a></li>
+            <li><a href="/schedule?stadium"><i class="fas fa-calendar-check"></i> 경기 일정</a></li>
         </ul>
     </nav>
 </header>
-
-<main class="schedule-search-main">
+<main class="search-main">
     <div class="search-container">
         <h1 class="search-title" th:text="'경기 상세 정보 (ID: ' + ${matchId} + ')'">📅 일정 상세</h1>
         <input type="hidden" id="match-id-hidden" th:value="${matchId}">
-
         <div class="detail-grid">
             <div class="detail-left-column">
-                <div class="map-area" id="map">(KakaoMap API가 표시될 영역)</div>
-
+                <div class="map-area" id="map">지도를 로드하는 중...</div>
                 <h3>
                     경기 정보
                     <span id="match-status-display" class="match-status-label"></span>
@@ -121,18 +71,14 @@
                     <span id="detail-skill-level">로딩중...</span>
                 </div>
             </div>
-
             <div class="detail-right-column">
                 <div class="status-card">
                     <h3>참여 현황</h3>
                     <strong><span id="current-players">0</span> / <span id="max-players">0</span> 명</strong>
-
                     <ul class="participant-list" id="participant-list">
                     </ul>
-
                     <div id="button-container">
                     </div>
-
                     <p id="login-prompt-msg" style="display:none; text-align: center; margin-top: 15px; font-size: 14px;">
                         참여하려면 <a href="/login" style="color: #6c5ce7; font-weight: 600;">로그인</a>이 필요합니다.
                     </p>
@@ -141,7 +87,6 @@
         </div>
     </div>
 </main>
-
 <script>
     /* =========================================================
        1. 초기화 및 헤더 처리
@@ -150,16 +95,11 @@
     let currentMatchData = null;
     let currentUserId = null;
     const matchId = document.getElementById('match-id-hidden').value;
-
     document.addEventListener('DOMContentLoaded', async () => {
-        // 로그인 정보 확인
         const token = localStorage.getItem('accessToken');
         const userIdStr = localStorage.getItem('userId');
         const nickname = localStorage.getItem('userNickname');
-
         if(userIdStr) currentUserId = Number(userIdStr);
-
-        // 헤더 UI 업데이트
         if (token) {
             document.getElementById('nav-login-btn').style.display = 'none';
             document.getElementById('profile-menu-toggle').style.display = 'block';
@@ -168,42 +108,70 @@
             document.getElementById('nav-login-btn').style.display = 'block';
             document.getElementById('profile-menu-toggle').style.display = 'none';
         }
-
-        // 메뉴 이벤트
-        document.getElementById('profile-menu-toggle').addEventListener('click', () => {
+        document.getElementById('profile-menu-toggle')?.addEventListener('click', () => {
             document.getElementById('profile-menu').classList.toggle('show');
         });
-        document.getElementById('logout-button').addEventListener('click', (e) => {
+        document.getElementById('logout-button')?.addEventListener('click', (e) => {
             e.preventDefault();
             localStorage.clear();
             window.location.href = '/login';
         });
-
-        // 데이터 로드
+        document.getElementById('menu-toggle')?.addEventListener('click', () => {
+            document.getElementById('main-menu').classList.toggle('show');
+            document.getElementById('profile-menu')?.classList.remove('show');
+        });
         await fetchMatchDetail();
         await fetchParticipantList();
-
-        // WebSocket 연결
         connectWebSocket();
     });
-
     /* =========================================================
-       2. 데이터 로드 함수
+       2. 지도 초기화 함수
+    ========================================================= */
+    function initMap(lat, lng, name) {
+        if (window.kakao && kakao.maps) {
+            const mapContainer = document.getElementById('map');
+            const mapOption = {
+                center: new kakao.maps.LatLng(lat, lng),
+                level: 3
+            };
+            const map = new kakao.maps.Map(mapContainer, mapOption);
+            const markerPosition = new kakao.maps.LatLng(lat, lng);
+            new kakao.maps.Marker({
+                position: markerPosition,
+                map: map
+            });
+            const infowindow = new kakao.maps.InfoWindow({
+                content: `<div style="padding:5px;font-size:12px;font-weight:bold;">${name}</div>`
+            });
+            infowindow.open(map, new kakao.maps.Marker({ position: markerPosition }));
+            console.log("Kakao Map initialized successfully.");
+        } else {
+            console.error("Kakao Map API is not loaded.");
+        }
+    }
+    /* =========================================================
+       3. 데이터 로드 함수 (지도 초기화 로직 포함)
     ========================================================= */
     async function fetchMatchDetail() {
         try {
             const res = await fetch(`/api/matchrooms/${matchId}`);
             if (!res.ok) throw new Error('경기 정보 로드 실패');
             currentMatchData = await res.json();
-
-            // 정보 표시
             document.getElementById('detail-datetime').textContent = `${currentMatchData.matchDate} ${currentMatchData.matchTime}`;
-            document.getElementById('detail-location').textContent = `구장 ID: ${currentMatchData.stadiumId}`;
             document.getElementById('detail-match-type').textContent = `개인 매칭 (${currentMatchData.maxPlayers}명)`;
             document.getElementById('detail-skill-level').textContent = currentMatchData.level;
             document.getElementById('max-players').textContent = currentMatchData.maxPlayers;
-
-            // 상태 표시
+            const stadiumId = currentMatchData.stadiumId;
+            const stadiumRes = await fetch(`/api/stadiums`);
+            const allStadiums = await stadiumRes.json();
+            const stadium = allStadiums.find(s => s.stadiumId === stadiumId);
+            if (stadium) {
+                document.getElementById('detail-location').textContent = stadium.name + ' (' + stadium.address + ')';
+                initMap(stadium.latitude, stadium.longitude, stadium.name);
+            } else {
+                document.getElementById('detail-location').textContent = `구장 ID ${stadiumId} 정보를 찾을 수 없습니다.`;
+                document.getElementById('map').textContent = '구장 정보를 찾을 수 없어 지도를 표시할 수 없습니다.';
+            }
             const statusEl = document.getElementById('match-status-display');
             if (currentMatchData.status === 'CLOSED') {
                 statusEl.textContent = "(모집 마감)";
@@ -212,9 +180,11 @@
                 statusEl.textContent = "(모집중)";
                 statusEl.className = "match-status-label status-open";
             }
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            console.error(err);
+            document.getElementById('map').textContent = '경기 정보 로드 중 오류 발생.';
+        }
     }
-
     async function fetchParticipantList() {
         try {
             const res = await fetch(`/api/matchrooms/${matchId}/participants/all`);
@@ -223,40 +193,31 @@
             renderParticipantList(participants);
         } catch (err) { console.error(err); }
     }
-
     /* =========================================================
-       3. 화면 렌더링 (핵심!)
+       4. 화면 렌더링 (기존 디자인 통일 적용)
     ========================================================= */
     function renderParticipantList(participants) {
         const listEl = document.getElementById('participant-list');
         listEl.innerHTML = '';
-
-        // 플레이어 수 카운트 (Host 제외, 확정된 사람만 셀 수도 있음. 여기선 전체 Player)
-        const players = participants.filter(p => p.role === 'Player');
-        document.getElementById('current-players').textContent = players.length;
-
-        // 내가 방장인지 확인
+        const totalCount = participants.length;
+        document.getElementById('current-players').textContent = totalCount;
         const amIHost = (currentMatchData && Number(currentMatchData.hostId) === currentUserId);
         const isClosed = (currentMatchData && currentMatchData.status === 'CLOSED');
-
         participants.forEach(user => {
             const li = document.createElement('li');
-
-            // 닉네임 표시
+            // 포지션 값 처리
+            const userPosition = user.position || '미정';
+            // 닉네임 + 배지 (기존 user-row의 div 내용)
             let nameHtml = `<span class="user-info">${user.nickname}</span>`;
-
-            // 배지 표시
             if (user.role === 'Host') nameHtml += ` <span class="badge badge-host">방장</span>`;
             if (Number(user.userId) === currentUserId) nameHtml += ` <span class="badge badge-me">나</span>`;
-
-            // 상태 표시 (Player인 경우만)
-            const status = user.status || '대기'; // 기본값 대기
+            // 상태 배지 (Player에게만)
+            const status = user.status || '대기';
             if (user.role === 'Player') {
                 if (status === '확정') nameHtml += ` <span class="badge badge-confirmed">확정</span>`;
                 else nameHtml += ` <span class="badge badge-waiting">대기</span>`;
             }
-
-            // 관리 버튼 (내가 방장이고 + 상대가 Player이고 + 경기가 안 끝났을 때)
+            // 관리 버튼 (방장일 경우 - 기존 btnHtml 구조)
             let btnHtml = '';
             if (amIHost && user.role === 'Player' && !isClosed) {
                 btnHtml = `
@@ -266,44 +227,41 @@
                     </div>
                 `;
             }
-
+            // li 전체 구조를 기존의 two-row 방식으로 재구성
             li.innerHTML = `
                 <div class="user-row">
                     <div>${nameHtml}</div>
-                    ${btnHtml}
-                </div>
-                <div class="user-meta">포지션: ${user.position || '미정'}</div>
+                        ${btnHtml}</div>
+                <div class="user-meta">포지션: ${userPosition}</div>
             `;
             listEl.appendChild(li);
         });
-
         // 하단 메인 버튼 업데이트
         renderMainButtons(participants, amIHost, isClosed);
     }
-
     function renderMainButtons(participants, amIHost, isClosed) {
         const container = document.getElementById('button-container');
         const loginPrompt = document.getElementById('login-prompt-msg');
         container.innerHTML = '';
-
         if (!currentUserId) {
             loginPrompt.style.display = 'block';
             return;
         }
         loginPrompt.style.display = 'none';
-
         // 1. 경기가 마감된 경우
         if (isClosed) {
             container.innerHTML = `<button class="join-button btn-disabled" disabled>모집이 마감되었습니다</button>`;
             return;
         }
-
         // 2. 내가 방장인 경우 -> [경기 확정(마감)] 버튼
         if (amIHost) {
-            container.innerHTML = `<button class="join-button btn-close" onclick="closeMatch()">📢 모집 마감 (경기 확정)</button>`;
+            container.innerHTML = `
+            <button class="join-button btn-close" onclick="closeMatch()">
+            📢 모집 마감 (경기 확정)
+            </button>
+            `;
             return;
         }
-
         // 3. 일반 참가자
         const isJoined = participants.some(p => Number(p.userId) === currentUserId);
         if (isJoined) {
@@ -318,21 +276,29 @@
             }
         }
     }
-
     /* =========================================================
-       4. 액션 함수들 (API 호출)
+       5. 액션 함수들 (API 호출)
+       (⭐️ 포지션 입력 프롬프트 제거하고, userId만 전송하도록 수정)
     ========================================================= */
-
     // 참가 신청
     window.joinMatch = async () => {
-        if (!confirm("참가 신청하시겠습니까?")) return;
-        await fetch(`/api/matchrooms/${matchId}/join`, {
+        // ⭐️ 포지션 입력 프롬프트 제거 - 백엔드가 User DB에서 포지션을 가져올 것으로 가정함
+        if (!confirm("참가 신청하시겠습니까? (회원 기본 포지션으로 등록됩니다)")) return;
+        // position 필드를 제거하고 userId만 전송
+        const res = await fetch(`/api/matchrooms/${matchId}/join`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ userId: currentUserId })
+            body: JSON.stringify({
+                userId: currentUserId
+                // 백엔드가 알아서 position을 User DB에서 가져와 저장해야 함
+            })
         });
+        if (res.ok) {
+            alert("참가 신청이 완료되었습니다. 방장의 수락을 기다려주세요.");
+        } else {
+            alert("참가 신청에 실패했습니다. (백엔드 API 확인 필요)");
+        }
     };
-
     // 참가 취소
     window.cancelMatch = async () => {
         if (!confirm("정말 취소하시겠습니까?")) return;
@@ -342,7 +308,6 @@
             body: JSON.stringify({ userId: currentUserId })
         });
     };
-
     // [방장] 참가자 수락
     window.approveUser = async (targetId) => {
         if (!confirm("이 참가자를 수락하시겠습니까?")) return;
@@ -352,7 +317,6 @@
             body: JSON.stringify({ userId: targetId })
         });
     };
-
     // [방장] 참가자 강퇴
     window.rejectUser = async (targetId) => {
         if (!confirm("이 참가자를 강퇴하시겠습니까?")) return;
@@ -362,7 +326,6 @@
             body: JSON.stringify({ userId: targetId })
         });
     };
-
     // [방장] 경기 확정 (마감)
     window.closeMatch = async () => {
         if (!confirm("모집을 마감하고 매칭을 확정하시겠습니까?\n(더 이상 참가자를 받을 수 없습니다)")) return;
@@ -372,9 +335,8 @@
             location.reload(); // 상태 변경 반영을 위해 새로고침
         }
     };
-
     /* =========================================================
-       5. WebSocket (실시간 갱신)
+       6. WebSocket (실시간 갱신)
     ========================================================= */
     function connectWebSocket() {
         const socket = new SockJS('/ws');
@@ -388,8 +350,6 @@
             });
         }, (err) => console.error("WebSocket Error:", err));
     }
-
 </script>
-
 </body>
 </html>

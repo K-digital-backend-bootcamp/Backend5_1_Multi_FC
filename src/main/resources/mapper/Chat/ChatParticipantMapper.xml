@@ -23,7 +23,7 @@
         select cp.*, u.nickname
         from Chat_Participant cp left join User u on cp.user_id = u.user_id
         where cp.user_id=#{userId} and cp.chat_room_id = #{roomId}
-        limit 1
+            limit 1
     </select>
 
     <insert id="insertParticipant" parameterType="com.multi.backend5_1_multi_fc.chat.dto.ChatParticipantDto" useGeneratedKeys="true" keyProperty="chatPartId">
@@ -35,7 +35,7 @@
         set last_read_message_id = #{lastReadMessageId}
         where chat_room_id = #{roomId} and user_id = #{userId}
     </update>
-    
+
     <delete id="deleteByUserIdAndRoomId">
         delete from Chat_Participant
         where user_id = #{userId} and chat_room_id = #{roomId}

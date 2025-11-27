@@ -8,7 +8,6 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
 </head>
 <body>
 
@@ -19,8 +18,15 @@
             <i class="fas fa-user-circle"></i>
             <span id="notification-badge" class="notification-badge"></span>
         </button>
+
         <div id="profile-menu" class="user-menu">
-            <div class="user-info"> <strong><span id="user-menu-username">사용자</span>님</strong> <p>환영합니다!</p> </div>
+            <!-- ✅ "닉네임님 환영합니다!" 한 줄 표시 -->
+            <div class="user-info">
+                <p>
+                    <strong><span id="user-menu-username">사용자</span>님</strong>
+                    환영합니다!
+                </p>
+            </div>
             <ul>
                 <li><a href="/notifications" id="nav-notifications-link"><i class="fas fa-bell"></i> 알림 목록</a></li>
                 <li><a href="/mypage"><i class="fas fa-user"></i> 마이페이지</a></li>
@@ -28,6 +34,7 @@
                 <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
             </ul>
         </div>
+
         <button id="menu-toggle" class="menu-toggle-btn"><i class="fas fa-bars"></i></button>
     </div>
 
@@ -37,6 +44,7 @@
             <li><a href="/fields"><i class="fas fa-search"></i> 구장검색</a></li>
             <li class="active"><a href="/community" class="active"><i class="fas fa-users"></i> 커뮤니티</a></li>
             <li><a href="/chat"><i class="fas fa-comments"></i> 실시간채팅</a></li>
+            <li><a href="/schedule?stadium"><i class="fas fa-calendar-alt"></i> 경기 일정</a></li>
         </ul>
     </nav>
 </header>
@@ -63,12 +71,14 @@
             <input type="text" id="search-keyword" placeholder="검색어를 입력하세요">
             <button id="search-exec-btn"><i class="fas fa-search"></i> 검색</button>
         </div>
+
         <table class="post-table">
             <thead>
             <tr>
                 <th style="width: 8%;">번호</th>
                 <th style="width: 10%;">카테고리</th>
-                <th style="width: 45%;">제목</th> <th style="width: 10%;"><i class="fas fa-comment-dots" title="댓글 수"></i></th>
+                <th style="width: 45%;">제목</th>
+                <th style="width: 10%;"><i class="fas fa-comment-dots" title="댓글 수"></i></th>
                 <th style="width: 12%;">작성자</th>
                 <th style="width: 15%;">날짜</th>
                 <th style="width: 7%;"><i class="fas fa-eye"></i></th>
@@ -78,13 +88,12 @@
             </tbody>
         </table>
 
-        <div class="pagination" id="community-pagination">
-        </div>
+        <div class="pagination" id="community-pagination"></div>
     </div>
 </main>
 
 <script>
-    // --- (★공통★) 메뉴 토글 및 로그아웃 로직 (유지) ---
+    // --- (★공통★) 메뉴 토글 및 로그아웃 로직 ---
     const menuToggle = document.getElementById('menu-toggle');
     const mainMenu = document.getElementById('main-menu');
     const profileMenuToggle = document.getElementById('profile-menu-toggle');
@@ -101,12 +110,14 @@
             if (profileMenu) profileMenu.classList.remove('show');
         });
     }
+
     if (profileMenuToggle) {
         profileMenuToggle.addEventListener('click', () => {
             profileMenu.classList.toggle('show');
             if (mainMenu) mainMenu.classList.remove('show');
         });
     }
+
     document.addEventListener('click', (event) => {
         const isClickInsideHeader = document.querySelector('header').contains(event.target);
         if (!isClickInsideHeader) {
@@ -124,6 +135,7 @@
             window.location.href = '/login';
         });
     }
+
     if (navLogoutLink) {
         navLogoutLink.addEventListener('click', (e) => {
             e.preventDefault();
@@ -141,10 +153,7 @@
         });
     }
 
-    // --- (★공통★) 알림 배지 로드 함수 (생략) ---
-    const badge = document.getElementById('notification-badge');
-    let hasReviewNotif = false;
-    let hasScheduleNotif = false;
+    // --- (★공통★) 알림 배지 ---
     function updateGlobalBadge() {
         const hasNew = localStorage.getItem('hasNewNotification') === 'true';
         const badge = document.getElementById('notification-badge');
@@ -152,33 +161,26 @@
     }
     updateGlobalBadge();
 
-    // [수정] 더미데이터를 제거하고 백엔드 API와 연동하기 위한 준비
+    // 백엔드 데이터 연동 준비
     const postListBody = document.getElementById('post-list-body');
     const tabsContainer = document.getElementById('community-tabs');
-    const writeButton = document.getElementById('write-post-btn');
     const searchExecBtn = document.getElementById('search-exec-btn');
     const paginationContainer = document.getElementById('community-pagination');
 
     const POSTS_PER_PAGE = 10;
-    const CATEGORY_ALL = '전체'; // [수정] '전체' 탭에서 사용할 카테고리 상수 추가
-    let currentPage = 1;
+    const CATEGORY_ALL = '전체';
     let allFilteredPosts = [];
 
     // ⭐ 백엔드에서 목록 가져오기
     async function fetchPosts(category) {
         let url = '/api/community/posts';
 
-        // backend가 현재 category 필수면:
-        // all → free/notice 두 번 호출해서 합치기
-        // [수정] 전체가 아닌 경우에만 category 파라미터를 붙여서 단일 카테고리 목록을 조회
         if (category && category !== CATEGORY_ALL) {
             url += `?category=${encodeURIComponent(category)}`;
             const res = await fetch(url);
             if (!res.ok) throw new Error('게시글 목록을 불러오지 못했습니다.');
-            return res.json(); // PostListResponse[]
+            return res.json();
         } else {
-            // all: notice + free 두 번 불러와서 합치기
-            // [수정] '전체' 탭일 때는 공지 + 자유게시판 두 카테고리를 각각 호출해서 합친다
             const [noticeRes, freeRes] = await Promise.all([
                 fetch('/api/community/posts?category=공지'),
                 fetch('/api/community/posts?category=자유게시판')
@@ -192,7 +194,15 @@
         }
     }
 
-
+    // ✅✅ 최신순 정렬만 적용 (createdAt desc / 없으면 postId desc)
+    function sortPostsLatestFirst(posts) {
+        return posts.sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            if (dateB !== dateA) return dateB - dateA;
+            return (b.postId || 0) - (a.postId || 0);
+        });
+    }
 
     /**
      * 페이지네이션 컨트롤 렌더링
@@ -203,38 +213,29 @@
 
         if (totalPages <= 1) return;
 
-        // ⭐⭐ [핵심 수정] 페이지네이션 버튼 수 조정 (요청: 10개까지 표시) ⭐⭐
         const pagesPerGroup = 10;
         const currentGroup = Math.ceil(currentPage / pagesPerGroup);
         const startPage = (currentGroup - 1) * pagesPerGroup + 1;
         const endPage = Math.min(startPage + pagesPerGroup - 1, totalPages);
 
-        // --- 버튼 렌더링 ---
-
-        // 이전 그룹/페이지 링크 (단순 이전 페이지로 이동)
-        const prevGroupPage = currentPage > 1 ? currentPage - 1 : 1;
+        const prevPage = currentPage > 1 ? currentPage - 1 : 1;
         const prevDisabled = currentPage === 1;
-        paginationContainer.innerHTML += `<a href="#" data-page="${prevGroupPage}" class="${prevDisabled ? 'disabled' : ''}">&lt;</a>`;
+        paginationContainer.innerHTML += `<a href="#" data-page="${prevPage}" class="${prevDisabled ? 'disabled' : ''}">&lt;</a>`;
 
-        // 페이지 번호
         for (let i = startPage; i <= endPage; i++) {
             paginationContainer.innerHTML += `<a href="#" data-page="${i}" class="${i === currentPage ? 'active' : ''}">${i}</a>`;
         }
 
-        // 다음 그룹/페이지 링크 (단순 다음 페이지로 이동)
-        const nextGroupPage = currentPage < totalPages ? currentPage + 1 : totalPages;
+        const nextPage = currentPage < totalPages ? currentPage + 1 : totalPages;
         const nextDisabled = currentPage === totalPages;
-        paginationContainer.innerHTML += `<a href="#" data-page="${nextGroupPage}" class="${nextDisabled ? 'disabled' : ''}">&gt;</a>`;
+        paginationContainer.innerHTML += `<a href="#" data-page="${nextPage}" class="${nextDisabled ? 'disabled' : ''}">&gt;</a>`;
 
-        // 이벤트 리스너 재할당
-        // [수정] 페이지 버튼 클릭 시, 현재 선택된 탭/검색 조건을 유지한 채로 해당 페이지를 다시 렌더링
         paginationContainer.querySelectorAll('a').forEach(link => {
             if (!link.classList.contains('disabled')) {
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
                     const newPage = parseInt(e.target.dataset.page);
                     if (newPage > 0 && newPage <= totalPages) {
-                        // 현재 탭과 검색 조건을 유지하면서 페이지 변경
                         renderPostList(
                             document.querySelector('.board-tabs button.active').dataset.category,
                             document.getElementById('search-keyword').value,
@@ -247,10 +248,12 @@
         });
     }
 
-    // [수정] 게시글 목록을 백엔드 데이터로 렌더링하는 함수로 변경
     async function renderPostList(category, searchKeyword = '', searchType = 'title', page = 1) {
         try {
-            let posts = await fetchPosts(category); // [수정] 항상 백엔드에서 최신 목록을 받아옴
+            let posts = await fetchPosts(category);
+
+            // ✅ 최신순 정렬 적용
+            posts = sortPostsLatestFirst(posts);
 
             // 검색
             if (searchKeyword) {
@@ -262,7 +265,6 @@
                     if (searchType === 'writer') {
                         return (post.writerNickname || '').toLowerCase().includes(keyword);
                     }
-                    // 내용 검색은 서버에 따로 검색
                     return false;
                 });
             }
@@ -291,8 +293,7 @@
                 row.dataset.postId = post.postId;
 
                 const sequentialId = startIndex + index + 1;
-                // [수정] DB ENUM 값(공지 / 자유게시판)에 맞춰 카테고리 표시
-                const categoryDisplay = post.category === '전체' ? '공지' : '자유';
+                const categoryDisplay = post.category === '공지' ? '공지' : '자유';
 
                 row.innerHTML = `
                 <td>${sequentialId}</td>
@@ -321,12 +322,10 @@
         }
     }
 
-
-    // [수정] 검색 실행 함수에서 '전체' 탭일 때 CATEGORY_ALL 상수를 사용하도록 변경
     if (searchExecBtn) {
         searchExecBtn.addEventListener('click', () => {
             const activeTab = document.querySelector('.board-tabs button.active');
-            const category = activeTab ? activeTab.dataset.category : CATEGORY_ALL; // [수정] 기본값을 '전체' 상수로
+            const category = activeTab ? activeTab.dataset.category : CATEGORY_ALL;
             const keyword = document.getElementById('search-keyword').value;
             const type = document.getElementById('search-type').value;
 
@@ -334,8 +333,7 @@
         });
     }
 
-
-    // --- 로그인 상태 확인 ---
+    // --- 로그인 상태 확인 + 탭/초기 로드 ---
     document.addEventListener('DOMContentLoaded', () => {
         const accessToken = localStorage.getItem('accessToken');
         const profileIcon = document.getElementById('profile-menu-toggle');
@@ -353,7 +351,6 @@
             });
         }
 
-        // [수정] 탭 클릭 시, data-category 값(전체/공지/자유게시판)을 그대로 renderPostList 에 넘기도록 변경
         const tabs = tabsContainer.querySelectorAll('button');
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -367,7 +364,7 @@
         // ✅ 초기 로드 시 "전체 목록"
         renderPostList(CATEGORY_ALL);
 
-        // ✅ 게시글 클릭 시 상세페이지 이동 (안전장치 차원에서 한 번 더)
+        // ✅ 게시글 클릭 상세 이동
         document.querySelectorAll('.post-table').forEach(table => {
             table.addEventListener('click', function(e) {
                 const titleCell = e.target.closest('.col-title');
@@ -379,7 +376,6 @@
         });
     });
 </script>
-
 
 </body>
 </html>

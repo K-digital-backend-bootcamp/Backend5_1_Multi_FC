@@ -34,9 +34,6 @@ public class UserController {
             @ModelAttribute UserDto userDto,
             @RequestParam(value = "profile_image_file", required = false) MultipartFile profileImageFile
     ) {
-        System.out.println("👉 [요청 도착] DTO: " + userDto);
-        System.out.println("👉 [요청 도착] 파일: " + (profileImageFile != null ? profileImageFile.getOriginalFilename() : "없음"));
-
         try {
             userService.signup(userDto, profileImageFile);
             return new ResponseEntity<>("회원가입 성공", HttpStatus.CREATED);
@@ -74,10 +71,10 @@ public class UserController {
                 return ResponseEntity.ok(response);
 
             } else {
-                System.out.println("❌ 로그인 실패: 아이디 또는 비밀번호 불일치");
                 return new ResponseEntity<>("아이디 또는 비밀번호가 올바르지 않습니다.", HttpStatus.UNAUTHORIZED);
             }
         } catch (Exception e) {
+            System.err.println("❌ 로그인 중 예외 발생:");
             e.printStackTrace();
             return new ResponseEntity<>("로그인 중 서버 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -254,6 +251,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
+
 
 
 

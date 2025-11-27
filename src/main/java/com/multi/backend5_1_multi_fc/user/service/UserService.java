@@ -143,11 +143,7 @@ public class UserService implements UserDetailsService {
 
         if (userDto != null) {
             String nick = userDto.getNickname();
-            System.out.println("✅ [UserService] 조회된 사용자 Nickname: " + (nick == null ? "NULL" : "'" + nick + "'"));
-        } else {
-            System.out.println("❌ [UserService] 조회된 사용자(" + username + ") 객체가 NULL임");
         }
-
         return userDto;
     }
 
@@ -171,7 +167,6 @@ public class UserService implements UserDetailsService {
 
         try {
             javaMailSender.send(message);
-            System.out.println("✅ 이메일 발송 성공!");
         } catch (Exception e) {
             System.err.println("❌ 이메일 발송 실패: " + e.getMessage());
             e.printStackTrace();
