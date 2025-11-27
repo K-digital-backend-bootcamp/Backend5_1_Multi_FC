@@ -7,6 +7,7 @@
     <link rel="stylesheet" th:href="@{/css/style.css?v=219}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 </head>
 <body>
 
@@ -123,10 +124,24 @@
                         </div>
 
 
-                        <!-- 활동 장소 -->
+                        <!-- 활동 장소 (주소 + 상세주소) -->
+                        <div class="input-group address-group">
+                            <div class="input-wrapper">
+                                <label for="address">활동 장소 설정</label>
+                                <input type="text"
+                                       id="address"
+                                       name="address"
+                                       placeholder="주소 검색 버튼을 눌러주세요"
+                                       required
+                                       readonly>
+                            </div>
+                            <button type="button" onclick="searchAddress()">주소 찾기</button>
+                        </div>
+
                         <div class="input-group">
-                            <label for="location">활동 장소 설정</label>
-                            <input type="text" id="location" name="location" placeholder="예: 서울시 강남구" required>
+                            <input type="text"
+                                   id="address-detail"
+                                   placeholder="상세 주소를 입력하세요 (예: 101동 1004호)">
                         </div>
 
                         <!-- 프로필 사진 -->
@@ -186,6 +201,25 @@
 
 <script>
     // --- (★공통★) 메뉴 토글 및 로그아웃 로직 ---
+
+    // --- 주소 검색 함수 (다음 우편번호 API) ---
+    function searchAddress() {
+        new daum.Postcode({
+            oncomplete: function(data) {
+                const addressInput = document.getElementById("address");
+                const detailInput = document.getElementById("address-detail");
+
+                // 도로명 또는 지번 주소
+                addressInput.value = data.roadAddress || data.jibunAddress;
+
+                // 상세주소 입력 포커스
+                detailInput.focus();
+
+                // 유효성 체크용 change 이벤트 강제 발생 (필요 시)
+                addressInput.dispatchEvent(new Event('change'));
+            }
+        }).open();
+    }
     const menuToggle = document.getElementById('menu-toggle');
     const mainMenu = document.getElementById('main-menu');
     const profileMenuToggle = document.getElementById('profile-menu-toggle');
@@ -479,17 +513,24 @@
             emailInput.value = myInfo.email || '';
             nicknameInput.value = myInfo.nickname || '';
             document.getElementById('position').value = myInfo.position || '전체 (ALL)';
-            document.getElementById('location').value = myInfo.address || '';
+            // 주소 + 상세주소 인풋
+            const addressInput = document.getElementById('address');
+            const addressDetailInput = document.getElementById('address-detail');
 
+        // 백엔드에서 지금은 하나의 문자열로 온다고 가정 (예: "서울시 강남구 어딘가 101동 1004호")
+            const fullAddress = myInfo.address || myInfo.location || '';
+
+        // 일단 전체를 메인 주소에 넣어주고, 상세주소는 빈칸으로 시작
+            addressInput.value = fullAddress;
+            addressDetailInput.value = '';
             // level 매핑
-            if (myInfo.level === '초급')      skillLevelSelect.value = 'beginner';
-            else if (myInfo.level === '중급') skillLevelSelect.value = 'intermediate';
-            else if (myInfo.level === '고급') skillLevelSelect.value = 'advanced';
-            else                             skillLevelSelect.value = '';
-
+            if (myInfo.level === '초급')           skillLevelSelect.value = '초급';
+            else if (myInfo.level === '중급')      skillLevelSelect.value = '중급';
+            else if (myInfo.level === '고급')      skillLevelSelect.value = '고급';
+            else if (myInfo.level === '미기입')    skillLevelSelect.value = '미기입';
+            else                                   skillLevelSelect.value = '';
             if (myInfo.profileImage) {
                 profilePreview.src = myInfo.profileImage;
-                currentProfileImage = myInfo.profileImage;
             }
 
             originalNickname = myInfo.nickname || '';
@@ -580,11 +621,17 @@
         }
 
         const formData = new FormData();
+        const addressInput = document.getElementById('address');
+        const addressDetailInput = document.getElementById('address-detail');
+        // 기본 주소 + 상세주소 합쳐서 하나의 location으로 백엔드에 보냄
+        const fullLocation = `${addressInput.value} ${addressDetailInput.value}`.trim();
+
         formData.append('email', emailInput.value);
         formData.append('nickname', nicknameInput.value);
         formData.append('position', document.getElementById('position').value);
         formData.append('skillLevel', skillLevelSelect.value);
-        formData.append('location', document.getElementById('location').value);
+        formData.append('location', fullLocation);
+
 
         if (profilePicInput.files && profilePicInput.files[0]) {
             formData.append('profilePic', profilePicInput.files[0]);
