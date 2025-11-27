@@ -1280,6 +1280,16 @@
         // 4. 목록의 마지막 메시지 업데이트
         updateLastMessage(currentRoomId, messageContent);
 
+        fetch(`/chatroom/${currentRoomId}/mark-read`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        }).catch(e => {
+            console.error('읽음 상태 갱신 실패', e);
+        });
     }
 
 
