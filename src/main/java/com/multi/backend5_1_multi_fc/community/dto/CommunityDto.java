@@ -79,4 +79,11 @@ public class CommunityDto {
         private LocalDateTime updatedAt;
     }
 
+    //페이징
+    @Data
+    public static class PostPageResponse {
+        private List<PostListResponse> posts;
+        private long totalCount;
+    }
+
 }
