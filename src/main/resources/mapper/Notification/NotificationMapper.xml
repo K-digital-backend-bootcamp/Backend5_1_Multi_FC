@@ -58,6 +58,14 @@
         where notification_id = #{notificationId}
     </delete>
 
+    <select id="findUnreadChatNotification" resultType="NotificationDto">
+        select  *
+        from Notification
+        where user_id = #{userId} and reference_id = #{referenceId} and type = '채팅' and is_read = false
+        order by created_at desc
+            limit 1
+    </select>
+
     <!--미읽음 댓글 알림 찾기-->
     <select id="findUnreadCommentNotification"
             parameterType="map"
@@ -77,16 +85,4 @@
         SET content = #{content}
         WHERE notification_id = #{notificationId}
     </update>
-
-    <select id="findUnreadNotificationByTypeAndReference"
-            parameterType="map"
-            resultType="com.multi.backend5_1_multi_fc.notification.dto.NotificationDto">
-        SELECT *
-        FROM Notification
-        WHERE user_id = #{userId}
-          AND type = #{type}
-          AND reference_id = #{referenceId}
-          AND is_read = false
-            LIMIT 1
-    </select>
 </mapper>
