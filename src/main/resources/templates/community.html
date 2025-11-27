@@ -8,44 +8,10 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
 </head>
 <body>
 
-<header class="quick-menu">
-    <div class="logo"><a href="/">Multi FC</a></div>
-    <div class="header-icons">
-        <button id="profile-menu-toggle" class="profile-icon" style="position: relative;">
-            <i class="fas fa-user-circle"></i>
-            <span id="notification-badge" class="notification-badge"></span>
-        </button>
-        <div id="profile-menu" class="user-menu">
-            <div class="user-info">
-                <strong><span id="user-menu-username">사용자</span>님</strong>
-                <p>환영합니다!</p>
-            </div>
-            <ul>
-                <li><a href="/notifications" id="nav-notifications-link"><i class="fas fa-bell"></i> 알림 목록</a></li>
-                <li><a href="/mypage"><i class="fas fa-user"></i> 마이페이지</a></li>
-                <li><a href="/profile/edit"><i class="fas fa-user-edit"></i> 프로필 수정</a></li>
-                <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
-            </ul>
-        </div>
-        <button id="menu-toggle" class="menu-toggle-btn"><i class="fas fa-bars"></i></button>
-    </div>
-
-    <nav id="main-menu" class="main-nav">
-        <ul>
-            <li><a href="/"><i class="fas fa-home"></i> 메인 (Home)</a></li>
-            <li><a href="/fields"><i class="fas fa-search"></i> 구장검색</a></li>
-            <li><a href="/community" class="active"><i class="fas fa-users"></i> 커뮤니티</a></li>
-            <li id="nav-chat-link-li"><a href="/chat" id="nav-chat-link"><i class="fas fa-comments"></i> 실시간채팅</a></li>
-            <li><a href="/schedule?stadium"><i class="fas fa-calendar-check"></i> 경기 일정</a></li>
-            <li><a href="/login" id="nav-login-link"><i class="fas fa-sign-in-alt"></i> 로그인</a></li>
-            <li><a href="#" id="nav-logout-link"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
-        </ul>
-    </nav>
-</header>
+<div th:replace="~{fragments/header :: siteHeader}"></div>
 
 <main class="community-main">
     <div class="community-board-container">
@@ -69,12 +35,14 @@
             <input type="text" id="search-keyword" placeholder="검색어를 입력하세요">
             <button id="search-exec-btn"><i class="fas fa-search"></i> 검색</button>
         </div>
+
         <table class="post-table">
             <thead>
             <tr>
                 <th style="width: 8%;">번호</th>
                 <th style="width: 10%;">카테고리</th>
-                <th style="width: 45%;">제목</th> <th style="width: 10%;"><i class="fas fa-comment-dots" title="댓글 수"></i></th>
+                <th style="width: 45%;">제목</th>
+                <th style="width: 10%;"><i class="fas fa-comment-dots" title="댓글 수"></i></th>
                 <th style="width: 12%;">작성자</th>
                 <th style="width: 15%;">날짜</th>
                 <th style="width: 7%;"><i class="fas fa-eye"></i></th>
@@ -84,81 +52,11 @@
             </tbody>
         </table>
 
-        <div class="pagination" id="community-pagination">
-        </div>
+        <div class="pagination" id="community-pagination"></div>
     </div>
 </main>
 
 <script>
-    // --- (★공통★) 메뉴 토글 및 로그아웃 로직 (유지) ---
-    const menuToggle = document.getElementById('menu-toggle');
-    const mainMenu = document.getElementById('main-menu');
-    const profileMenuToggle = document.getElementById('profile-menu-toggle');
-    const profileMenu = document.getElementById('profile-menu');
-    const logoutButton = document.getElementById('logout-button');
-    const navNotificationsLink = document.getElementById('nav-notifications-link');
-
-    const navLoginLink = document.getElementById('nav-login-link');
-    const navLogoutLink = document.getElementById('nav-logout-link');
-
-    if (menuToggle) {
-        menuToggle.addEventListener('click', () => {
-            mainMenu.classList.toggle('show');
-            if (profileMenu) profileMenu.classList.remove('show');
-        });
-    }
-    if (profileMenuToggle) {
-        profileMenuToggle.addEventListener('click', () => {
-            profileMenu.classList.toggle('show');
-            if (mainMenu) mainMenu.classList.remove('show');
-        });
-    }
-    document.addEventListener('click', (event) => {
-        const isClickInsideHeader = document.querySelector('header').contains(event.target);
-        if (!isClickInsideHeader) {
-            mainMenu.classList.remove('show');
-            if (profileMenu) profileMenu.classList.remove('show');
-        }
-    });
-
-    if (logoutButton) {
-        logoutButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('hasReadReviews');
-            localStorage.removeItem('hasReadSchedules');
-            window.location.href = '/login';
-        });
-    }
-    if (navLogoutLink) {
-        navLogoutLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('hasReadReviews');
-            localStorage.removeItem('hasReadSchedules');
-            window.location.href = '/login';
-        });
-    }
-
-    if (navNotificationsLink) {
-        navNotificationsLink.addEventListener('click', (e) => {
-            localStorage.setItem('hasReadReviews', 'true');
-            window.location.href = '/notifications';
-        });
-    }
-
-    // --- (★공통★) 알림 배지 로드 함수 (생략) ---
-    const badge = document.getElementById('notification-badge');
-    let hasReviewNotif = false;
-    let hasScheduleNotif = false;
-    function updateGlobalBadge() {
-        const hasNew = localStorage.getItem('hasNewNotification') === 'true';
-        const badge = document.getElementById('notification-badge');
-        if (badge) badge.style.display = hasNew ? 'block' : 'none';
-    }
-    updateGlobalBadge();
-
-    // [수정] 더미데이터를 제거하고 백엔드 API와 연동하기 위한 준비
     const postListBody = document.getElementById('post-list-body');
     const tabsContainer = document.getElementById('community-tabs');
     const writeButton = document.getElementById('write-post-btn');
@@ -166,7 +64,7 @@
     const paginationContainer = document.getElementById('community-pagination');
 
     const POSTS_PER_PAGE = 10;
-    const CATEGORY_ALL = '전체'; // [수정] '전체' 탭에서 사용할 카테고리 상수 추가
+    const CATEGORY_ALL = '전체';
     let currentPage = 1;
     let allFilteredPosts = [];
 
@@ -174,17 +72,14 @@
     async function fetchPosts(category) {
         let url = '/api/community/posts';
 
-        // backend가 현재 category 필수면:
-        // all → free/notice 두 번 호출해서 합치기
-        // [수정] 전체가 아닌 경우에만 category 파라미터를 붙여서 단일 카테고리 목록을 조회
         if (category && category !== CATEGORY_ALL) {
+            // 단일 카테고리 조회
             url += `?category=${encodeURIComponent(category)}`;
             const res = await fetch(url);
             if (!res.ok) throw new Error('게시글 목록을 불러오지 못했습니다.');
-            return res.json(); // PostListResponse[]
+            return res.json();
         } else {
-            // all: notice + free 두 번 불러와서 합치기
-            // [수정] '전체' 탭일 때는 공지 + 자유게시판 두 카테고리를 각각 호출해서 합친다
+            // 전체: 공지 + 자유게시판 두 번 호출해서 합치기
             const [noticeRes, freeRes] = await Promise.all([
                 fetch('/api/community/posts?category=공지'),
                 fetch('/api/community/posts?category=자유게시판')
@@ -198,49 +93,36 @@
         }
     }
 
-
-
-    /**
-     * 페이지네이션 컨트롤 렌더링
-     */
+    // 페이지네이션 렌더링
     function renderPagination(totalPosts, currentPage) {
         const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
         paginationContainer.innerHTML = '';
 
         if (totalPages <= 1) return;
 
-        // ⭐⭐ [핵심 수정] 페이지네이션 버튼 수 조정 (요청: 10개까지 표시) ⭐⭐
         const pagesPerGroup = 10;
         const currentGroup = Math.ceil(currentPage / pagesPerGroup);
         const startPage = (currentGroup - 1) * pagesPerGroup + 1;
         const endPage = Math.min(startPage + pagesPerGroup - 1, totalPages);
 
-        // --- 버튼 렌더링 ---
-
-        // 이전 그룹/페이지 링크 (단순 이전 페이지로 이동)
         const prevGroupPage = currentPage > 1 ? currentPage - 1 : 1;
         const prevDisabled = currentPage === 1;
         paginationContainer.innerHTML += `<a href="#" data-page="${prevGroupPage}" class="${prevDisabled ? 'disabled' : ''}">&lt;</a>`;
 
-        // 페이지 번호
         for (let i = startPage; i <= endPage; i++) {
             paginationContainer.innerHTML += `<a href="#" data-page="${i}" class="${i === currentPage ? 'active' : ''}">${i}</a>`;
         }
 
-        // 다음 그룹/페이지 링크 (단순 다음 페이지로 이동)
         const nextGroupPage = currentPage < totalPages ? currentPage + 1 : totalPages;
         const nextDisabled = currentPage === totalPages;
         paginationContainer.innerHTML += `<a href="#" data-page="${nextGroupPage}" class="${nextDisabled ? 'disabled' : ''}">&gt;</a>`;
 
-        // 이벤트 리스너 재할당
-        // [수정] 페이지 버튼 클릭 시, 현재 선택된 탭/검색 조건을 유지한 채로 해당 페이지를 다시 렌더링
         paginationContainer.querySelectorAll('a').forEach(link => {
             if (!link.classList.contains('disabled')) {
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
                     const newPage = parseInt(e.target.dataset.page);
                     if (newPage > 0 && newPage <= totalPages) {
-                        // 현재 탭과 검색 조건을 유지하면서 페이지 변경
                         renderPostList(
                             document.querySelector('.board-tabs button.active').dataset.category,
                             document.getElementById('search-keyword').value,
@@ -253,12 +135,11 @@
         });
     }
 
-    // [수정] 게시글 목록을 백엔드 데이터로 렌더링하는 함수로 변경
+    // 게시글 리스트 렌더링
     async function renderPostList(category, searchKeyword = '', searchType = 'title', page = 1) {
         try {
-            let posts = await fetchPosts(category); // [수정] 항상 백엔드에서 최신 목록을 받아옴
+            let posts = await fetchPosts(category);
 
-            // 검색
             if (searchKeyword) {
                 const keyword = searchKeyword.toLowerCase();
                 posts = posts.filter(post => {
@@ -268,7 +149,7 @@
                     if (searchType === 'writer') {
                         return (post.writerNickname || '').toLowerCase().includes(keyword);
                     }
-                    // 내용 검색은 서버에 따로 검색
+                    // 내용 검색은 서버에서 처리한다고 가정
                     return false;
                 });
             }
@@ -282,12 +163,12 @@
 
             if (totalPosts === 0) {
                 postListBody.innerHTML = `
-                <tr>
-                    <td colspan="7" style="text-align: center; color: #999; padding: 50px;">
-                        게시글이 없습니다.
-                    </td>
-                </tr>
-            `;
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: #999; padding: 50px;">
+                            게시글이 없습니다.
+                        </td>
+                    </tr>
+                `;
                 renderPagination(0, 1);
                 return;
             }
@@ -297,20 +178,19 @@
                 row.dataset.postId = post.postId;
 
                 const sequentialId = startIndex + index + 1;
-                // [수정] DB ENUM 값(공지 / 자유게시판)에 맞춰 카테고리 표시
                 const categoryDisplay = post.category === '전체' ? '공지' : '자유';
 
                 row.innerHTML = `
-                <td>${sequentialId}</td>
-                <td class="col-category">${categoryDisplay}</td>
-                <td class="col-title" onclick="location.href='/community/detail/${post.postId}'">
-                    ${post.title}
-                </td>
-                <td>${post.commentCount ?? 0}</td>
-                <td>${post.writerNickname}</td>
-                <td>${post.createdAt ?? ''}</td>
-                <td>${post.viewCount ?? 0}</td>
-            `;
+                    <td>${sequentialId}</td>
+                    <td class="col-category">${categoryDisplay}</td>
+                    <td class="col-title" onclick="location.href='/community/detail/${post.postId}'">
+                        ${post.title}
+                    </td>
+                    <td>${post.commentCount ?? 0}</td>
+                    <td>${post.writerNickname}</td>
+                    <td>${post.createdAt ?? ''}</td>
+                    <td>${post.viewCount ?? 0}</td>
+                `;
                 postListBody.appendChild(row);
             });
 
@@ -318,21 +198,20 @@
         } catch (err) {
             console.error(err);
             postListBody.innerHTML = `
-            <tr>
-                <td colspan="7" style="text-align: center; color: #e74c3c; padding: 50px;">
-                    게시글을 불러오는 중 오류가 발생했습니다.
-                </td>
-            </tr>
-        `;
+                <tr>
+                    <td colspan="7" style="text-align: center; color: #e74c3c; padding: 50px;">
+                        게시글을 불러오는 중 오류가 발생했습니다.
+                    </td>
+                </tr>
+            `;
         }
     }
 
-
-    // [수정] 검색 실행 함수에서 '전체' 탭일 때 CATEGORY_ALL 상수를 사용하도록 변경
+    // 검색 버튼
     if (searchExecBtn) {
         searchExecBtn.addEventListener('click', () => {
             const activeTab = document.querySelector('.board-tabs button.active');
-            const category = activeTab ? activeTab.dataset.category : CATEGORY_ALL; // [수정] 기본값을 '전체' 상수로
+            const category = activeTab ? activeTab.dataset.category : CATEGORY_ALL;
             const keyword = document.getElementById('search-keyword').value;
             const type = document.getElementById('search-type').value;
 
@@ -340,26 +219,11 @@
         });
     }
 
-
-    // --- 로그인 상태 확인 ---
+    // 초기화
     document.addEventListener('DOMContentLoaded', () => {
         const accessToken = localStorage.getItem('accessToken');
-        const profileIcon = document.getElementById('profile-menu-toggle');
-        const userMenuName = document.getElementById('user-menu-username');
 
-        if (accessToken) {
-            if (profileIcon) profileIcon.style.display = 'flex';
-            if (userMenuName) {
-                const nickname = localStorage.getItem('username') || '사용자';
-                userMenuName.textContent = nickname;
-            }
-            updateGlobalBadge();
-            window.addEventListener('storage', (e) => {
-                if (e.key === 'hasNewNotification') updateGlobalBadge();
-            });
-        }
-
-        // [수정] 탭 클릭 시, data-category 값(전체/공지/자유게시판)을 그대로 renderPostList 에 넘기도록 변경
+        // 🔹 커뮤니티 탭/리스트 초기화
         const tabs = tabsContainer.querySelectorAll('button');
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -370,12 +234,12 @@
             });
         });
 
-        // ✅ 초기 로드 시 "전체 목록"
+        // 첫 로딩: 전체 탭
         renderPostList(CATEGORY_ALL);
 
-        // ✅ 게시글 클릭 시 상세페이지 이동 (안전장치 차원에서 한 번 더)
+        // 제목 클릭 시 상세 이동 (백업용 – td에 onclick도 이미 있음)
         document.querySelectorAll('.post-table').forEach(table => {
-            table.addEventListener('click', function(e) {
+            table.addEventListener('click', function (e) {
                 const titleCell = e.target.closest('.col-title');
                 if (titleCell) {
                     const postId = String(titleCell.closest('tr').dataset.postId);
@@ -383,9 +247,33 @@
                 }
             });
         });
+
+        // 🔹 로그인 상태라면 알림/일정 정보 불러와서 헤더 배지 갱신
+        if (accessToken) {
+            (async () => {
+                // userId가 안 들어있을 수도 있으니 한 번 보강
+                if (!localStorage.getItem('userId')) {
+                    try {
+                        const res = await fetch('/api/users/me', {
+                            headers: { 'Authorization': 'Bearer ' + accessToken }
+                        });
+                        if (res.ok) {
+                            const user = await res.json();
+                            localStorage.setItem('userId', user.userId);
+                            localStorage.setItem('username', user.nickname);
+                        }
+                    } catch (e) {
+                        console.error('사용자 정보 조회 실패:', e);
+                    }
+                }
+
+                if (window.checkPendingReviews) await window.checkPendingReviews();
+                if (window.checkUpcomingSchedules) await window.checkUpcomingSchedules();
+                if (window.updateGlobalBadge) window.updateGlobalBadge();
+            })();
+        }
     });
 </script>
-
 
 </body>
 </html>

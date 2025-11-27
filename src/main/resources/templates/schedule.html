@@ -64,6 +64,7 @@
             border: none;
         }
 
+        /* 카드 그리드 (한 페이지 안에서 최대 6개) */
         .match-list-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -174,42 +175,69 @@
         .flatpickr-current-month .flatpickr-monthDropdown-months { /* 월 */
             order: 2;
         }
+
+        /* 🔥 슬라이더 레이아웃 */
+        .match-slider-wrapper {
+            position: relative;
+            margin-top: 10px;
+        }
+        .match-slider-viewport {
+            overflow: hidden;
+            width: 100%;
+        }
+        .match-slider-track {
+            display: flex;
+            width: 100%;
+            transition: transform 0.4s ease;
+        }
+        .match-slider-page {
+            flex: 0 0 100%;
+            box-sizing: border-box;
+            padding: 5px 0;
+        }
+
+        /* 좌우 화살표 */
+        .schedule-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0,0,0,0.25);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 5;
+        }
+        .schedule-arrow.left {
+            left: -10px;
+        }
+        .schedule-arrow.right {
+            right: -10px;
+        }
+        .schedule-arrow:disabled {
+            opacity: 0.3;
+            cursor: default;
+        }
+
+        /* 모바일에서 화살표 조금 안쪽으로 */
+        @media (max-width: 768px) {
+            .schedule-arrow.left {
+                left: 0;
+            }
+            .schedule-arrow.right {
+                right: 0;
+            }
+        }
     </style>
 </head>
 <body>
 
-<header class="quick-menu">
-    <div class="logo"><a href="/">Multi FC</a></div>
-    <div class="header-icons">
-        <button id="profile-menu-toggle" class="profile-icon" style="position: relative;">
-            <i class="fas fa-user-circle"></i>
-            <span id="notification-badge" class="notification-badge"></span>
-        </button>
-        <div id="profile-menu" class="user-menu">
-            <div class="user-info">
-                <strong><span id="user-menu-username">사용자</span>님</strong>
-                <p>환영합니다!</p>
-            </div>
-            <ul>
-                <li><a href="/notifications" id="nav-notifications-link"><i class="fas fa-bell"></i> 알림 목록</a></li>
-                <li><a href="/mypage"><i class="fas fa-user"></i> 마이페이지</a></li>
-                <li><a href="/profile/edit"><i class="fas fa-user-edit"></i> 프로필 수정</a></li>
-                <li><a href="#" id="logout-button"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
-            </ul>
-        </div>
-        <button id="menu-toggle" class="menu-toggle-btn"><i class="fas fa-bars"></i></button>
-    </div>
-
-    <nav id="main-menu" class="main-nav">
-        <ul>
-            <li><a href="/" ><i class="fas fa-home"></i> 메인 (Home)</a></li>
-            <li><a href="/fields"><i class="fas fa-search"></i> 구장검색</a></li>
-            <li><a href="/community"><i class="fas fa-users"></i> 커뮤니티</a></li>
-            <li id="nav-chat-link-li"><a href="/chat" id="nav-chat-link"><i class="fas fa-comments"></i> 실시간채팅</a></li>
-            <li><a href="/schedule?stadium" class="active"><i class="fas fa-calendar-check"></i> 경기 일정</a></li>
-        </ul>
-    </nav>
-</header>
+<div th:replace="~{fragments/header :: siteHeader}"></div>
 
 <main class="schedule-search-main">
     <div class="search-container">
@@ -249,159 +277,145 @@
             <button id="search-btn">검색</button>
         </div>
 
-        <div class="match-list-container" id="match-list-container"></div>
+        <!-- 🔥 카드 슬라이더 -->
+        <div class="match-slider-wrapper">
+            <button class="schedule-arrow left" id="prev-slide">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+
+            <div class="match-slider-viewport">
+                <div class="match-slider-track" id="match-slider-track">
+                    <!-- JS에서 페이지 단위로 채움 -->
+                </div>
+            </div>
+
+            <button class="schedule-arrow right" id="next-slide">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+
         <p id="no-results-message" style="color: #666; text-align: center; margin-top: 30px; display: none;">검색 결과가 없습니다.</p>
     </div>
 </main>
 
 <script>
-    // --- 공통 메뉴 토글 로직 ---
-    const menuToggle = document.getElementById('menu-toggle');
-    const mainMenu = document.getElementById('main-menu');
-    const profileMenuToggle = document.getElementById('profile-menu-toggle');
-    const profileMenu = document.getElementById('profile-menu');
-    const logoutButton = document.getElementById('logout-button');
-    const navNotificationsLink = document.getElementById('nav-notifications-link');
-    const navChatLinkElement = document.getElementById('nav-chat-link-li');
-    const navLoginLink = document.getElementById('nav-login-link');
-    const navLogoutLink = document.getElementById('nav-logout-link');
-
-    if (menuToggle) {
-        menuToggle.addEventListener('click', () => {
-            mainMenu.classList.toggle('show');
-            profileMenu.classList.remove('show');
-        });
-    }
-    if (profileMenuToggle) {
-        profileMenuToggle.addEventListener('click', () => {
-            profileMenu.classList.toggle('show');
-            mainMenu.classList.remove('show');
-        });
-    }
-    document.addEventListener('click', (event) => {
-        if (!mainMenu.contains(event.target) && !menuToggle.contains(event.target) &&
-            !profileMenu.contains(event.target) && !profileMenuToggle.contains(event.target)) {
-            mainMenu.classList.remove('show');
-            profileMenu.classList.remove('show');
-        }
-    });
-    if (logoutButton) {
-        logoutButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('hasReadReviews');
-            localStorage.removeItem('hasReadSchedules');
-            window.location.href = '/login';
-        });
-    }
-    if (navNotificationsLink) {
-        navNotificationsLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.setItem('hasReadReviews', 'true');
-            localStorage.setItem('hasReadSchedules', 'true');
-            window.location.href = '/notifications';
-        });
-    }
-    if (navLogoutLink) {
-        navLogoutLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('hasReadReviews');
-            localStorage.removeItem('hasReadSchedules');
-            window.location.href = '/login';
-        });
-    }
-
-    const badge = document.getElementById('notification-badge');
-    let hasReviewNotif = false;
-    let hasScheduleNotif = false;
-
-    function updateGlobalBadge() {
-        if (hasReviewNotif || hasScheduleNotif) {
-            if (badge) badge.style.display = 'block';
-        } else {
-            if (badge) badge.style.display = 'none';
-        }
-    }
-    async function checkPendingReviews() {
-        if (localStorage.getItem('hasReadReviews') === 'true') {
-            hasReviewNotif = false;
-            return;
-        }
-        try {
-            await new Promise(r => setTimeout(r, 200));
-            const mockReviews = { "count": 1 };
-            if (mockReviews.count > 0) {
-                hasReviewNotif = true;
-            }
-        } catch (error) { console.error("후기 알림 요청 중 오류:", error); }
-    }
-    async function checkUpcomingSchedules() {
-        if (localStorage.getItem('hasReadSchedules') === 'true') {
-            hasScheduleNotif = false;
-            return;
-        }
-        try {
-            await new Promise(r => setTimeout(r, 500));
-            const mockSchedules = [ { id: 1, date: "2025-11-01" } ];
-            if (mockSchedules.length > 0) {
-                hasScheduleNotif = true;
-            }
-        } catch (error) { console.error("일정 요청 중 오류 발생:", error); }
-    }
-
     let allMySchedules = [];
     let currentUserId = null;
     let currentUserName = null;
     let dateRangePicker = null; // flatpickr 인스턴스
 
-    // 카드 렌더링
-    function renderMatchList(matches) {
-        const listContainer = document.getElementById('match-list-container');
-        const noResults = document.getElementById('no-results-message');
-        listContainer.innerHTML = '';
+    // 🔥 슬라이더 상태
+    const PAGE_SIZE = 6;
+    let filteredSchedules = [];
+    let pages = [];
+    let currentPage = 0;
 
-        if (matches.length === 0) {
+    function buildPages(matches) {
+        pages = [];
+        if (!matches) matches = [];
+        for (let i = 0; i < matches.length; i += PAGE_SIZE) {
+            pages.push(matches.slice(i, i + PAGE_SIZE));
+        }
+    }
+
+    // 카드 + 슬라이더 렌더링
+    function renderMatchList(matches) {
+        filteredSchedules = matches || [];
+        buildPages(filteredSchedules);
+        currentPage = 0;
+        updateSlider();
+    }
+
+    function updateSlider() {
+        const track = document.getElementById('match-slider-track');
+        const noResults = document.getElementById('no-results-message');
+        const prevBtn = document.getElementById('prev-slide');
+        const nextBtn = document.getElementById('next-slide');
+
+        if (!track) return;
+
+        track.innerHTML = '';
+
+        const totalPages = pages.length;
+
+        if (totalPages === 0) {
             noResults.style.display = 'block';
+            if (prevBtn) prevBtn.style.display = 'none';
+            if (nextBtn) nextBtn.style.display = 'none';
             return;
         }
+
         noResults.style.display = 'none';
 
-        matches.forEach(match => {
-            const card = document.createElement('div');
-            const statusClass = match.status === 'closed' ? 'closed' : 'open';
-            const buttonDisabled = match.status === 'closed' ? 'disabled' : '';
+        // 각 페이지별로 그리드 생성
+        pages.forEach(pageItems => {
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'match-slider-page';
 
-            card.className = `match-item-card ${statusClass}`;
-            card.dataset.matchId = match.id;
+            const grid = document.createElement('div');
+            grid.className = 'match-list-container';
 
-            const isHost = match.creator === currentUserName;
-            const creatorDisplay = isHost ? '나 (Host)' : match.creator;
+            pageItems.forEach(match => {
+                const card = document.createElement('div');
+                const statusClass = match.status === 'closed' ? 'closed' : 'open';
+                const buttonDisabled = match.status === 'closed' ? 'disabled' : '';
 
-            card.innerHTML = `
-                <div class="match-item-header">
-                    <span class="date">${match.date}</span>
-                </div>
-                <div class="match-item-body">
-                    <p style="font-size: 14px; color: #6c5ce7; font-weight: 600; margin-bottom: 12px;">
-                        <i class="fas fa-crown" style="margin-right: 5px;"></i> 생성자: ${creatorDisplay}
-                    </p>
-                    <p class="location">
-                        <i class="fas fa-map-marker-alt"></i>
-                        ${match.stadiumName} (${match.location})
-                    </p>
+                card.className = `match-item-card ${statusClass}`;
+                card.dataset.matchId = match.id;
 
-                    <p class="status">
-                        <i class="fas fa-users"></i>
-                        <span class="status-badge ${statusClass}">${match.status === 'open' ? '모집중' : '모집완료'}</span> ( ${match.current} / ${match.max}명 )
-                    </p>
-                    <a href="/schedule/detail/${match.id}" class="details-button ${buttonDisabled}" ${buttonDisabled ? 'onclick="return false;"' : ''}>
-                        ${match.status === 'closed' ? '마감 (상세보기)' : '상세보기'}
-                    </a>
-                </div>
-            `;
-            listContainer.appendChild(card);
+                const isHost = match.creator === currentUserName;
+                const creatorDisplay = isHost ? '나 (Host)' : match.creator;
+
+                card.innerHTML = `
+                    <div class="match-item-header">
+                        <span class="date">${match.date}</span>
+                    </div>
+                    <div class="match-item-body">
+                        <p style="font-size: 14px; color: #6c5ce7; font-weight: 600; margin-bottom: 12px;">
+                            <i class="fas fa-crown" style="margin-right: 5px;"></i> 생성자: ${creatorDisplay}
+                        </p>
+                        <p class="location">
+                            <i class="fas fa-map-marker-alt"></i>
+                            ${match.stadiumName} (${match.location})
+                        </p>
+
+                        <p class="status">
+                            <i class="fas fa-users"></i>
+                            <span class="status-badge ${statusClass}">${match.status === 'open' ? '모집중' : '모집완료'}</span> ( ${match.current} / ${match.max}명 )
+                        </p>
+                        <a href="/schedule/detail/${match.id}" class="details-button ${buttonDisabled}" ${buttonDisabled ? 'onclick="return false;"' : ''}>
+                            ${match.status === 'closed' ? '마감 (상세보기)' : '상세보기'}
+                        </a>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            pageDiv.appendChild(grid);
+            track.appendChild(pageDiv);
         });
+
+        // 현재 페이지 범위 보정
+        if (currentPage >= totalPages) currentPage = totalPages - 1;
+        if (currentPage < 0) currentPage = 0;
+
+        // 슬라이드 이동 애니메이션
+        track.style.transform = `translateX(-${currentPage * 100}%)`;
+
+        // 화살표 표시/상태
+        if (totalPages <= 1) {
+            if (prevBtn) prevBtn.style.display = 'none';
+            if (nextBtn) nextBtn.style.display = 'none';
+        } else {
+            if (prevBtn) {
+                prevBtn.style.display = 'flex';
+                prevBtn.disabled = currentPage === 0;
+            }
+            if (nextBtn) {
+                nextBtn.style.display = 'flex';
+                nextBtn.disabled = currentPage === totalPages - 1;
+            }
+        }
     }
 
     // 내 스케줄 불러오기
@@ -421,30 +435,37 @@
 
             if (!response.ok) {
                 console.error("Failed to fetch schedules:", response.statusText);
-                document.getElementById('match-list-container').innerHTML =
-                    `<p style="color:red; text-align:center;">경기 목록을 불러오는 중 오류가 발생했습니다. (API ${response.status})</p>`;
+                const track = document.getElementById('match-slider-track');
+                if (track) {
+                    track.innerHTML =
+                        `<p style="color:red; text-align:center; width:100%;">경기 목록을 불러오는 중 오류가 발생했습니다. (API ${response.status})</p>`;
+                }
                 return [];
             }
 
             const rawMatches = await response.json();
 
             allMySchedules = rawMatches.map(match => {
-                // 🔥 시분만 추출 (HH:mm)
                 const timeOnly = match.matchTime
                     ? String(match.matchTime).split(':').slice(0, 2).join(':')
                     : '';
 
+                // 백엔드에서 내려준 현재 인원 (방장/본인 제외일 가능성 있어서 0 처리)
+                const baseCurrent = typeof match.currentPlayers === 'number'
+                    ? match.currentPlayers
+                    : 0;
+
+                const displayCurrent = baseCurrent + 1;   // ➕ 방장 1명 포함
+
                 return {
                     id: match.roomId,
-                    // 화면 표시용: "2025-11-25 (12:30)"
                     date: `${match.matchDate}${timeOnly ? ` (${timeOnly})` : ''}`,
-                    // 필터/정렬용
-                    matchDate: match.matchDate,   // YYYY-MM-DD
-                    matchTime: timeOnly,          // HH:mm
+                    matchDate: match.matchDate,
+                    matchTime: timeOnly,
                     location: match.stadiumAddress || '주소 정보 없음',
                     stadiumName: match.stadiumName || '구장 정보 없음',
                     creator: match.hostNickname || ('Host ID: ' + match.hostId),
-                    current: match.currentPlayers || 0,
+                    current: displayCurrent,
                     max: match.maxPlayers,
                     status: match.status.toLowerCase() === 'closed' ? 'closed' : 'open',
                 };
@@ -454,8 +475,11 @@
 
         } catch (error) {
             console.error("API call error:", error);
-            document.getElementById('match-list-container').innerHTML =
-                `<p style="color:red; text-align:center;">네트워크 연결 중 오류 발생.</p>`;
+            const track = document.getElementById('match-slider-track');
+            if (track) {
+                track.innerHTML =
+                    `<p style="color:red; text-align:center; width:100%;">네트워크 연결 중 오류 발생.</p>`;
+            }
             return [];
         }
     }
@@ -466,102 +490,71 @@
         const endDateValue = document.getElementById('filter-date-end').value;
         const status = document.getElementById('filter-status').value;
         const sortOrderSelect = document.getElementById('sort-order');
-        const sortOrder = sortOrderSelect ? sortOrderSelect.value : 'desc'; // 기본 최신순
+        const sortOrder = sortOrderSelect ? sortOrderSelect.value : 'desc';
 
         let filtered = allMySchedules;
 
-        // 1. 날짜 범위 필터
         if (startDateValue || endDateValue) {
             const start = startDateValue ? new Date(startDateValue) : null;
             const end = endDateValue ? new Date(endDateValue) : null;
 
             filtered = filtered.filter(match => {
                 if (!match.matchDate) return true;
-
                 const matchDate = new Date(match.matchDate);
-
                 if (start && matchDate < start) return false;
                 if (end && matchDate > end) return false;
                 return true;
             });
         }
 
-        // 2. 상태 필터
         if (status) {
             filtered = filtered.filter(match => match.status === status);
         }
 
-        // 3. 🔥 정렬 (날짜 + 시간 기준)
         filtered.sort((a, b) => {
             const aKey = new Date(`${a.matchDate}T${a.matchTime || '00:00'}`);
             const bKey = new Date(`${b.matchDate}T${b.matchTime || '00:00'}`);
-
-            if (sortOrder === 'asc') {
-                return aKey - bKey; // 오래된순
-            } else {
-                return bKey - aKey; // 최신순
-            }
+            return (sortOrder === 'asc') ? (aKey - bKey) : (bKey - aKey);
         });
 
-        // 4. 렌더링
         renderMatchList(filtered);
     }
 
-    // 🔥 기간 select → 시작/종료일 + 달력 반영
     function setupPeriodSelect() {
         const periodSelect = document.getElementById('filter-period');
         const dateStartHidden = document.getElementById('filter-date-start');
         const dateEndHidden = document.getElementById('filter-date-end');
-
         if (!periodSelect) return;
 
         periodSelect.addEventListener('change', () => {
             const range = periodSelect.value;
 
-            // "직접 선택"이면 날짜 초기화만 하고 끝
             if (!range) {
                 dateStartHidden.value = "";
                 dateEndHidden.value = "";
-                if (dateRangePicker) {
-                    dateRangePicker.clear();
-                }
+                if (dateRangePicker) dateRangePicker.clear();
                 return;
             }
 
             const today = new Date();
-            const end = new Date(today.getFullYear(), today.getMonth(), today.getDate()); // 오늘 00시
-            const start = new Date(end); // 복사
+            const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const start = new Date(end);
 
             switch (range) {
-                case 'today':
-                    // start = today 그대로
-                    break;
-                case '1w':
-                    start.setDate(start.getDate() - 7);
-                    break;
-                case '2w':
-                    start.setDate(start.getDate() - 14);
-                    break;
-                case '1m':
-                    start.setMonth(start.getMonth() - 1);
-                    break;
-                case '6m':
-                    start.setMonth(start.getMonth() - 6);
-                    break;
-                case '1y':
-                    start.setFullYear(start.getFullYear() - 1);
-                    break;
+                case 'today': break;
+                case '1w': start.setDate(start.getDate() - 7); break;
+                case '2w': start.setDate(start.getDate() - 14); break;
+                case '1m': start.setMonth(start.getMonth() - 1); break;
+                case '6m': start.setMonth(start.getMonth() - 6); break;
+                case '1y': start.setFullYear(start.getFullYear() - 1); break;
             }
 
             const fmt = d => d.toISOString().slice(0, 10);
-
-            // hidden 값 세팅
             dateStartHidden.value = fmt(start);
             dateEndHidden.value = fmt(end);
 
-            // flatpickr에도 범위 세팅
             if (dateRangePicker) {
-                dateRangePicker.setDate([start, end], false); // false: onChange 다시 안 부름
+                dateRangePicker.setDate([start, end], false);
             }
         });
     }
@@ -571,6 +564,7 @@
         const accessToken = localStorage.getItem('accessToken');
         const currentPath = window.location.pathname;
 
+        // 🔒 로그인 체크
         if (!accessToken) {
             alert("❌ 회원 전용 페이지입니다.\n로그인 후에 이용하실 수 있습니다.");
             localStorage.setItem('redirectAfterLogin', currentPath);
@@ -578,23 +572,30 @@
             return;
         }
 
-        if (accessToken) {
-            if (profileMenuToggle) profileMenuToggle.style.display = 'block';
-
-            if (navLoginLink && navLoginLink.parentElement) navLoginLink.parentElement.style.display = 'none';
-            if (navLogoutLink && navLogoutLink.parentElement) navLogoutLink.parentElement.style.display = 'list-item';
-
-            await checkPendingReviews();
-            await checkUpcomingSchedules();
-            updateGlobalBadge();
-        } else {
-            if (navLoginLink && navLoginLink.parentElement) navLoginLink.parentElement.style.display = 'list-item';
-            if (navLogoutLink && navLogoutLink.parentElement) navLogoutLink.parentElement.style.display = 'none';
+        // ✅ 헤더 닉네임 ("사용자님" 대신)
+        const userMenuName = document.getElementById('user-menu-username');
+        if (userMenuName) {
+            const nickname =
+                localStorage.getItem('userNickname') ||
+                localStorage.getItem('username') ||
+                '회원';
+            userMenuName.textContent = nickname;
         }
 
+        // 🔴 헤더에 정의된 전역 알림 함수가 있으면 호출 → 빨간 배지 갱신
+        if (typeof checkPendingReviews === 'function') {
+            try { await checkPendingReviews(); } catch (e) { console.error(e); }
+        }
+        if (typeof checkUpcomingSchedules === 'function') {
+            try { await checkUpcomingSchedules(); } catch (e) { console.error(e); }
+        }
+        if (typeof updateGlobalBadge === 'function') {
+            try { updateGlobalBadge(); } catch (e) { console.error(e); }
+        }
+
+        // 📅 나의 일정 불러오기
         const schedules = await fetchMySchedules();
 
-        // 🔥 범위 달력 초기화
         const dateRangeInput = document.getElementById('filter-date-range');
         const dateStartHidden = document.getElementById('filter-date-start');
         const dateEndHidden = document.getElementById('filter-date-end');
@@ -602,11 +603,10 @@
 
         if (dateRangeInput) {
             dateRangePicker = flatpickr(dateRangeInput, {
-                mode: "range",          // 범위 선택
+                mode: "range",
                 dateFormat: "Y-m-d",
-                locale: flatpickr.l10ns.ko, // 한국어
-                onChange(selectedDates, dateStr) {
-                    // 사용자가 달력에서 직접 선택했을 때 hidden 값 동기화
+                locale: flatpickr.l10ns.ko,
+                onChange(selectedDates) {
                     if (selectedDates.length === 0) {
                         dateStartHidden.value = "";
                         dateEndHidden.value = "";
@@ -620,22 +620,37 @@
                         dateEndHidden.value = flatpickr.formatDate(end, "Y-m-d");
                     }
 
-                    // 달력을 직접 건드렸으면 기간 select는 "직접 선택"으로 리셋
-                    if (periodSelect) {
-                        periodSelect.value = "";
-                    }
+                    if (periodSelect) periodSelect.value = "";
                 }
             });
         }
 
-        // 검색 버튼 이벤트
         const searchBtn = document.getElementById('search-btn');
-        if (searchBtn) {
-            searchBtn.addEventListener('click', performSearch);
-        }
+        if (searchBtn) searchBtn.addEventListener('click', performSearch);
 
-        // 기간 select 세팅
         setupPeriodSelect();
+
+        // 슬라이더 화살표 이벤트
+        const prevBtn = document.getElementById('prev-slide');
+        const nextBtn = document.getElementById('next-slide');
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                if (currentPage > 0) {
+                    currentPage--;
+                    updateSlider();
+                }
+            });
+        }
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                const totalPages = pages.length;
+                if (currentPage < totalPages - 1) {
+                    currentPage++;
+                    updateSlider();
+                }
+            });
+        }
 
         // 초기 전체 목록 (정렬 기본값: 최신순)
         renderMatchList(

@@ -1,0 +1,218 @@
+<!-- fragments/header.html -->
+<div th:fragment="siteHeader">
+    <header class="quick-menu">
+        <div class="logo"><a href="/">Multi FC</a></div>
+        <div class="header-icons">
+            <button id="profile-menu-toggle" class="profile-icon" style="position: relative;">
+                <i class="fas fa-user-circle"></i>
+                <span id="notification-badge" class="notification-badge"></span>
+            </button>
+            <div id="profile-menu" class="user-menu">
+                <div class="user-info">
+                    <strong><span id="user-menu-username">사용자</span>님</strong>
+                    <p>환영합니다!</p>
+                </div>
+                <ul>
+                    <li><a href="/notifications" id="nav-notifications-link"><i class="fas fa-bell"></i> 알림 목록</a></li>
+                    <li><a href="/mypage"><i class="fas fa-user"></i> 마이페이지</a></li>
+                    <li><a href="/profile/edit"><i class="fas fa-user-edit"></i> 프로필 수정</a></li>
+                    <li id="nav-logout-li" style="display:none;">
+                        <a href="#" id="nav-logout-link"><i class="fas fa-sign-out-alt"></i> 로그아웃</a>
+                    </li>
+                </ul>
+            </div>
+            <button id="menu-toggle" class="menu-toggle-btn"><i class="fas fa-bars"></i></button>
+        </div>
+
+        <nav id="main-menu" class="main-nav">
+            <ul>
+                <li><a href="/" class="active"><i class="fas fa-home"></i> 메인 (Home)</a></li>
+                <li><a href="/fields"><i class="fas fa-search"></i> 구장검색</a></li>
+                <li><a href="/community"><i class="fas fa-users"></i> 커뮤니티</a></li>
+                <li id="nav-chat-link-li"><a href="/chat" id="nav-chat-link"><i class="fas fa-comments"></i> 실시간채팅</a></li>
+                <li><a href="/schedule?stadium"><i class="fas fa-calendar-check"></i> 경기 일정</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- 🔥 로그아웃 글자 빨간색 적용 -->
+    <style>
+        #nav-logout-li a {
+            color: #e74c3c !important;
+            font-weight: 700;
+        }
+    </style>
+
+    <!-- ✅ 헤더용 JS (알림/배지 공용 함수 + 메뉴 컨트롤) -->
+    <script>
+        // === 전역 알림 상태 (여러 페이지에서 공유) ===
+        window.hasReviewNotif = window.hasReviewNotif || false;
+        window.hasScheduleNotif = window.hasScheduleNotif || false;
+        window.pendingReviewStadiumIds = window.pendingReviewStadiumIds || [];
+        window.upcomingSchedules = window.upcomingSchedules || [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuToggle = document.getElementById('menu-toggle');
+            const mainMenu = document.getElementById('main-menu');
+            const profileMenuToggle = document.getElementById('profile-menu-toggle');
+            const profileMenu = document.getElementById('profile-menu');
+            const logoutButton = document.getElementById('logout-button'); // 없으면 무시
+            const navNotificationsLink = document.getElementById('nav-notifications-link');
+            const navLogoutLink = document.getElementById('nav-logout-link');
+            const navLoginLink = document.getElementById('nav-login-link');
+            const navChatLinkElement = document.getElementById('nav-chat-link');
+            const badge = document.getElementById('notification-badge');
+
+            // === 1) 알림/배지 전역 함수 정의 (여기서 "정의만" 하고 호출은 각 페이지에서) ===
+            window.updateGlobalBadge = function () {
+                if (!badge) return;
+
+                if (pendingReviewStadiumIds.length > 0 || hasScheduleNotif) {
+                    if (localStorage.getItem('hasReadReviews') !== 'true') {
+                        badge.style.display = 'block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                } else {
+                    badge.style.display = 'none';
+                }
+            };
+
+            window.checkPendingReviews = async function () {
+                const currentUserId = localStorage.getItem('userId');
+                if (!currentUserId) return;
+
+                try {
+                    const response = await fetch(`/api/reviews/pending-stadiums?userId=${currentUserId}`);
+                    if (response.ok) {
+                        const ids = await response.json();
+                        pendingReviewStadiumIds = ids;
+                        hasReviewNotif = ids && ids.length > 0;
+                    }
+                } catch (error) {
+                    console.error("후기 알림 요청 중 오류:", error);
+                }
+            };
+
+            window.checkUpcomingSchedules = async function () {
+                if (localStorage.getItem('hasReadSchedules') === 'true') {
+                    hasScheduleNotif = false;
+                    return;
+                }
+                const accessToken = localStorage.getItem('accessToken');
+                if (!accessToken) return;
+
+                try {
+                    const response = await fetch(`/api/schedule/upcoming`, {
+                        headers: { 'Authorization': 'Bearer ' + accessToken }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        upcomingSchedules = data.map(item => ({
+                            id: item.scheduleId,
+                            matchId: item.matchId,
+                            type: item.scheduleType,   // "경기" / "개인"
+                            date: item.scheduleDate,
+                            time: item.scheduleTime,
+                            title: item.title
+                        }));
+                        hasScheduleNotif = upcomingSchedules.length > 0;
+                    }
+                } catch (error) {
+                    console.error("일정 요청 중 오류:", error);
+                }
+            };
+
+            // === 2) 헤더 메뉴 / 프로필 드롭다운 ===
+            if (menuToggle) {
+                menuToggle.addEventListener('click', () => {
+                    mainMenu.classList.toggle('show');
+                    profileMenu.classList.remove('show');
+                });
+            }
+            if (profileMenuToggle) {
+                profileMenuToggle.addEventListener('click', () => {
+                    profileMenu.classList.toggle('show');
+                    mainMenu.classList.remove('show');
+                });
+            }
+
+            document.addEventListener('click', (event) => {
+                if (
+                    mainMenu &&
+                    profileMenu &&
+                    !mainMenu.contains(event.target) &&
+                    !menuToggle.contains(event.target) &&
+                    !profileMenu.contains(event.target) &&
+                    !profileMenuToggle.contains(event.target)
+                ) {
+                    mainMenu.classList.remove('show');
+                    profileMenu.classList.remove('show');
+                }
+            });
+
+            // === 3) 로그인/로그아웃 UI 기본 처리 (옵션) ===
+            const accessToken = localStorage.getItem('accessToken');
+            const profileIcon = document.getElementById('profile-menu-toggle');
+            const userMenuName = document.getElementById('user-menu-username');
+
+            if (accessToken) {
+                const nickname = localStorage.getItem('username') || '사용자';
+                if (profileIcon) profileIcon.style.display = 'flex';
+                if (userMenuName) userMenuName.textContent = nickname;
+
+                if (navLoginLink && navLoginLink.parentElement) {
+                    navLoginLink.parentElement.style.display = 'none';
+                }
+                if (navLogoutLink && navLogoutLink.parentElement) {
+                    navLogoutLink.parentElement.style.display = 'list-item';
+                }
+            } else {
+                if (profileIcon) profileIcon.style.display = 'none';
+                if (userMenuName) userMenuName.textContent = '게스트';
+
+                if (navLoginLink && navLoginLink.parentElement) {
+                    navLoginLink.parentElement.style.display = 'list-item';
+                }
+                if (navLogoutLink && navLogoutLink.parentElement) {
+                    navLogoutLink.parentElement.style.display = 'none';
+                }
+            }
+
+            // 로그아웃 처리
+            if (navLogoutLink) {
+                navLogoutLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('username');
+                    localStorage.removeItem('userId');
+                    localStorage.removeItem('hasReadReviews');
+                    localStorage.removeItem('hasReadSchedules');
+                    window.location.href = '/login';
+                });
+            }
+
+            // 채팅 메뉴: 비로그인 시 로그인 유도
+            if (navChatLinkElement) {
+                navChatLinkElement.addEventListener('click', function (e) {
+                    const accessToken = localStorage.getItem('accessToken');
+                    if (!accessToken) {
+                        e.preventDefault();
+                        alert("로그인이 필요한 서비스입니다.");
+                        window.location.href = '/login';
+                    }
+                });
+            }
+
+            // 알림 목록 클릭 시 읽음 처리
+            if (navNotificationsLink) {
+                navNotificationsLink.addEventListener('click', () => {
+                    localStorage.setItem('hasReadReviews', 'true');
+                    localStorage.setItem('hasReadSchedules', 'true');
+                    // 실제 페이지 이동은 a 태그 href로 진행
+                });
+            }
+        });
+    </script>
+</div>
