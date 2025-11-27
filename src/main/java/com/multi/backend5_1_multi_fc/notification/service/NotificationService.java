@@ -6,6 +6,7 @@ import com.multi.backend5_1_multi_fc.notification.dto.NotificationDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -207,4 +208,42 @@ public class NotificationService {
         }
         return 1;
     }
+
+    // ⭐⭐⭐ [수정] 경기 후기 알림 일괄 전송 (중복 방지 로직 추가) ⭐⭐⭐
+    @Transactional
+    public void sendReviewNotificationForMatch(Long stadiumId, List<Long> userIds) {
+        String content = "참여했던 경기장 후기를 작성해 주세요! (구장 ID: " + stadiumId + ")";
+        String type = "후기";
+
+        for (Long userId : userIds) {
+
+            // 핵심 중복 방지: 이미 읽지 않은 동일한 후기 알림이 있는지 확인
+            NotificationDto existing = notificationDao.findUnreadNotificationByTypeAndReference(userId, type, stadiumId);
+
+            if (existing != null) {
+                continue; // 이미 알림이 있으므로 생성하지 않음
+            }
+
+            // 알림 생성
+            NotificationDto notification = NotificationDto.builder()
+                    .userId(userId)
+                    .content(content)
+                    .type(type)
+                    .referenceId(stadiumId)
+                    .isRead(false)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            // DB 저장
+            notificationDao.insert(notification);
+
+            // WebSocket 실시간 전송
+            simpMessagingTemplate.convertAndSendToUser(
+                    String.valueOf(userId),
+                    "/queue/notifications",
+                    notification
+            );
+        }
+    }
+    // ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐
 }

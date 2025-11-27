@@ -77,4 +77,16 @@
         SET content = #{content}
         WHERE notification_id = #{notificationId}
     </update>
+
+    <select id="findUnreadNotificationByTypeAndReference"
+            parameterType="map"
+            resultType="com.multi.backend5_1_multi_fc.notification.dto.NotificationDto">
+        SELECT *
+        FROM Notification
+        WHERE user_id = #{userId}
+          AND type = #{type}
+          AND reference_id = #{referenceId}
+          AND is_read = false
+            LIMIT 1
+    </select>
 </mapper>
