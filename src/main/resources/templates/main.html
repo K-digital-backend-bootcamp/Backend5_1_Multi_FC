@@ -286,11 +286,6 @@
     }
 
     async function checkUpcomingSchedules() {
-        if (localStorage.getItem('hasReadSchedules') === 'true') {
-            hasScheduleNotif = false;
-            return;
-        }
-
         const accessToken = localStorage.getItem('accessToken');
         if (!accessToken) {
             hasScheduleNotif = false;
