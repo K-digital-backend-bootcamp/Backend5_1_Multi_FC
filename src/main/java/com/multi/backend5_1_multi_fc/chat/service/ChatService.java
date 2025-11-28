@@ -108,6 +108,12 @@ public class ChatService {
                     .role("member")
                     .build()
             );
+            notificationService.createAndSendNotification(
+                    userId2,
+                    newRoom.getRoomName() + "방에 초대되었습니다.",
+                    "채팅",
+                    newRoom.getRoomId()
+            );
         }
         return newRoom;
     }
