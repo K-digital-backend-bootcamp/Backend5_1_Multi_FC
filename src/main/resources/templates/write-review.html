@@ -30,14 +30,12 @@
                     <div class="input-group">
                         <label>후기 작성 대상 구장</label>
 
-                        <!-- ✅ 기존 input → select 로 교체 -->
                         <select id="pending-stadium-select"
                                 style="background: #fff; width: 100%; padding: 12px; border: 1px solid #ddd;
                                        border-radius: 10px; font-size: 15px;">
                             <option value="">구장 정보 로딩 중...</option>
                         </select>
 
-                        <!-- ✅ 선택된 stadiumId 저장용 hidden -->
                         <input type="hidden" id="stadium-id" name="stadiumId" th:value="${stadiumId}" value="">
                         <p id="selected-stadium-hint"
                            style="font-size:12px; color:#777; margin-top:6px;"></p>
@@ -224,17 +222,18 @@
                 });
 
                 if (response.ok) {
-                    successMsg.textContent =
-                        '✅ 후기가 성공적으로 등록되었습니다. 구장 상세 페이지로 이동합니다.';
-                    successMsg.style.display = 'block';
 
                     // ✅ 읽음 처리
                     localStorage.setItem('hasReadReviews', 'true');
 
-                    // ✅ pending 목록 재로딩 → 다음 구장 선택 가능하게
-                    setTimeout(async () => {
-                        await location.reload();
-                    }, 1200);
+                    // ⭐⭐⭐ 팝업창 띄운 후 이동 ⭐⭐⭐
+                    const selectElement = document.getElementById('pending-stadium-select');
+                    const stadiumName = selectElement.options[selectElement.selectedIndex].textContent.split('(')[0].trim();
+
+                    alert(`✅ 후기가 성공적으로 등록되었습니다! ${stadiumName} 후기 페이지로 이동합니다.`);
+
+                    // 구장 상세 페이지로 이동 (alert 닫히면 바로 실행됨)
+                    window.location.href = `/stadium/detail?id=${currentStadiumId}`;
 
                 } else {
                     const errorBody = await response.text();

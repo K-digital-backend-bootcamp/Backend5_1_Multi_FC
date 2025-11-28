@@ -16,7 +16,7 @@
 <div th:replace="~{fragments/header :: siteHeader}"></div>
 
 <main class="stadium-main">
-    <div class="search-container">
+    <div class="stadium-container">
         <h1 class="stadium-title" id="stadium-name">구장 정보 로딩중... (ID: <span th:text="${stadiumId}"></span>)</h1>
 
         <div class="detail-left-column">
@@ -478,6 +478,7 @@
 
     function openMatchModal(show) {
         document.getElementById('match-create-modal').style.display =
+            show ? 'flex' : 'none';
             show ? 'flex' : 'none';
     }
 </script>
