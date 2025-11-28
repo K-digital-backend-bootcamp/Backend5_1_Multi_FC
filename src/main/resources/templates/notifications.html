@@ -199,18 +199,19 @@
                         }
                     };
 
-                } else if (notif.type === '친구신청' || notif.type === '친구요청'){
+                } else if (notif.type === '친구신청' || notif.type === '친구요청') {
+                    // 친구 요청 알림: 버튼 없이, 클릭하면 마이페이지 친구요청 탭으로 이동
                     iconHtml = '<i class="fas fa-user-friends icon-friend"></i>';
-                    actionHtml = `
-                        <div class="notification-actions">
-                            <button class="btn-accept"
-                                onclick="handleFriendAction(${notif.referenceId}, 'accept', event)">수락</button>
-                            <button class="btn-reject"
-                                onclick="handleFriendAction(${notif.referenceId}, 'reject', event)">거절</button>
-                        </div>
-                    `;
-                    isClickable = false;
-                    item.style.cursor = 'default';
+
+                    item.onclick = () => {
+                        if (isClickable) {
+                            markAsRead(notif.notificationId, notif.type);
+                            window.location.href = '/mypage?tab=friends&subtab=add';
+                        }
+                    };
+                    actionHtml = '';
+                    isClickable = true;
+                    item.style.cursor = 'pointer';
 
                 } else if (notif.type === '매치') {
                     iconHtml = '<i class="fas fa-calendar-alt icon-schedule"></i>';
@@ -278,7 +279,6 @@
     }
 
     async function markAsRead(notificationId, type){
-        // 가짜 알림 ID(0) 처리
         if (notificationId === 0) {
             await loadNotifications();
             return;
@@ -324,52 +324,55 @@
         }
     }
 
-    async function handleFriendAction(friendId, action, event) {
-        event.stopPropagation();
-        const accessToken = localStorage.getItem('accessToken');
-
-        try {
-            const endpoint = action === 'accept'
-                ? `/api/friends/accept/${friendId}`
-                : `/api/friends/reject/${friendId}`;
-
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include'
-            });
-
-            if (!response.ok) throw new Error('친구 요청 처리 실패');
-
-            alert(action === 'accept'
-                ? '✅ 친구 요청을 수락했습니다.'
-                : '❌ 친구 요청을 거절했습니다.');
-
-            loadNotifications();
-
-            // 처리 후 배지 갱신
-            try {
-                if (typeof window.checkPendingReviews === 'function') {
-                    await window.checkPendingReviews();
-                }
-                if (typeof window.checkUpcomingSchedules === 'function') {
-                    await window.checkUpcomingSchedules();
-                }
-                if (typeof window.updateGlobalBadge === 'function') {
-                    window.updateGlobalBadge();
-                }
-            } catch (e) {
-                console.error('배지 업데이트 중 오류:', e);
-            }
-
-        } catch (error){
-            console.error('친구 요청 처리 실패:', error);
-            alert('친구 요청 처리 중 오류가 발생했습니다.');
-        }
-    }
+    // async function handleFriendAction(friendId, notificationId, action, event) {
+    //     event.stopPropagation();
+    //     const accessToken = localStorage.getItem('accessToken');
+    //
+    //     try {
+    //         const endpoint = action === 'accept'
+    //             ? `/api/friends/requests/${friendId}/accept`   // 수정
+    //             : `/api/friends/requests/${friendId}/reject`;  // 수정
+    //
+    //         const response = await fetch(endpoint, {
+    //             method: 'POST',
+    //             headers: {
+    //                 'Authorization': `Bearer ${accessToken}`,
+    //                 'Content-Type': 'application/json'
+    //             },
+    //             credentials: 'include'
+    //         });
+    //
+    //         if (!response.ok) throw new Error('친구 요청 처리 실패');
+    //
+    //         alert(action === 'accept'
+    //             ? '✅ 친구 요청을 수락했습니다.'
+    //             : '❌ 친구 요청을 거절했습니다.');
+    //
+    //         // 🔥 수락/거절 성공 후 이 알림을 읽음 처리
+    //         if (notificationId) {
+    //             await markAsRead(notificationId, '친구요청');
+    //         }
+    //
+    //         // 처리 후 배지 갱신
+    //         try {
+    //             if (typeof window.checkPendingReviews === 'function') {
+    //                 await window.checkPendingReviews();
+    //             }
+    //             if (typeof window.checkUpcomingSchedules === 'function') {
+    //                 await window.checkUpcomingSchedules();
+    //             }
+    //             if (typeof window.updateGlobalBadge === 'function') {
+    //                 window.updateGlobalBadge();
+    //             }
+    //         } catch (e) {
+    //             console.error('배지 업데이트 중 오류:', e);
+    //         }
+    //
+    //     } catch (error){
+    //         console.error('친구 요청 처리 실패:', error);
+    //         alert('친구 요청 처리 중 오류가 발생했습니다.');
+    //     }
+    // }
 
     document.addEventListener('DOMContentLoaded', async () => {
         const accessToken = localStorage.getItem('accessToken');

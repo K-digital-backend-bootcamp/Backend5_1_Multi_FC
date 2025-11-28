@@ -246,4 +246,18 @@ public class NotificationService {
         }
     }
     // ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐
+
+    // 친구 요청 알림 처리 (수락/거절 시 호출)
+    public void markFriendRequestNotificationHandled(Long receiverUserId, Long requesterUserId) {
+        NotificationDto notif =
+                notificationDao.findUnreadNotificationByTypeAndReference(
+                        receiverUserId,
+                        "친구신청",
+                        requesterUserId
+                );
+        if (notif == null) {
+            return;
+        }
+        notificationDao.updateReadStatus(notif.getNotificationId());
+    }
 }
