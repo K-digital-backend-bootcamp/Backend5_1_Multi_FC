@@ -4,32 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MULTI FC - 일정 검색</title>
-
     <link rel="stylesheet" th:href="@{/css/style.css?v=219}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
     <!-- 🔥 Flatpickr (범위 달력) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
 </head>
 <body>
-
 <div th:replace="~{fragments/header :: siteHeader}"></div>
-
 <main class="schedule-search-main">
     <div class="search-container">
         <h1 class="search-title">📅 경기일정 검색 (내가 참가한 경기)</h1>
-
         <div class="filter-section">
             <!-- 🔥 실제 필터용 값 (숨김) -->
             <input type="hidden" id="filter-date-start">
             <input type="hidden" id="filter-date-end">
-
             <!-- 🔥 유저가 클릭해서 범위 선택하는 달력 -->
             <input type="text" id="filter-date-range" placeholder="날짜 범위를 선택하세요">
-
             <!-- 🔥 기간 선택 셀렉트 (종료일 = 오늘 고정, 시작일 자동 계산) -->
             <select id="filter-period">
                 <option value="">기간 선택(직접선택)</option>
@@ -40,57 +33,47 @@
                 <option value="6m">6개월전</option>
                 <option value="1y">1년전</option>
             </select>
-
             <select id="filter-status">
                 <option value="">상태 (전체)</option>
                 <option value="open">모집중</option>
                 <option value="closed">모집완료</option>
             </select>
-
             <!-- 🔥 정렬 기준 -->
             <select id="sort-order">
                 <option value="desc">최신순</option>
                 <option value="asc">오래된순</option>
             </select>
-
             <button id="search-btn">검색</button>
         </div>
-
         <!-- 🔥 카드 슬라이더 -->
         <div class="match-slider-wrapper">
             <button class="schedule-arrow left" id="prev-slide">
                 <i class="fas fa-chevron-left"></i>
             </button>
-
             <div class="match-slider-viewport">
                 <div class="match-slider-track" id="match-slider-track">
                     <!-- JS에서 페이지 단위로 채움 -->
                 </div>
             </div>
-
             <button class="schedule-arrow right" id="next-slide">
                 <i class="fas fa-chevron-right"></i>
             </button>
         </div>
-
         <p id="no-results-message" style="color: #666; text-align: center; margin-top: 30px; display: none;">
             검색 결과가 없습니다.
         </p>
     </div>
 </main>
-
 <script>
     let allMySchedules = [];
     let currentUserId = null;
     let currentUserName = null;
     let dateRangePicker = null; // flatpickr 인스턴스
-
     // 🔥 슬라이더 상태
     const PAGE_SIZE = 6;
     let filteredSchedules = [];
     let pages = [];
     let currentPage = 0;
-
     function buildPages(matches) {
         pages = [];
         if (!matches) matches = [];
@@ -98,7 +81,6 @@
             pages.push(matches.slice(i, i + PAGE_SIZE));
         }
     }
-
     // 카드 + 슬라이더 렌더링
     function renderMatchList(matches) {
         filteredSchedules = matches || [];
@@ -106,47 +88,35 @@
         currentPage = 0;
         updateSlider();
     }
-
     function updateSlider() {
         const track = document.getElementById('match-slider-track');
         const noResults = document.getElementById('no-results-message');
         const prevBtn = document.getElementById('prev-slide');
         const nextBtn = document.getElementById('next-slide');
-
         if (!track) return;
-
         track.innerHTML = '';
-
         const totalPages = pages.length;
-
         if (totalPages === 0) {
             noResults.style.display = 'block';
             if (prevBtn) prevBtn.style.display = 'none';
             if (nextBtn) nextBtn.style.display = 'none';
             return;
         }
-
         noResults.style.display = 'none';
-
         // 각 페이지별로 그리드 생성
         pages.forEach(pageItems => {
             const pageDiv = document.createElement('div');
             pageDiv.className = 'match-slider-page';
-
             const grid = document.createElement('div');
             grid.className = 'match-list-container';
-
             pageItems.forEach(match => {
                 const card = document.createElement('div');
                 const statusClass = match.status === 'closed' ? 'closed' : 'open';
                 const buttonDisabled = match.status === 'closed' ? 'disabled' : '';
-
                 card.className = `match-item-card ${statusClass}`;
                 card.dataset.matchId = match.id;
-
                 const isHost = match.creator === currentUserName;
                 const creatorDisplay = isHost ? '나 (Host)' : match.creator;
-
                 card.innerHTML = `
                     <div class="match-item-header">
                         <span class="date">${match.date}</span>
@@ -157,9 +127,8 @@
                         </p>
                         <p class="location">
                             <i class="fas fa-map-marker-alt"></i>
-                            ${match.stadiumName} (${match.location})
+                            ${match.stadiumName}
                         </p>
-
                         <p class="status">
                             <i class="fas fa-users"></i>
                             <span class="status-badge ${statusClass}">
@@ -174,18 +143,14 @@
                 `;
                 grid.appendChild(card);
             });
-
             pageDiv.appendChild(grid);
             track.appendChild(pageDiv);
         });
-
         // 현재 페이지 범위 보정
         if (currentPage >= totalPages) currentPage = totalPages - 1;
         if (currentPage < 0) currentPage = 0;
-
         // 슬라이드 이동 애니메이션
         track.style.transform = `translateX(-${currentPage * 100}%)`;
-
         // 화살표 표시/상태
         if (totalPages <= 1) {
             if (prevBtn) prevBtn.style.display = 'none';
@@ -201,22 +166,18 @@
             }
         }
     }
-
     // 내 스케줄 불러오기
     async function fetchMySchedules() {
         const userId = localStorage.getItem('userId');
         const userName = localStorage.getItem('userNickname');
-
         if (!userId) {
             console.error("User ID not found in localStorage.");
             return [];
         }
         currentUserId = Number(userId);
         currentUserName = userName;
-
         try {
             const response = await fetch(`/api/matchrooms/my-schedules?userId=${userId}`);
-
             if (!response.ok) {
                 console.error("Failed to fetch schedules:", response.statusText);
                 const track = document.getElementById('match-slider-track');
@@ -226,20 +187,15 @@
                 }
                 return [];
             }
-
             const rawMatches = await response.json();
-
             allMySchedules = rawMatches.map(match => {
                 const timeOnly = match.matchTime
                     ? String(match.matchTime).split(':').slice(0, 2).join(':')
                     : '';
-
                 const baseCurrent = typeof match.currentPlayers === 'number'
                     ? match.currentPlayers
                     : 0;
-
                 const displayCurrent = baseCurrent + 1;
-
                 return {
                     id: match.roomId,
                     date: `${match.matchDate}${timeOnly ? ` (${timeOnly})` : ''}`,
@@ -253,9 +209,7 @@
                     status: match.status.toLowerCase() === 'closed' ? 'closed' : 'open',
                 };
             });
-
             return allMySchedules;
-
         } catch (error) {
             console.error("API call error:", error);
             const track = document.getElementById('match-slider-track');
@@ -266,7 +220,6 @@
             return [];
         }
     }
-
     // 필터 + 정렬
     function performSearch() {
         const startDateValue = document.getElementById('filter-date-start').value;
@@ -274,13 +227,10 @@
         const status = document.getElementById('filter-status').value;
         const sortOrderSelect = document.getElementById('sort-order');
         const sortOrder = sortOrderSelect ? sortOrderSelect.value : 'desc';
-
         let filtered = allMySchedules;
-
         if (startDateValue || endDateValue) {
             const start = startDateValue ? new Date(startDateValue) : null;
             const end = endDateValue ? new Date(endDateValue) : null;
-
             filtered = filtered.filter(match => {
                 if (!match.matchDate) return true;
                 const matchDate = new Date(match.matchDate);
@@ -289,40 +239,32 @@
                 return true;
             });
         }
-
         if (status) {
             filtered = filtered.filter(match => match.status === status);
         }
-
         filtered.sort((a, b) => {
             const aKey = new Date(`${a.matchDate}T${a.matchTime || '00:00'}`);
             const bKey = new Date(`${b.matchDate}T${b.matchTime || '00:00'}`);
             return (sortOrder === 'asc') ? (aKey - bKey) : (bKey - aKey);
         });
-
         renderMatchList(filtered);
     }
-
     function setupPeriodSelect() {
         const periodSelect = document.getElementById('filter-period');
         const dateStartHidden = document.getElementById('filter-date-start');
         const dateEndHidden = document.getElementById('filter-date-end');
         if (!periodSelect) return;
-
         periodSelect.addEventListener('change', () => {
             const range = periodSelect.value;
-
             if (!range) {
                 dateStartHidden.value = "";
                 dateEndHidden.value = "";
                 if (dateRangePicker) dateRangePicker.clear();
                 return;
             }
-
             const today = new Date();
             const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
             const start = new Date(end);
-
             switch (range) {
                 case 'today': break;
                 case '1w': start.setDate(start.getDate() - 7); break;
@@ -331,28 +273,23 @@
                 case '6m': start.setMonth(start.getMonth() - 6); break;
                 case '1y': start.setFullYear(start.getFullYear() - 1); break;
             }
-
             const fmt = d => d.toISOString().slice(0, 10);
             dateStartHidden.value = fmt(start);
             dateEndHidden.value = fmt(end);
-
             if (dateRangePicker) {
                 dateRangePicker.setDate([start, end], false);
             }
         });
     }
-
     document.addEventListener('DOMContentLoaded', async () => {
         const accessToken = localStorage.getItem('accessToken');
         const currentPath = window.location.pathname;
-
         if (!accessToken) {
             alert("❌ 회원 전용 페이지입니다.\n로그인 후에 이용하실 수 있습니다.");
             localStorage.setItem('redirectAfterLogin', currentPath);
             window.location.href = '/login';
             return;
         }
-
         const userMenuName = document.getElementById('user-menu-username');
         if (userMenuName) {
             const nickname =
@@ -361,7 +298,6 @@
                 '회원';
             userMenuName.textContent = nickname;
         }
-
         // ✅✅✅ 여기만 핵심 수정 (배지 갱신 window. 로 통일) ✅✅✅
         try {
             if (typeof window.checkPendingReviews === 'function') {
@@ -377,14 +313,11 @@
             console.error('알림/일정 배지 업데이트 중 오류:', e);
         }
         // ✅✅✅ 수정 끝 ✅✅✅
-
         const schedules = await fetchMySchedules();
-
         const dateRangeInput = document.getElementById('filter-date-range');
         const dateStartHidden = document.getElementById('filter-date-start');
         const dateEndHidden = document.getElementById('filter-date-end');
         const periodSelect = document.getElementById('filter-period');
-
         if (dateRangeInput) {
             dateRangePicker = flatpickr(dateRangeInput, {
                 mode: "range",
@@ -403,20 +336,15 @@
                         dateStartHidden.value = flatpickr.formatDate(start, "Y-m-d");
                         dateEndHidden.value = flatpickr.formatDate(end, "Y-m-d");
                     }
-
                     if (periodSelect) periodSelect.value = "";
                 }
             });
         }
-
         const searchBtn = document.getElementById('search-btn');
         if (searchBtn) searchBtn.addEventListener('click', performSearch);
-
         setupPeriodSelect();
-
         const prevBtn = document.getElementById('prev-slide');
         const nextBtn = document.getElementById('next-slide');
-
         if (prevBtn) {
             prevBtn.addEventListener('click', () => {
                 if (currentPage > 0) {
@@ -434,7 +362,6 @@
                 }
             });
         }
-
         renderMatchList(
             [...schedules].sort((a, b) =>
                 new Date(`${b.matchDate}T${b.matchTime || '00:00'}`) -
