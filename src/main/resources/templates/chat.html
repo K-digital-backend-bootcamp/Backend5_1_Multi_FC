@@ -1022,6 +1022,40 @@
         const checkedCount = friendListToInvite.querySelectorAll('.friend-checkbox:checked').length;
         selectedInviteCountElement.textContent = checkedCount;
     });
+    // ★새로운 함수: 채팅방 삭제 로직
+    async function leaveChatRoom(roomId) {
+        if(!confirm('정말로 이 채팅방을 나가시겠습니까?')){
+            return;
+        }
+
+        try {
+            const response = await fetch(`/chatroom/${roomId}/leave`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if(!response.ok) throw new Error('채팅방 나가기 실패')
+
+            alert('채팅방을 나갔습니다.');
+
+            if(currentRoomId === roomId){
+                currentRoomId = null;
+                document.getElementById('current-chat-room').style.display = 'none';
+                document.getElementById('chat-welcome-message').style.display = 'flex';
+
+                const leaveRoomBtn = document.getElementById('leave-room-btn');
+                if(leaveRoomBtn){
+                    leaveRoomBtn.style.display = 'none';
+                }
+            }
+            loadRoomList(currentChatType);
+        } catch (e){
+            console.error('채팅방 나가기 실패:', e);
+            alert('채팅방을 나가는데 실패했습니다.');
+        }
+    }
 
     async function sendInvite() {
         const invitedUserIds = Array.from(document.querySelectorAll('.friend-checkbox:checked'))
