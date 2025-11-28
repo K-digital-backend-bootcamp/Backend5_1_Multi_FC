@@ -16,7 +16,7 @@
 <div th:replace="~{fragments/header :: siteHeader}"></div>
 
 <main class="stadium-main">
-    <div class="search-container">
+    <div class="stadium-container">
         <h1 class="stadium-title" id="stadium-name">구장 정보 로딩중... (ID: <span th:text="${stadiumId}"></span>)</h1>
 
         <div class="detail-left-column">
@@ -86,17 +86,24 @@
     </div>
 </div>
 
+<!-- 후기 수정 모달 -->
 <div id="edit-review-modal" class="modal-overlay">
     <div class="modal-content">
-        <h2>후기 수정</h2>
+        <!-- ✅ 제목 + X 버튼 한 줄 -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+            <h2 style="margin:0;">후기 수정</h2>
+            <button type="button" class="modal-close-btn" onclick="closeEditReviewModal()">&times;</button>
+        </div>
+
         <form id="edit-review-form">
             <input type="hidden" id="edit-review-id">
             <label>평점</label>
             <input type="number" id="edit-rating" name="rating" min="1" max="5" required>
             <label>내용</label>
             <textarea id="edit-content" name="content" rows="5" required></textarea>
+
             <div class="modal-actions">
-                <button class="btn-cancel" type="button" onclick="document.getElementById('edit-review-modal').style.display='none'">취소</button>
+                <!-- ⛔ 취소 버튼 제거 -->
                 <button class="btn-create" type="submit">수정 완료</button>
             </div>
         </form>
@@ -104,13 +111,17 @@
 </div>
 
 <script>
+
+    function closeEditReviewModal() {
+        const modal = document.getElementById('edit-review-modal');
+        if (modal) modal.style.display = 'none';
+    }
     // ===========================
-    // 1. 초기화 (헤더 스크립트 제거 버전)
+    // 1. 초기화
     // ===========================
     document.addEventListener('DOMContentLoaded', async () => {
         const token = localStorage.getItem('accessToken');
 
-        // ✅ 헤더 닉네임: "사용자님" 대신 localStorage 값 사용
         const userMenuName = document.getElementById('user-menu-username');
         if (userMenuName) {
             const nickname =
@@ -120,7 +131,6 @@
             userMenuName.textContent = nickname;
         }
 
-        // 🔴 공통 알림 배지 함수가 있으면 호출 → 빨간 배지 갱신
         if (token) {
             if (typeof checkPendingReviews === 'function') {
                 try { await checkPendingReviews(); } catch (e) { console.error(e); }
@@ -133,14 +143,10 @@
             }
         }
 
-        // ===========================
-        // 2. 구장 정보 및 경기 로드
-        // ===========================
         const stadiumId = new URLSearchParams(window.location.search).get('id');
         const currentUserId = localStorage.getItem('userId');
 
         if (stadiumId) {
-            // 구장 정보
             const stadiumListRes = await fetch('/api/stadiums');
             const stadiumList = await stadiumListRes.json();
             const stadium = stadiumList.find(s => s.stadiumId == stadiumId);
@@ -152,7 +158,6 @@
                 document.getElementById('stadiumName').value = stadium.name;
                 document.getElementById('stadiumId').value = stadiumId;
 
-                // Kakao Map 초기화 및 마커 표시
                 if (window.kakao && kakao.maps) {
                     const map = new kakao.maps.Map(
                         document.getElementById('map'),
@@ -165,7 +170,6 @@
                 }
             }
 
-            // 경기 목록
             let allMatchesRes = await fetch(`/api/matchrooms/stadium/${stadiumId}`);
             let allMatches = await allMatchesRes.json();
 
@@ -182,27 +186,39 @@
             // WebSocket (실시간 목록 갱신)
             const socket = new SockJS('/ws');
             const stompClient = Stomp.over(socket);
-            stompClient.connect({}, () => {
-                stompClient.subscribe(`/topic/matches/${stadiumId}`, (msg) => {
-                    const newMatch = JSON.parse(msg.body);
-                    if (!allMatches.some(m => m.roomId === newMatch.roomId)) {
-                        allMatches.push(newMatch);
-                    } else {
-                        allMatches = allMatches.map(m =>
-                            m.roomId === newMatch.roomId ? newMatch : m
+
+            const wsToken = localStorage.getItem('accessToken');
+            const connectHeaders = {};
+            if (wsToken) {
+                connectHeaders['Authorization'] = 'Bearer ' + wsToken;
+            }
+
+            stompClient.connect(
+                connectHeaders,
+                function onConnect() {
+                    stompClient.subscribe(`/topic/matches/${stadiumId}`, function (msg) {
+                        const newMatch = JSON.parse(msg.body);
+
+                        if (!allMatches.some(function (m) { return m.roomId === newMatch.roomId; })) {
+                            allMatches.push(newMatch);
+                        } else {
+                            allMatches = allMatches.map(function (m) {
+                                return m.roomId === newMatch.roomId ? newMatch : m;
+                            });
+                        }
+
+                        renderMatches(
+                            allMatches,
+                            document.getElementById('match-date-filter').value
                         );
-                    }
-                    renderMatches(
-                        allMatches,
-                        document.getElementById('match-date-filter').value
-                    );
-                });
-            });
+                    });
+                },
+                function onError(error) {
+                    console.error('STOMP 연결 실패:', error);
+                }
+            );
         }
 
-        // ===========================
-        // 3. 경기 생성 버튼
-        // ===========================
         document.getElementById('btn-create-match').addEventListener('click', (e) => {
             e.preventDefault();
             if (!localStorage.getItem('accessToken')) {
@@ -211,13 +227,10 @@
             }
             document.getElementById('hostName').value =
                 localStorage.getItem('userNickname') || '회원';
-            setupTime(); // 시간/레벨 초기화
+            setupTime();
             openMatchModal(true);
         });
 
-        // ===========================
-        // 4. 탭 이벤트
-        // ===========================
         document
             .getElementById('tab-btn-match')
             .addEventListener('click', () => changeTab('match'));
@@ -229,7 +242,7 @@
     });
 
     // ===========================
-    // 5. 탭 변경 및 후기 로직
+    // 5. 탭 & 후기 로직
     // ===========================
     function changeTab(activeTab) {
         document.querySelectorAll('.tab-button')
@@ -317,7 +330,6 @@
     function registerReviewActionListeners(currentUserId) {
         const stadiumId = new URLSearchParams(window.location.search).get('id');
 
-        // 삭제
         document.querySelectorAll('.delete-review-btn').forEach(button => {
             button.addEventListener('click', async (e) => {
                 const reviewId = e.target.dataset.id;
@@ -343,7 +355,6 @@
             });
         });
 
-        // 수정 모달 오픈
         document.querySelectorAll('.edit-review-btn').forEach(button => {
             button.addEventListener('click', (e) => {
                 document.getElementById('edit-review-id').value = e.target.dataset.id;
@@ -376,7 +387,7 @@
 
                 if (response.ok) {
                     alert('후기가 수정되었습니다.');
-                    document.getElementById('edit-review-modal').style.display = 'none';
+                    closeEditReviewModal();  // ✅ X 버튼과 동일하게 닫기
                     fetchReviews(stadiumId, currentUserId);
                 } else {
                     const errorText = await response.text();

@@ -146,7 +146,7 @@
 </div>
 
 <div id="invite-modal" class="chat-modal-overlay">
-    <div class="chat-modal-content">
+    <div class="modal-content">
         <button type="button" class="modal-close-x" onclick="openInviteModal(false)">&times;</button>
 
         <h2>친구 초대</h2>
@@ -183,6 +183,10 @@
     let myUsername = null;
     let currentUserId = null;
     let currentNickname = null;
+
+    // ⭐⭐⭐ 추가: 참여자 ID와 닉네임을 매핑하는 맵 ⭐⭐⭐
+    let currentRoomParticipantsMap = {}; // Key: userId, Value: nickname
+    let nicknameCache = {}; // Key: userId, Value: nickname (온디맨드 캐시)
 
     const chatContainer = document.getElementById('chat-messages-container');
     const inputArea = document.getElementById('message-input');
@@ -277,13 +281,76 @@
             });
     }
 
+    // ⭐⭐⭐ 추가: 채팅방 참여자 ID-닉네임 맵을 로드하는 함수 ⭐⭐⭐
+    async function loadParticipantMap(roomId) {
+        currentRoomParticipantsMap = {}; // 맵 초기화
+        try {
+            const response = await fetch(`/chatroom/${roomId}/participants`, { headers: { 'Authorization': `Bearer ${token}` } });
+            if (!response.ok) throw new Error('참여자 정보 조회 실패');
+            const participants = await response.json();
+
+            participants.forEach(p => {
+                currentRoomParticipantsMap[p.userId] = p.nickname;
+            });
+            console.log('✅ 참여자 맵 업데이트 완료:', currentRoomParticipantsMap);
+        } catch (e) {
+            console.error('참여자 맵 로드 실패:', e);
+        }
+    }
+
+    // ⭐⭐⭐ 추가: 실시간으로 닉네임을 보장하는 온디맨드 함수 ⭐⭐⭐
+    async function getNicknameOnTheFly(userId, initialNickname) {
+        // ID가 null이거나 undefined, 0인 경우 REST API 호출 없이 바로 초기 닉네임을 반환합니다.
+        if (!userId || userId === 0) {
+            return initialNickname || '알 수 없는 사용자';
+        }
+
+        // 1. 캐시 확인
+        if (nicknameCache[userId]) {
+            return nicknameCache[userId];
+        }
+        // 2. 현재 맵 확인
+        if (currentRoomParticipantsMap[userId]) {
+            return currentRoomParticipantsMap[userId];
+        }
+
+        // 3. initialNickname이 닉네임처럼 보이면 (ID가 아니면) 캐시에 저장 후 반환
+        if (initialNickname && /[가-힣A-Z]/.test(initialNickname)) {
+            nicknameCache[userId] = initialNickname;
+            return initialNickname;
+        }
+
+        // 4. REST API를 통해 프로필을 조회 (최후의 수단)
+        try {
+            const response = await fetch(`/api/users/${userId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            if (response.ok) {
+                const profile = await response.json();
+                const guaranteedNickname = profile.nickname || `사용자${userId}`;
+
+                // 캐시 및 맵 업데이트
+                nicknameCache[userId] = guaranteedNickname;
+                currentRoomParticipantsMap[userId] = guaranteedNickname;
+
+                return guaranteedNickname;
+            }
+        } catch (e) {
+            console.warn(`⚠️ On-the-fly 닉네임 조회 실패 (ID: ${userId})`, e);
+        }
+
+        // 5. 실패 시 ID 반환
+        return initialNickname || `ID:${userId}`;
+    }
+
+
     function updateStatus(message, isError = true) {
         connectionStatus.textContent = message;
         connectionStatus.style.display = 'block';
         connectionStatus.style.backgroundColor = isError ? '#ffe3e3' : '#e6ffed';
         connectionStatus.style.color = isError ? '#c0392b' : '#28a745';
 
-        const delay = isError ? 5000 : 3000;
+        // ⭐⭐⭐ 수정: 성공 메시지 표시 시간을 1초로 단축 (1000ms) ⭐⭐⭐
+        const delay = isError ? 5000 : 1000;
+
         setTimeout(() => {
             connectionStatus.style.display = 'none';
         }, delay);
@@ -356,18 +423,24 @@
         }
     }
 
-    function handleReceivedMessage(receivedMessage) {
+    async function handleReceivedMessage(receivedMessage) {
+
+        // 💡 수정: ID가 유효한지 확인하고, 닉네임 보장 함수 호출
+        const senderId = receivedMessage.sender || receivedMessage.senderId;
+        let senderNickname = await getNicknameOnTheFly(senderId, receivedMessage.senderNickname);
+
         if (receivedMessage.roomId === currentRoomId) {
             displayMessage({
-                sender: receivedMessage.senderId,
-                senderNickname: receivedMessage.senderNickname,
+                sender: senderId,
+                senderNickname: senderNickname,
                 content: receivedMessage.content,
                 timestamp: formatTimestamp(receivedMessage.sentAt || new Date()),
             });
         } else {
             updateUnreadCount(receivedMessage.roomId);
         }
-        updateLastMessageInList(receivedMessage.roomId, receivedMessage.content, receivedMessage.senderNickname);
+
+        updateLastMessageInList(receivedMessage.roomId, receivedMessage.content, senderNickname);
     }
 
     function updateUnreadCount(roomId) {
@@ -431,12 +504,17 @@
         }
     }
 
-    function onMessageReceived(payload) {
+    async function onMessageReceived(payload) {
         try {
             const message = JSON.parse(payload.body);
+
+            // 💡 수정: ID가 유효한지 확인하고, 닉네임 보장 함수 호출
+            const senderId = message.sender || message.senderId;
+            let senderNickname = await getNicknameOnTheFly(senderId, message.senderNickname);
+
             displayMessage({
-                sender: message.senderId,
-                senderNickname: message.senderNickname,
+                sender: senderId,
+                senderNickname: senderNickname,
                 content: message.content,
                 timestamp: formatTimestamp(message.sentAt || new Date())
             });
@@ -647,6 +725,44 @@
         }
     }
 
+    // ⭐⭐⭐ 채팅방 나가기 로직 추가 ⭐⭐⭐
+    async function leaveChatRoom(roomId) {
+        if (!confirm('정말로 이 채팅방을 나가시겠습니까? 이 방의 메시지는 더 이상 볼 수 없게 됩니다.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/chatroom/${roomId}/leave`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                throw new Error(data.message || '채팅방 나가기 요청 실패');
+            }
+
+            alert('✅ 채팅방을 나갔습니다.');
+
+            // 1. 현재 화면 정리
+            if (currentRoomId === roomId) {
+                currentRoomId = null;
+                document.getElementById('current-chat-room').style.display = 'none';
+                document.getElementById('chat-welcome-message').style.display = 'flex';
+                document.getElementById('leave-room-btn').style.display = 'none';
+                openInlineProfileDetail(false); // 프로필 창 닫기
+            }
+
+            // 2. 채팅방 목록 갱신
+            loadRoomList(currentChatType);
+
+        } catch (e) {
+            console.error('채팅방 나가기 오류:', e);
+            alert('❌ 채팅방을 나가는 중 오류가 발생했습니다: ' + e.message);
+        }
+    }
+
+
     async function selectRoom(room) {
         document.querySelector('.room-item.active')?.classList.remove('active');
         openInlineProfileDetail(false);
@@ -679,6 +795,9 @@
         const currentChatRoomEl = document.getElementById('current-chat-room');
         currentChatRoomEl.style.display = 'flex';
         currentChatRoomEl.style.flexDirection = 'column';
+
+        // ⭐⭐⭐ 수정: 참여자 맵을 먼저 로드하여 실시간 닉네임 표시 문제를 해결 ⭐⭐⭐
+        await loadParticipantMap(room.roomId);
 
         await loadRoomHistory(room.roomId);
 
@@ -718,6 +837,14 @@
             const participants = await participantsResponse.json();
 
             participantListContainer.innerHTML = '';
+
+            // ⭐⭐⭐ 수정: 참여자 맵을 다시 업데이트하여 최신 정보를 반영 ⭐⭐⭐
+            currentRoomParticipantsMap = {};
+            participants.forEach(p => {
+                currentRoomParticipantsMap[p.userId] = p.nickname;
+            });
+            console.log('✅ 참여자 맵 업데이트 완료 (Sidebar 호출):', currentRoomParticipantsMap);
+
             if (!participants || participants.length === 0) {
                 participantListContainer.innerHTML =
                     '<p style="color: #999; text-align: center; padding:20px;">참여자 정보를 찾을 수 없습니다.</p>';
