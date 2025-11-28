@@ -79,6 +79,7 @@ public class ChatService {
         }
 
         Long currentLastRoom = chatRoomDao.getLastRoomId();
+        UserDto owner = userMapper.findByUserId(userId1);
         UserDto targetUser = userMapper.findByUserId(userId2);
 
         ChatRoomDto newRoom = ChatRoomDto.builder()
@@ -110,8 +111,8 @@ public class ChatService {
             );
             notificationService.createAndSendNotification(
                     userId2,
-                    newRoom.getRoomName() + "방에 초대되었습니다.",
-                    "채팅",
+                     owner.getNickname()+ "님 과의 채팅방에 초대되었습니다.",
+                    "초대",
                     newRoom.getRoomId()
             );
         }
@@ -167,7 +168,7 @@ public class ChatService {
             notificationService.createAndSendNotification(
                     userId,
                     request.getRoomName() + "채팅방에 초대되었습니다.",
-                    "채팅",
+                    "초대",
                     newRoom.getRoomId()
             );
         }
