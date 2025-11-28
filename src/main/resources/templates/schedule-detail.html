@@ -3,206 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="'구장 상세 (' + ${stadiumId} + ') - MULTI FC'">MULTI FC - 구장 상세</title>
+    <title th:text="'경기 상세 (ID: ' + ${matchId} + ') - MULTI FC'">MULTI FC - 일정 상세</title>
     <link rel="stylesheet" th:href="@{/css/style.css?v=219}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=4caaf2cb0e09303d4dd13d3fb5ff15e9&libraries=services"></script>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-
-    </style>
+    <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=4caaf2cb0e09303d4dd13d3fb5ff15e9&libraries=services"></script>
 </head>
 <body>
-
 <div th:replace="~{fragments/header :: siteHeader}"></div>
 
-<main class="stadium-main">
-    <div class="stadium-container">
-        <h1 class="stadium-title" id="stadium-name">
-            구장 정보 로딩중... (ID: <span th:text="${stadiumId}"></span>)
-        </h1>
+<main class="search-main">
+    <div class="search-container">
+        <h1 class="search-title" th:text="'경기 상세 정보 (ID: ' + ${matchId} + ')'">📅 일정 상세</h1>
+        <input type="hidden" id="match-id-hidden" th:value="${matchId}">
+        <div class="detail-grid">
+            <div class="detail-left-column">
+                <div class="map-area" id="map">지도를 로드하는 중...</div>
 
-        <div class="detail-left-column">
-            <div class="map-area" id="map"></div>
-            <div class="info-card">
-                <h2>구장 기본 정보</h2>
-                <div class="info-item">
+                <h3>
+                    경기 정보
+                    <span id="match-status-display" class="match-status-label"></span>
+                </h3>
+
+                <div class="detail-info-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span id="detail-datetime">로딩중...</span>
+                </div>
+                <div class="detail-info-item">
                     <i class="fas fa-map-marker-alt"></i>
-                    <span id="stadium-address">주소</span>
+                    <span id="detail-location">로딩중...</span>
                 </div>
-                <div class="info-item">
+                <div class="detail-info-item">
                     <i class="fas fa-users"></i>
-                    <span id="stadium-size">-</span>
+                    <span id="detail-match-type">로딩중...</span>
+                </div>
+                <div class="detail-info-item">
+                    <i class="fas fa-medal"></i>
+                    <span id="detail-skill-level">로딩중...</span>
                 </div>
             </div>
-        </div>
 
-        <div class="review-right-column">
-            <div class="tab-header">
-                <button id="tab-btn-match" class="tab-button active">경기</button>
-                <button id="tab-btn-review" class="tab-button">후기</button>
-            </div>
+            <div class="detail-right-column">
+                <div class="status-card">
+                    <h3>참여 현황</h3>
+                    <strong><span id="current-players">0</span> / <span id="max-players">0</span> 명</strong>
+                    <ul class="participant-list" id="participant-list"></ul>
 
-            <div id="tab-match" class="tab-content active">
-                <h2 style="font-size: 24px; color: #333; margin-bottom: 15px;">⚽ 경기 정보</h2>
-                <div class="match-filter">
-                    <label for="match-date-filter">날짜 선택</label>
-                    <input type="date" id="match-date-filter">
-                </div>
-                <div id="match-list" class="match-list">
-                    <p style="color:#777; font-size:13px; padding:10px 0;">
-                        날짜를 선택하면 경기가 표시됩니다.
+                    <div id="button-container"></div>
+
+                    <p id="login-prompt-msg" style="display:none; text-align: center; margin-top: 15px; font-size: 14px;">
+                        참여하려면 <a href="/login" style="color: #6c5ce7; font-weight: 600;">로그인</a>이 필요합니다.
                     </p>
                 </div>
             </div>
-
-            <div id="tab-review" class="tab-content">
-                <h2 style="font-size: 24px; color: #333; margin-bottom: 15px;">⭐ 구장 리뷰</h2>
-                <div id="review-list"></div>
-                <div style="text-align: center; margin-top: 20px; font-size: 14px; color: #777;">
-                    후기 작성은 매칭 완료 후 메인 페이지 알림을 통해 가능합니다.
-                </div>
-            </div>
-        </div>
-
-        <div class="action-button-group">
-            <a href="/schedule?stadiumId=1" class="btn-schedule" id="btn-schedule">
-                <i class="fas fa-calendar-alt"></i> 매치/일정 확인
-            </a>
-            <button class="btn-create-match" id="btn-create-match">
-                <i class="fas fa-plus-circle"></i> 경기 생성
-            </button>
         </div>
     </div>
 </main>
 
-<!-- 경기 생성 모달 -->
-<div id="match-create-modal" class="modal-overlay">
-    <div class="modal-content">
-        <h2>경기 개설</h2>
-        <label>주최자</label>
-        <input type="text" id="hostName" readonly>
-        <label>장소</label>
-        <input type="text" id="stadiumName" readonly>
-        <input type="hidden" id="stadiumId">
-        <label>레벨</label>
-        <select id="matchLevel">
-            <option value="초급">초급</option>
-            <option value="중급">중급</option>
-            <option value="고급">고급</option>
-        </select>
-        <label>날짜</label>
-        <input type="date" id="matchDate">
-        <label>시간</label>
-        <div class="time-select-group">
-            <select id="startTime"></select>
-            <span>~</span>
-            <select id="endTime"></select>
-        </div>
-        <div class="modal-actions">
-            <button class="btn-create" onclick="submitMatchForm()">생성</button>
-            <button class="btn-cancel" onclick="openMatchModal(false)">취소</button>
-        </div>
-    </div>
-</div>
-
-<!-- 후기 수정 모달 -->
-<div id="edit-review-modal" class="modal-overlay">
-    <div class="modal-content">
-        <!-- 상단 제목 + X -->
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
-            <h2 style="margin:0;">후기 수정</h2>
-            <button type="button" class="modal-close-btn" onclick="closeEditReviewModal()">&times;</button>
-        </div>
-
-        <form id="edit-review-form">
-            <input type="hidden" id="edit-review-id">
-
-            <!-- ⭐ 평점 + 별점 UI -->
-            <div class="input-group rating-group">
-                <label>평점</label>
-
-                <div id="edit-star-rating" class="star-rating">
-                    <i class="fa fa-star star" data-value="5"></i>
-                    <i class="fa fa-star star" data-value="4"></i>
-                    <i class="fa fa-star star" data-value="3"></i>
-                    <i class="fa fa-star star" data-value="2"></i>
-                    <i class="fa fa-star star" data-value="1"></i>
-                </div>
-
-                <!-- 실제 서버로 보낼 값 -->
-                <input type="hidden" id="edit-rating" name="rating" required>
-            </div>
-
-            <label>내용</label>
-            <textarea id="edit-content" name="content" rows="5" required></textarea>
-
-            <div class="modal-actions">
-                <button class="btn-create" type="submit">수정 완료</button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <script>
-    /* ===========================
-       공통: 모달 닫기
-    ============================ */
-    function closeEditReviewModal() {
-        const modal = document.getElementById('edit-review-modal');
-        if (modal) modal.style.display = 'none';
-    }
+    /* =========================================================
+       1. 초기화 (헤더 스크립트 제거 버전)
+    ========================================================= */
+    let stompClient = null;
+    let currentMatchData = null;
+    let currentUserId = null;
+    const matchId = document.getElementById('match-id-hidden').value;
 
-    /* ===========================
-       후기 수정 모달 - 별점 로직
-    ============================ */
+    document.addEventListener('DOMContentLoaded', async () => {
+        const token = localStorage.getItem('accessToken');
+        const currentPath = window.location.pathname;
 
-    // ⭐ 별 클릭 시 rating 설정 + UI 반영
-    function setupEditStarRating() {
-        const stars = document.querySelectorAll('#edit-star-rating .star');
-        const ratingInput = document.getElementById('edit-rating');
-
-        if (!stars.length || !ratingInput) {
-            console.warn('⭐ edit-star-rating 요소를 찾을 수 없습니다.');
+        // 🔐 비로그인 접근 차단
+        if (!token) {
+            alert("❌ 회원 전용 페이지입니다.\n로그인 후에 이용하실 수 있습니다.");
+            localStorage.setItem('redirectAfterLogin', currentPath);
+            window.location.href = '/login';
             return;
         }
 
-        stars.forEach(star => {
-            star.addEventListener('click', () => {
-                const value = parseInt(star.dataset.value, 10);
-                ratingInput.value = value;
+        // 현재 로그인 유저 ID
+        const userIdStr = localStorage.getItem('userId');
+        if (userIdStr) currentUserId = Number(userIdStr);
 
-                stars.forEach(s => {
-                    const v = parseInt(s.dataset.value, 10);
-                    s.classList.toggle('selected', v <= value);
-                });
-            });
-        });
-    }
-
-    // ⭐ 기존 rating 값으로 별 UI 초기 세팅 (수정 버튼 클릭 시 사용)
-    function applyEditStarValue(value) {
-        const stars = document.querySelectorAll('#edit-star-rating .star');
-        const ratingInput = document.getElementById('edit-rating');
-        const num = Number(value) || 0;
-
-        if (!stars.length || !ratingInput) return;
-
-        ratingInput.value = num;
-
-        stars.forEach(s => {
-            const v = parseInt(s.dataset.value, 10);
-            s.classList.toggle('selected', v <= num);
-        });
-    }
-
-    /* ===========================
-       1. 초기화
-    ============================ */
-    document.addEventListener('DOMContentLoaded', async () => {
-        const token = localStorage.getItem('accessToken');
-
+        // ✅ 헤더 닉네임: "사용자님" 대신 localStorage 값 사용
         const userMenuName = document.getElementById('user-menu-username');
         if (userMenuName) {
             const nickname =
@@ -212,387 +97,294 @@
             userMenuName.textContent = nickname;
         }
 
-        if (token) {
-            if (typeof checkPendingReviews === 'function') {
-                try { await checkPendingReviews(); } catch (e) { console.error(e); }
-            }
-            if (typeof checkUpcomingSchedules === 'function') {
-                try { await checkUpcomingSchedules(); } catch (e) { console.error(e); }
-            }
-            if (typeof updateGlobalBadge === 'function') {
-                try { updateGlobalBadge(); } catch (e) { console.error(e); }
-            }
+        // 🔴 헤더에 정의된 전역 알림 관련 함수가 있으면 호출 → 빨간 배지 갱신
+        if (typeof checkPendingReviews === 'function') {
+            try { await checkPendingReviews(); } catch (e) { console.error(e); }
+        }
+        if (typeof checkUpcomingSchedules === 'function') {
+            try { await checkUpcomingSchedules(); } catch (e) { console.error(e); }
+        }
+        if (typeof updateGlobalBadge === 'function') {
+            try { updateGlobalBadge(); } catch (e) { console.error(e); }
         }
 
-        const stadiumId = new URLSearchParams(window.location.search).get('id');
-        const currentUserId = localStorage.getItem('userId');
-
-        if (stadiumId) {
-            const stadiumListRes = await fetch('/api/stadiums');
-            const stadiumList = await stadiumListRes.json();
-            const stadium = stadiumList.find(s => s.stadiumId == stadiumId);
-
-            if (stadium) {
-                document.getElementById('stadium-name').textContent =
-                    `${stadium.name} (ID: ${stadiumId})`;
-                document.getElementById('stadium-address').textContent = stadium.address;
-                document.getElementById('stadiumName').value = stadium.name;
-                document.getElementById('stadiumId').value = stadiumId;
-
-                if (window.kakao && kakao.maps) {
-                    const map = new kakao.maps.Map(
-                        document.getElementById('map'),
-                        {
-                            center: new kakao.maps.LatLng(stadium.latitude, stadium.longitude),
-                            level: 3
-                        }
-                    );
-                    new kakao.maps.Marker({ position: map.getCenter(), map: map });
-                }
-            }
-
-            let allMatchesRes = await fetch(`/api/matchrooms/stadium/${stadiumId}`);
-            let allMatches = await allMatchesRes.json();
-
-            const today = new Date().toISOString().split("T")[0];
-            document.getElementById('match-date-filter').value = today;
-            renderMatches(allMatches, today);
-
-            document
-                .getElementById('match-date-filter')
-                .addEventListener('change', (e) =>
-                    renderMatches(allMatches, e.target.value)
-                );
-
-            // WebSocket (실시간 목록 갱신)
-            const socket = new SockJS('/ws');
-            const stompClient = Stomp.over(socket);
-
-            const wsToken = localStorage.getItem('accessToken');
-            const connectHeaders = {};
-            if (wsToken) {
-                connectHeaders['Authorization'] = 'Bearer ' + wsToken;
-            }
-
-            stompClient.connect(
-                connectHeaders,
-                function onConnect() {
-                    stompClient.subscribe(`/topic/matches/${stadiumId}`, function (msg) {
-                        const newMatch = JSON.parse(msg.body);
-
-                        if (!allMatches.some(function (m) { return m.roomId === newMatch.roomId; })) {
-                            allMatches.push(newMatch);
-                        } else {
-                            allMatches = allMatches.map(function (m) {
-                                return m.roomId === newMatch.roomId ? newMatch : m;
-                            });
-                        }
-
-                        renderMatches(
-                            allMatches,
-                            document.getElementById('match-date-filter').value
-                        );
-                    });
-                },
-                function onError(error) {
-                    console.error('STOMP 연결 실패:', error);
-                }
-            );
-        }
-
-        document.getElementById('btn-create-match').addEventListener('click', (e) => {
-            e.preventDefault();
-            if (!localStorage.getItem('accessToken')) {
-                alert('로그인이 필요합니다.');
-                return location.href = '/login';
-            }
-            document.getElementById('hostName').value =
-                localStorage.getItem('userNickname') || '회원';
-            setupTime();
-            openMatchModal(true);
-        });
-
-        document
-            .getElementById('tab-btn-match')
-            .addEventListener('click', () => changeTab('match'));
-        document
-            .getElementById('tab-btn-review')
-            .addEventListener('click', () => changeTab('review'));
-
-        changeTab('match');
-
-        // ⭐ 수정 모달 별점 클릭 이벤트 세팅
-        setupEditStarRating();
+        // 📦 상세 정보 및 참가자 목록 로드 + WebSocket 연결
+        await fetchMatchDetail();
+        await fetchParticipantList();
+        connectWebSocket();
     });
 
-    /* ===========================
-       5. 탭 & 후기 로직
-    ============================ */
-    function changeTab(activeTab) {
-        document.querySelectorAll('.tab-button')
-            .forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.tab-content')
-            .forEach(content => content.classList.remove('active'));
-
-        document.getElementById(`tab-btn-${activeTab}`).classList.add('active');
-        document.getElementById(`tab-${activeTab}`).classList.add('active');
-
-        if (activeTab === 'review') {
-            const stadiumId = new URLSearchParams(window.location.search).get('id');
-            const currentUserId = localStorage.getItem('userId');
-            if (stadiumId) {
-                fetchReviews(stadiumId, currentUserId);
-            }
-        }
-    }
-
-    async function fetchReviews(stadiumId, currentUserId) {
-        const reviewListEl = document.getElementById('review-list');
-        reviewListEl.innerHTML = '<p style="color:#777; padding:10px 0;">후기 로딩중...</p>';
-
-        try {
-            const res = await fetch(`/api/reviews/stadium/${stadiumId}`);
-            if (!res.ok) throw new Error('후기 로드 실패');
-
-            const reviews = await res.json();
-            renderReviews(reviews, currentUserId);
-        } catch (e) {
-            console.error("Failed to fetch reviews:", e);
-            reviewListEl.innerHTML =
-                '<p style="color:#e74c3c; padding:10px 0;">후기 로드 중 오류 발생</p>';
-        }
-    }
-
-    function renderReviews(reviews, currentUserId) {
-        const reviewListEl = document.getElementById('review-list');
-        reviewListEl.innerHTML = '';
-
-        if (!reviews || reviews.length === 0) {
-            reviewListEl.innerHTML =
-                '<p style="color:#777; padding:10px 0;">아직 작성된 후기가 없습니다.</p>';
-            return;
-        }
-
-        reviews.forEach(review => {
-            const isMyReview =
-                currentUserId && Number(currentUserId) === review.userId;
-
-            // ⭐ 5개 별 중 평점 이하만 색 채우기
-            let starsHtml = '';
-            for (let i = 1; i <= 5; i++) {
-                const filledClass = i <= review.rating ? 'filled' : '';
-                starsHtml += `<i class="fa fa-star star ${filledClass}"></i>`;
-            }
-
-            const reviewDiv = document.createElement('div');
-            reviewDiv.className = 'review-item';
-
-            reviewDiv.innerHTML = `
-                <div class="review-header">
-                    <span class="review-author">
-                        ${review.nickname || '익명'} ${isMyReview ? '(나)' : ''}
-                    </span>
-                    <span class="review-rating">
-                        <span class="review-star-rating">
-                            ${starsHtml}  (${review.rating}/5)
-                        </span>
-                    </span>
-                </div>
-                <p class="review-content">${review.content}</p>
-                <div class="review-actions">
-                    ${
-                isMyReview
-                    ? `<button class="action-btn edit-review-btn"
-                                       data-id="${review.reviewId}"
-                                       data-rating="${review.rating}"
-                                       data-content="${review.content}">수정</button>
-                               <button class="action-btn delete-review-btn"
-                                       data-id="${review.reviewId}">삭제</button>`
-                    : ''
-            }
-                    <small style="color: #aaa; margin-left: 10px;">
-                        작성일: ${review.createdAt || '방금'}
-                    </small>
-                </div>
-            `;
-            reviewListEl.appendChild(reviewDiv);
-        });
-
-        registerReviewActionListeners(currentUserId);
-    }
-
-    function registerReviewActionListeners(currentUserId) {
-        const stadiumId = new URLSearchParams(window.location.search).get('id');
-
-        // 삭제
-        document.querySelectorAll('.delete-review-btn').forEach(button => {
-            button.addEventListener('click', async (e) => {
-                const reviewId = e.target.dataset.id;
-                if (!confirm("정말로 이 후기를 삭제하시겠습니까?")) return;
-
-                try {
-                    const response = await fetch(
-                        `/api/reviews/${reviewId}?userId=${Number(currentUserId)}`,
-                        { method: 'DELETE' }
-                    );
-
-                    if (response.ok) {
-                        alert('후기가 삭제되었습니다.');
-                        fetchReviews(stadiumId, currentUserId);
-                    } else {
-                        const errorText = await response.text();
-                        alert(`삭제 실패: ${errorText}`);
-                    }
-                } catch (error) {
-                    console.error('Delete error:', error);
-                    alert('서버 통신 중 오류가 발생했습니다.');
-                }
-            });
-        });
-
-        // 수정 모달 오픈 + 기존 별점 반영
-        document.querySelectorAll('.edit-review-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const reviewId = e.target.dataset.id;
-                const rating = e.target.dataset.rating;
-                const content = e.target.dataset.content;
-
-                document.getElementById('edit-review-id').value = reviewId;
-                document.getElementById('edit-content').value = content;
-
-                // ⭐ 기존 평점 숫자를 별 UI + hidden 값에 반영
-                applyEditStarValue(rating);
-
-                // 모달 열기
-                document.getElementById('edit-review-modal').style.display = 'flex';
-            });
-        });
-
-        // 수정 폼 제출
-        document.getElementById('edit-review-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const reviewId = document.getElementById('edit-review-id').value;
-            const newRating = document.getElementById('edit-rating').value;
-            const newContent = document.getElementById('edit-content').value;
-
-            const updatedReviewData = {
-                userId: Number(currentUserId),
-                rating: Number(newRating),
-                content: newContent
+    /* =========================================================
+       2. 지도 초기화 함수
+    ========================================================= */
+    function initMap(lat, lng, name) {
+        if (window.kakao && kakao.maps) {
+            const mapContainer = document.getElementById('map');
+            const mapOption = {
+                center: new kakao.maps.LatLng(lat, lng),
+                level: 3
             };
+            const map = new kakao.maps.Map(mapContainer, mapOption);
+            const markerPosition = new kakao.maps.LatLng(lat, lng);
 
-            try {
-                const response = await fetch(`/api/reviews/${reviewId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(updatedReviewData)
-                });
+            const marker = new kakao.maps.Marker({
+                position: markerPosition,
+                map: map
+            });
 
-                if (response.ok) {
-                    alert('후기가 수정되었습니다.');
-                    closeEditReviewModal();
-                    fetchReviews(stadiumId, currentUserId);
-                } else {
-                    const errorText = await response.text();
-                    alert(`수정 실패: ${errorText}`);
-                }
-            } catch (error) {
-                console.error('Update error:', error);
-                alert('서버 통신 중 오류가 발생했습니다.');
+            const infowindow = new kakao.maps.InfoWindow({
+                content: `<div style="padding:5px;font-size:12px;font-weight:bold;">${name}</div>`
+            });
+            infowindow.open(map, marker);
+
+            console.log("Kakao Map initialized successfully.");
+        } else {
+            console.error("Kakao Map API is not loaded.");
+        }
+    }
+
+    /* =========================================================
+       3. 데이터 로드 함수 (지도 초기화 포함)
+    ========================================================= */
+    async function fetchMatchDetail() {
+        try {
+            const res = await fetch(`/api/matchrooms/${matchId}`);
+            if (!res.ok) throw new Error('경기 정보 로드 실패');
+            currentMatchData = await res.json();
+
+            document.getElementById('detail-datetime').textContent =
+                `${currentMatchData.matchDate} ${currentMatchData.matchTime}`;
+            document.getElementById('detail-match-type').textContent =
+                `개인 매칭 (${currentMatchData.maxPlayers}명)`;
+            document.getElementById('detail-skill-level').textContent =
+                currentMatchData.level;
+            document.getElementById('max-players').textContent =
+                currentMatchData.maxPlayers;
+
+            const stadiumId = currentMatchData.stadiumId;
+            const stadiumRes = await fetch(`/api/stadiums`);
+            const allStadiums = await stadiumRes.json();
+            const stadium = allStadiums.find(s => s.stadiumId === stadiumId);
+
+            if (stadium) {
+                document.getElementById('detail-location').textContent =
+                    stadium.name + ' (' + stadium.address + ')';
+                initMap(stadium.latitude, stadium.longitude, stadium.name);
+            } else {
+                document.getElementById('detail-location').textContent =
+                    `구장 ID ${stadiumId} 정보를 찾을 수 없습니다.`;
+                document.getElementById('map').textContent =
+                    '구장 정보를 찾을 수 없어 지도를 표시할 수 없습니다.';
             }
+
+            const statusEl = document.getElementById('match-status-display');
+            if (currentMatchData.status === 'CLOSED') {
+                statusEl.textContent = "(모집 마감)";
+                statusEl.className = "match-status-label status-closed";
+            } else {
+                statusEl.textContent = "(모집중)";
+                statusEl.className = "match-status-label status-open";
+            }
+        } catch (err) {
+            console.error(err);
+            document.getElementById('map').textContent = '경기 정보 로드 중 오류 발생.';
+        }
+    }
+
+    async function fetchParticipantList() {
+        try {
+            const res = await fetch(`/api/matchrooms/${matchId}/participants/all`);
+            if (!res.ok) throw new Error('참가자 목록 로드 실패');
+            const participants = await res.json();
+            renderParticipantList(participants);
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    /* =========================================================
+       4. 화면 렌더링
+    ========================================================= */
+    function renderParticipantList(participants) {
+        const listEl = document.getElementById('participant-list');
+        listEl.innerHTML = '';
+
+        const totalCount = participants.length;
+        document.getElementById('current-players').textContent = totalCount;
+
+        const amIHost =
+            (currentMatchData && Number(currentMatchData.hostId) === currentUserId);
+        const isClosed =
+            (currentMatchData && currentMatchData.status === 'CLOSED');
+
+        participants.forEach(user => {
+            const li = document.createElement('li');
+
+            const userPosition = user.position || '미정';
+
+            let nameHtml = `<span class="user-info">${user.nickname}</span>`;
+            if (user.role === 'Host')
+                nameHtml += ` <span class="badge badge-host">방장</span>`;
+            if (Number(user.userId) === currentUserId)
+                nameHtml += ` <span class="badge badge-me">나</span>`;
+
+            const status = user.status || '대기';
+            if (user.role === 'Player') {
+                if (status === '확정') {
+                    nameHtml += ` <span class="badge badge-confirmed">확정</span>`;
+                } else {
+                    nameHtml += ` <span class="badge badge-waiting">대기</span>`;
+                }
+            }
+
+            let btnHtml = '';
+            if (amIHost && user.role === 'Player' && !isClosed) {
+                btnHtml = `
+                    <div class="manage-btns">
+                        ${status === '대기'
+                    ? `<button class="btn-sm btn-approve" onclick="approveUser(${user.userId})">수락</button>`
+                    : ''
+                }
+                        <button class="btn-sm btn-reject" onclick="rejectUser(${user.userId})">강퇴</button>
+                    </div>
+                `;
+            }
+
+            li.innerHTML = `
+                <div class="user-row">
+                    <div>${nameHtml}</div>
+                    ${btnHtml}
+                </div>
+                <div class="user-meta">포지션: ${userPosition}</div>
+            `;
+            listEl.appendChild(li);
         });
+
+        renderMainButtons(participants, amIHost, isClosed);
     }
 
-    /* ===========================
-       6. 경기 생성 관련
-    ============================ */
-    function setupTime() {
-        const start = document.getElementById("startTime");
-        const end = document.getElementById("endTime");
-        const levelSelect = document.getElementById("matchLevel");
+    function renderMainButtons(participants, amIHost, isClosed) {
+        const container = document.getElementById('button-container');
+        const loginPrompt = document.getElementById('login-prompt-msg');
+        container.innerHTML = '';
 
-        start.innerHTML = "";
-        end.innerHTML = "";
-
-        for (let i = 0; i < 24; i++) {
-            const t = `${i < 10 ? '0' + i : i}:00`;
-            start.innerHTML += `<option>${t}</option>`;
-            end.innerHTML += `<option>${t}</option>`;
+        if (!currentUserId) {
+            loginPrompt.style.display = 'block';
+            return;
         }
-        start.value = "19:00";
-        end.value = "20:00";
+        loginPrompt.style.display = 'none';
 
-        if (levelSelect) {
-            levelSelect.value = "초급";
-        }
-    }
-
-    async function submitMatchForm() {
-        const hostId = localStorage.getItem('userId');
-        const level = document.getElementById('matchLevel').value;
-
-        if (!hostId) {
-            alert("로그인 정보가 없습니다.");
-            location.href = '/login';
+        if (isClosed) {
+            container.innerHTML =
+                `<button class="join-button btn-disabled" disabled>모집이 마감되었습니다</button>`;
             return;
         }
 
-        const req = {
-            stadiumId: Number(document.getElementById('stadiumId').value),
-            hostId: Number(hostId),
-            matchDate: document.getElementById('matchDate').value,
-            matchTime: document.getElementById('startTime').value,
-            maxPlayers: 10,
-            level: level
-        };
+        if (amIHost) {
+            container.innerHTML = `
+                <button class="join-button btn-close" onclick="closeMatch()">
+                    📢 모집 마감 (경기 확정)
+                </button>
+            `;
+            return;
+        }
 
-        const res = await fetch('/api/matchrooms', {
+        const isJoined = participants.some(p => Number(p.userId) === currentUserId);
+
+        if (isJoined) {
+            container.innerHTML =
+                `<button class="join-button btn-cancel" onclick="cancelMatch()">참가 취소</button>`;
+        } else {
+            const currentCount = participants.filter(p => p.role === 'Player').length;
+            if (currentCount < currentMatchData.maxPlayers) {
+                container.innerHTML =
+                    `<button class="join-button btn-join" onclick="joinMatch()">참가 신청</button>`;
+            } else {
+                container.innerHTML =
+                    `<button class="join-button btn-disabled" disabled>정원 초과</button>`;
+            }
+        }
+    }
+
+    /* =========================================================
+       5. 액션 함수들
+    ========================================================= */
+    // 참가 신청
+    window.joinMatch = async () => {
+        if (!confirm("참가 신청하시겠습니까? (회원 기본 포지션으로 등록됩니다)")) return;
+
+        const res = await fetch(`/api/matchrooms/${matchId}/join`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(req)
+            body: JSON.stringify({
+                userId: currentUserId
+            })
         });
 
         if (res.ok) {
-            alert("경기 생성 완료!");
-            openMatchModal(false);
+            alert("참가 신청이 완료되었습니다. 방장의 수락을 기다려주세요.");
         } else {
-            alert("생성 실패");
+            alert("참가 신청에 실패했습니다. (백엔드 API 확인 필요)");
         }
-    }
+    };
 
-    /* ===========================
-       7. 경기 리스트 렌더링 & 모달
-    ============================ */
-    function renderMatches(matches, date) {
-        const list = document.getElementById('match-list');
-        const filtered = matches.filter(m => m.matchDate === date);
+    // 참가 취소
+    window.cancelMatch = async () => {
+        if (!confirm("정말 취소하시겠습니까?")) return;
 
-        if (filtered.length === 0) {
-            list.innerHTML = '<p style="color:#777; padding:10px 0;">등록된 경기가 없습니다.</p>';
-            return;
+        await fetch(`/api/matchrooms/${matchId}/cancel`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ userId: currentUserId })
+        });
+    };
+
+    // [방장] 참가자 수락
+    window.approveUser = async (targetId) => {
+        if (!confirm("이 참가자를 수락하시겠습니까?")) return;
+
+        await fetch(`/api/matchrooms/${matchId}/approve`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ userId: targetId })
+        });
+    };
+
+    // [방장] 참가자 강퇴
+    window.rejectUser = async (targetId) => {
+        if (!confirm("이 참가자를 강퇴하시겠습니까?")) return;
+
+        await fetch(`/api/matchrooms/${matchId}/reject`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ userId: targetId })
+        });
+    };
+    // [방장] 경기 확정 (마감)
+    window.closeMatch = async () => {
+        if (!confirm("모집을 마감하고 매칭을 확정하시겠습니까?\n(더 이상 참가자를 받을 수 없습니다)")) return;
+
+        const res = await fetch(`/api/matchrooms/${matchId}/close`, { method: 'POST' });
+        if (res.ok) {
+            alert("매칭이 확정되었습니다!");
+            location.reload();
         }
+    };
 
-        filtered.sort((a, b) => a.matchTime.localeCompare(b.matchTime));
+    /* =========================================================
+       6. WebSocket (실시간 갱신)
+    ========================================================= */
+    function connectWebSocket() {
+        const socket = new SockJS('/ws');
+        stompClient = Stomp.over(socket);
 
-        list.innerHTML = filtered.map(m => {
-            const isClosed = (m.status === 'CLOSED' || m.status === 'closed');
-            const statusText = isClosed ? '모집 마감' : '모집중';
-            const statusClass = isClosed ? 'closed' : 'open';
-
-            return `
-                <div class="match-item" onclick="location.href='/schedule/detail/${m.roomId}'">
-                    <div class="match-item-time">${m.matchTime}</div>
-                    <div class="match-item-meta">
-                        최대인원: ${m.maxPlayers}명 ·
-                        <span class="match-status ${statusClass}">${statusText}</span>
-                    </div>
-                </div>`;
-        }).join('');
-    }
-
-    function openMatchModal(show) {
-        document.getElementById('match-create-modal').style.display =
-            show ? 'flex' : 'none';
+        stompClient.connect({}, () => {
+            console.log("WebSocket Connected");
+            stompClient.subscribe(`/topic/matchroom/${matchId}/participants`, () => {
+                console.log("Update detected, refreshing list...");
+                fetchParticipantList();
+            });
+        }, (err) => console.error("WebSocket Error:", err));
     }
 </script>
 </body>
