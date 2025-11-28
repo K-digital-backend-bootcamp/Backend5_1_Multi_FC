@@ -2,13 +2,23 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.multi.backend5_1_multi_fc.Notification.dao.NotificationDao">
+<mapper namespace="com.multi.backend5_1_multi_fc.notification.dao.NotificationDao">
+
+    <resultMap id="NotificationResultMap" type="com.multi.backend5_1_multi_fc.notification.dto.NotificationDto">
+        <id column="notification_id" property="notificationId"/>
+        <result column="user_id" property="userId"/>
+        <result column="type" property="type"/>
+        <result column="reference_id" property="referenceId"/>
+        <result column="content" property="content"/>
+        <result column="is_read" property="isRead"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
     <insert id="insert" parameterType="NotificationDto" useGeneratedKeys="true" keyProperty="notificationId">
         INSERT INTO Notification (
-            user_id, content, type, is_read, created_at, redirect_url, related_id
-            ) values (
-                      #{userId}, #{content}, #{type}, #{isRead}, NOW(), #{redirectUrl}, #{relatedId}
-            )
+            user_id, content, type, is_read, created_at, reference_id
+        ) values (
+                     #{userId}, #{content}, #{type}, #{isRead}, NOW(), #{referenceId}
+                 )
     </insert>
 
     <select id="findByUserId" parameterType="long" resultType="NotificationDto">
@@ -47,4 +57,46 @@
         delete from Notification
         where notification_id = #{notificationId}
     </delete>
+
+    <select id="findUnreadChatNotification" resultType="NotificationDto">
+        select  *
+        from Notification
+        where user_id = #{userId} and reference_id = #{referenceId} and type = '채팅' and is_read = false
+        order by created_at desc
+            limit 1
+    </select>
+
+    <!--미읽음 댓글 알림 찾기-->
+    <select id="findUnreadCommentNotification"
+            parameterType="map"
+            resultType="com.multi.backend5_1_multi_fc.notification.dto.NotificationDto">
+        SELECT *
+        FROM Notification
+        WHERE user_id = #{userId}
+          AND type = '댓글'
+          AND reference_id = #{postId}
+          AND is_read = false
+            LIMIT 1
+    </select>
+
+    <!-- 알림 내용 수정 -->
+    <update id="updateContent" parameterType="map">
+        UPDATE Notification
+        SET content = #{content}
+        WHERE notification_id = #{notificationId}
+    </update>
+
+    <!-- 타입 + reference_id 기준으로 미읽음 알림 1건 찾기 -->
+    <select id="findUnreadNotificationByTypeAndReference"
+            parameterType="map"
+            resultType="com.multi.backend5_1_multi_fc.notification.dto.NotificationDto">
+        SELECT *
+        FROM Notification
+        WHERE user_id = #{userId}
+          AND type = #{type}
+          AND reference_id = #{referenceId}
+          AND is_read = false
+        ORDER BY created_at DESC
+            LIMIT 1
+    </select>
 </mapper>

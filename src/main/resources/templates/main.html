@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi FC - 메인 페이지</title>
+    <link rel="stylesheet" th:href="@{/css/style.css?v=219}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/header :: siteHeader}"></div>
+
+<div class="video-background">
+    <video poster="" autoplay muted loop></video>
+</div>
+<div class="video-overlay"></div>
+
+<main class="main-content">
+
+    <section class="hero-section">
+        <div id="hero-center-card" class="hero-center-card">
+            <div id="no-schedule-view-hero" style="display:none; position:relative; z-index:50;">
+                <p class="no-schedule-message" style="color:white; font-size:1.5rem; text-shadow: 0 0 5px black;">
+                    로그인하고 7일 이내의<br>나의 일정을 확인하세요! ⚽
+                </p>
+                <div style="text-align: center; margin-top: 20px;">
+                    <a href="/login" class="login-prompt-button" style="background: #e74c3c;">로그인</a>
+                    <a href="/register" class="login-prompt-button" style="background: #2c3e50;">회원가입</a>
+                </div>
+            </div>
+
+            <div id="member-content-area" style="position:relative; z-index:50;">
+                <div id="review-notification-section"></div>
+
+                <div id="upcoming-schedule-section">
+                    <h2 class="schedule-title">📅 7일 이내의 일정</h2>
+
+                    <div class="schedule-slider-container" style="display:none;">
+                        <div class="slider-controls-wrapper">
+                            <button id="schedule-prev" class="slider-arrow prev" style="display: none;">&lt;</button>
+
+                            <div class="schedule-slider-viewport">
+                                <div id="schedule-list-items"></div>
+                            </div>
+
+                            <button id="schedule-next" class="slider-arrow next" style="display: none;">&gt;</button>
+                        </div>
+                        <div class="slider-pagination" id="schedule-pagination"></div>
+                    </div>
+
+                    <div id="no-schedule-view" style="display:none;"></div>
+                </div>
+            </div>
+
+            <h1 class="hero-message">Multi FC</h1>
+            <h2 class="hero-sub-message">실시간 풋살 매칭, 지금 시작하세요!</h2>
+
+            <a href="/fields" class="cta-button" style="z-index:50; position:relative;">매치 찾아보기</a>
+        </div>
+    </section>
+
+    <section class="value-section">
+        <h2 style="font-size: 30px; font-weight: 800; margin-bottom: 50px;">서비스 핵심 가치</h2>
+        <div class="value-grid">
+            <div class="value-card">
+                <i class="fas fa-shield-alt"></i>
+                <h3>공정하고 안전한 환경</h3>
+                <p>운영진의 관리와 시스템을 통해 모두가 즐길 수 있는 깨끗한 풋살 환경을 제공합니다.</p>
+            </div>
+            <div class="value-card">
+                <i class="fas fa-sync-alt"></i>
+                <h3>실시간 동기화</h3>
+                <p>일정 변경, 채팅, 참여 현황 등 모든 정보가 실시간으로 동기화되어 즉각적인 대응이 가능합니다.</p>
+            </div>
+            <div class="value-card">
+                <i class="fas fa-map-marker-alt"></i>
+                <h3>지도 기반 검색</h3>
+                <p>현재 위치와 활동 반경에 맞춘 정교한 구장 검색으로 이동 시간을 최소화합니다.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="features-section">
+        <h2 style="font-size: 36px; margin-bottom: 60px; font-weight:900;">
+            MULTI FC, 주요 서비스
+        </h2>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="icon-wrapper">
+                    <i class="fas fa-map-marked-alt"></i>
+                </div>
+                <h3>최적의 구장 검색</h3>
+                <p>위치, 인원, 시간대별 맞춤형 필터로 주변 풋살장을 빠르게 찾아보세요.<br>지도 연동으로 접근성을 높입니다.</p>
+                <a href="/fields" class="card-link">구장 찾기</a>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon-wrapper">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <h3>실시간 매칭방</h3>
+                <p>경기 개설 또는 참여 신청을 하고,<br>남은 인원을 확인하세요.<br>경기일정 탭을 통헤 일정을 확인합니다.</p>
+                <a href="/schedule" class="card-link">일정 확인</a>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon-wrapper">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3>커뮤니티 소통</h3>
+                <p>자유게시판을 통해 정보를 공유해보세요. 다른 사용자와 활발하게 소통합니다.</p>
+                <a href="/community" class="card-link">커뮤니티 바로가기</a>
+            </div>
+
+            <div class="feature-card">
+                <div class="icon-wrapper">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <h3>실시간 채팅</h3>
+                <p>1:1 또는 그룹 채팅으로 다른 유저들과<br>실시간으로 소통합니다.</p>
+                <a href="/chat" class="card-link">실시간 채팅 바로가기</a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="project-footer">
+    <div class="footer-content">
+        <p>
+            프로젝트 조명 : Multi FC <br>
+            프로젝트 팀원 : 팀장 - 박태란 / 팀원 - 권성민, 문진우, 윤승근, 최준호, 홍예린 <br>
+            담당 업무 : 프론트- 윤승근(조장), 권성민 / 백엔드 - 박태란(조장), 문진우, 최준호, 홍예린 <br>
+            프로젝트 주제 : WebSocket 기반 실시간 스포츠 매칭 플랫폼
+        </p>
+    </div>
+</footer>
+
+<script>
+    // ----------------------
+    // 7일 이내 일정 슬라이더 렌더링용 코드
+    // ----------------------
+    let currentIndex = 0;
+    let totalSlides = 0;
+
+    const sliderTrack = document.getElementById('schedule-list-items');
+    const prevBtn = document.getElementById('schedule-prev');
+    const nextBtn = document.getElementById('schedule-next');
+    const paginationContainer = document.getElementById('schedule-pagination');
+    const sliderContainer = document.querySelector('.schedule-slider-container');
+    const noScheduleView = document.getElementById('no-schedule-view');
+
+    function moveSlider() {
+        if (sliderTrack && sliderTrack.querySelector('.schedule-item')) {
+            const itemWidth = sliderTrack.querySelector('.schedule-item').offsetWidth + 20;
+            sliderTrack.style.transform = `translateX(-${currentIndex * itemWidth}px)`;
+        }
+    }
+
+    function updatePaginationDots() {
+        if (!paginationContainer) return;
+        const dots = paginationContainer.querySelectorAll('.dot');
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index === currentIndex);
+        });
+    }
+
+    function updateSliderControls() {
+        if (!prevBtn || !nextBtn || !sliderContainer) return;
+
+        if (totalSlides > 1) {
+            prevBtn.style.display = (currentIndex === 0) ? 'none' : 'block';
+            nextBtn.style.display = (currentIndex === totalSlides - 1) ? 'none' : 'block';
+        } else {
+            prevBtn.style.display = 'none';
+            nextBtn.style.display = 'none';
+        }
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            if (currentIndex < totalSlides - 1) {
+                currentIndex++;
+                moveSlider();
+                updateSliderControls();
+                updatePaginationDots();
+            }
+        });
+    }
+
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                moveSlider();
+                updateSliderControls();
+                updatePaginationDots();
+            }
+        });
+    }
+
+    if (paginationContainer) {
+        paginationContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('dot')) {
+                currentIndex = parseInt(e.target.dataset.index);
+                moveSlider();
+                updateSliderControls();
+                updatePaginationDots();
+            }
+        });
+    }
+
+    function closeReviewNotification() {
+        const reviewSection = document.getElementById('review-notification-section');
+        if (reviewSection) reviewSection.style.display = 'none';
+    }
+
+    // ⭐ HH:mm 포맷으로 잘라주는 유틸 함수
+    function formatTimeToHHMM(timeStr) {
+        if (!timeStr) return '';
+        // "HH:mm:ss" 또는 "HH:mm" 모두 대응
+        const parts = timeStr.split(':');
+        if (parts.length >= 2) {
+            const hh = parts[0].padStart(2, '0');
+            const mm = parts[1].padStart(2, '0');
+            return `${hh}:${mm}`;
+        }
+        return timeStr; // 예상치 못한 형식이면 그냥 원본 리턴
+    }
+
+    function renderUpcomingSchedules() {
+        const schedules = window.upcomingSchedules || [];
+
+        if (!schedules.length) {
+            if (noScheduleView) {
+                noScheduleView.innerHTML =
+                    '<p class="no-schedule-message" style="color:white; text-shadow: 0 0 3px black;">아직 7일 이내의 일정이 없습니다. 😥</p>';
+                noScheduleView.style.display = 'block';
+            }
+            if (sliderContainer) sliderContainer.style.display = 'none';
+            return;
+        }
+
+        if (sliderTrack) sliderTrack.innerHTML = '';
+        if (paginationContainer) paginationContainer.innerHTML = '';
+
+        schedules.forEach((schedule, index) => {
+            const item = document.createElement('div');
+            item.className = 'schedule-item';
+
+            const isMatch = schedule.type === '경기';
+            const timeText = schedule.time ? formatTimeToHHMM(schedule.time) : '';
+
+            if (isMatch) {
+                const targetMatchId = schedule.matchId;
+                item.innerHTML = `
+                    <div class="item-info-wrapper">
+                        <div class="item-type type-match">경기 일정</div>
+                        <strong>${schedule.title || ''}</strong>
+                        <div class="item-location">
+                            <i class="fas fa-clock"></i>
+                            ${schedule.date || ''} ${timeText ? `(${timeText})` : ''}
+                        </div>
+                    </div>
+                    <a href="/schedule/detail/${targetMatchId}" class="schedule-item-link">상세보기</a>
+                `;
+            } else {
+                item.innerHTML = `
+                    <div class="item-info-wrapper">
+                        <div class="item-type type-personal">개인 일정</div>
+                        <strong>${schedule.title || '(제목 없는 일정)'}</strong>
+                        <div class="item-location">
+                            <i class="fas fa-calendar-alt"></i>
+                            ${schedule.date || ''} ${timeText ? `(${timeText})` : ''}
+                        </div>
+                    </div>
+                    <a href="/mypage?tab=calendar&date=${schedule.date}&scheduleId=${schedule.id}" class="schedule-item-link">
+                        달력에서 보기
+                    </a>
+                `;
+            }
+
+            sliderTrack.appendChild(item);
+
+            const dot = document.createElement('span');
+            dot.className = 'dot';
+            dot.dataset.index = index;
+            paginationContainer.appendChild(dot);
+        });
+
+        totalSlides = schedules.length;
+        currentIndex = 0;
+
+        updateSliderControls();
+        updatePaginationDots();
+
+        if (sliderContainer) sliderContainer.style.display = 'block';
+        if (noScheduleView) noScheduleView.style.display = 'none';
+    }
+
+    // ----------------------
+    // 페이지 로드 후 실행
+    // ----------------------
+    document.addEventListener('DOMContentLoaded', async () => {
+
+        // SSO 처리
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        if (token) {
+            localStorage.setItem('accessToken', token);
+            window.history.replaceState({}, document.title, "/");
+
+            try {
+                const response = await fetch('/api/users/me', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (response.ok) {
+                    const userData = await response.json();
+                    localStorage.setItem('username', userData.nickname);
+                    localStorage.setItem('userId', userData.username);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        const accessToken = localStorage.getItem('accessToken');
+        const loggedInUsername = localStorage.getItem('username');
+
+        const noScheduleViewHero = document.getElementById('no-schedule-view-hero');
+        const memberContentArea = document.getElementById('member-content-area');
+        const globalCtaRegister = document.getElementById('global-cta-register');
+
+        const scheduleSection = document.getElementById('upcoming-schedule-section');
+        const reviewSection = document.getElementById('review-notification-section');
+
+        const heroCenterCard = document.getElementById('hero-center-card');
+
+        if (accessToken) {
+            if (noScheduleViewHero) noScheduleViewHero.style.display = 'none';
+            if (memberContentArea) memberContentArea.style.display = 'block';
+            if (globalCtaRegister) globalCtaRegister.style.display = 'none';
+
+            const userMenuUsername = document.getElementById('user-menu-username');
+            if (userMenuUsername) userMenuUsername.textContent = loggedInUsername;
+
+            if (window.checkPendingReviews) await window.checkPendingReviews();
+            if (window.checkUpcomingSchedules) await window.checkUpcomingSchedules();
+            if (window.updateGlobalBadge) window.updateGlobalBadge();
+
+            renderUpcomingSchedules();
+
+            const ids = window.pendingReviewStadiumIds || [];
+            if (reviewSection && ids.length > 0) {
+                const stadiumId = ids[0];
+                const count = ids.length;
+
+                reviewSection.innerHTML = `
+                    <div class="review-notification-text">
+                        <i class="fas fa-bell"></i> 작성하지 않은 경기 후기가 <strong>${count}건</strong> 있습니다.
+                    </div>
+                    <a href="/reviews/write?stadiumId=${stadiumId}" class="review-notification-link">후기 작성하기</a>
+                    <button class="close-review-btn" onclick="closeReviewNotification()">&times;</button>
+                `;
+                reviewSection.style.display = 'flex';
+            } else if (reviewSection) {
+                reviewSection.style.display = 'none';
+            }
+
+            if (heroCenterCard) heroCenterCard.classList.add('logged-in');
+        } else {
+            if (noScheduleViewHero) noScheduleViewHero.style.display = 'block';
+            if (memberContentArea) memberContentArea.style.display = 'none';
+            if (scheduleSection) scheduleSection.style.display = 'none';
+            if (reviewSection) reviewSection.style.display = 'none';
+            if (globalCtaRegister) globalCtaRegister.style.display = 'block';
+            if (heroCenterCard) heroCenterCard.classList.remove('logged-in');
+        }
+    });
+</script>
+
+</body>
+</html>

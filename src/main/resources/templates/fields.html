@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MULTI FC - 구장 검색</title>
+
+    <!-- ✅ 전역 스타일 -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <!-- 카카오맵 -->
+    <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=4caaf2cb0e09303d4dd13d3fb5ff15e9&libraries=services"></script>
+
+</head>
+
+<body>
+
+<div th:replace="~{fragments/header :: siteHeader}"></div>
+
+<main class="field-search-main">
+    <div class="search-container">
+        <h1 class="search-title">🔎 구장 검색</h1>
+
+        <div class="filter-section">
+            <input type="text" id="search-keyword" placeholder="구장 이름 또는 지역 입력 (예: 강남)">
+            <button id="search-btn">검색</button>
+        </div>
+
+        <div class="search-content">
+            <div class="map-area" id="map"></div>
+
+            <div class="field-list-area">
+                <h2 style="font-size:22px;">검색 결과</h2>
+                <div id="field-list">
+                    <p id="initial-message" style="color:#777; padding: 10px;">구장 목록을 로드 중...</p>
+                </div>
+                <p id="no-results-message" style="display:none; color:#777;">검색 결과가 없습니다.</p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        const accessToken = localStorage.getItem('accessToken');
+
+        // 로그인 사용자 이름 설정 (헤더용)
+        const nickname = localStorage.getItem('username');
+        const userSpan = document.getElementById('user-menu-username');
+        if (nickname && userSpan) {
+            userSpan.textContent = nickname;
+        }
+
+        // 🔥 알림/일정 배지 갱신 (로그인 상태일 때만)
+        if (accessToken) {
+            // userId가 없는 경우를 대비해서 한 번 더 me 호출해도 괜찮음(선택)
+            if (!localStorage.getItem('userId')) {
+                try {
+                    const res = await fetch('/api/users/me', {
+                        headers: { 'Authorization': 'Bearer ' + accessToken }
+                    });
+                    if (res.ok) {
+                        const user = await res.json();
+                        localStorage.setItem('userId', user.userId);
+                        localStorage.setItem('username', user.nickname);
+                        if (userSpan) userSpan.textContent = user.nickname;
+                    }
+                } catch (e) {
+                    console.error('사용자 정보 조회 실패:', e);
+                }
+            }
+
+            // header / main 쪽에서 전역으로 노출한 함수들 호출
+            if (typeof window.checkPendingReviews === 'function') {
+                await window.checkPendingReviews();
+            }
+            if (typeof window.checkUpcomingSchedules === 'function') {
+                await window.checkUpcomingSchedules();
+            }
+            if (typeof window.updateGlobalBadge === 'function') {
+                window.updateGlobalBadge();
+            }
+        }
+
+        // 지도 초기화 + 첫 목록 로드
+        initMap();
+        const list = await fetchStadiums("");
+        renderFieldList(list, false);
+
+        document.getElementById("search-btn").addEventListener("click", performSearch);
+    });
+
+    /* -------------------------------
+     *   🔥 이하 구장 검색 전용 코드
+     * ------------------------------- */
+
+    let kakaoMap = null;
+    let kakaoMarkers = [];
+    let markerInfoById = new Map();
+    let kakaoInfoWindow = null;
+
+    function initMap(lat = 37.5665, lng = 126.9780) {
+        if (!(window.kakao && window.kakao.maps)) return;
+        kakaoMap = new kakao.maps.Map(document.getElementById('map'), {
+            center: new kakao.maps.LatLng(lat, lng),
+            level: 5
+        });
+    }
+
+    function showStadiumInfo(marker, stadium) {
+        if (!kakaoMap || !marker || !stadium) return;
+
+        if (kakaoInfoWindow) kakaoInfoWindow.close();
+
+        const content = `
+            <div style="box-sizing:border-box;padding:10px;width:230px;white-space:normal;word-break:break-all;">
+                <div style="font-weight:600;margin-bottom:6px;font-size:14px;">${stadium.name}</div>
+                <div style="font-size:12px;color:#555;margin-bottom:10px;">${stadium.address}</div>
+                <button
+                    style="padding:8px 10px;font-size:12px;border:none;border-radius:4px;background-color:#6c5ce7;color:#fff;cursor:pointer;"
+                    onclick="location.href='/stadium/detail?id=${stadium.stadiumId}'"
+                >
+                    상세보기
+                </button>
+            </div>
+        `;
+
+        kakaoInfoWindow = new kakao.maps.InfoWindow({ content });
+        kakaoInfoWindow.open(kakaoMap, marker);
+        kakaoMap.panTo(marker.getPosition());
+    }
+
+    function updateMapMarkers(list) {
+        if (!kakaoMap) return;
+
+        kakaoMarkers.forEach(m => m.setMap(null));
+        kakaoMarkers = [];
+        markerInfoById.clear();
+
+        if (kakaoInfoWindow) {
+            kakaoInfoWindow.close();
+            kakaoInfoWindow = null;
+        }
+
+        const bounds = new kakao.maps.LatLngBounds();
+
+        list.forEach(s => {
+            if (!s.latitude || !s.longitude) return;
+            const pos = new kakao.maps.LatLng(s.latitude, s.longitude);
+            const marker = new kakao.maps.Marker({ position: pos, map: kakaoMap });
+
+            kakao.maps.event.addListener(marker, 'click', () => showStadiumInfo(marker, s));
+
+            kakaoMarkers.push(marker);
+            bounds.extend(pos);
+
+            const id = s.stadiumId || s.id || s.stadium_id;
+            if (id != null) markerInfoById.set(String(id), { marker, data: s });
+        });
+
+        if (kakaoMarkers.length > 0) kakaoMap.setBounds(bounds);
+    }
+
+    function renderFieldList(fields, updateMap = true) {
+        const list = document.getElementById("field-list");
+        const noMsg = document.getElementById("no-results-message");
+
+        list.innerHTML = "";
+
+        if (!fields || fields.length === 0) {
+            noMsg.style.display = "block";
+            updateMapMarkers([]);
+            return;
+        }
+
+        noMsg.style.display = "none";
+
+        fields.forEach(field => {
+            const card = document.createElement("div");
+            card.className = "field-card";
+            card.innerHTML = `<h3>${field.name}</h3>`;
+
+            card.addEventListener('click', () => {
+                const id = field.stadiumId || field.id || field.stadium_id;
+                if (!id || !kakaoMap) return;
+
+                const info = markerInfoById.get(String(id));
+                if (info && info.marker) {
+                    showStadiumInfo(info.marker, info.data);
+                } else {
+                    updateMapMarkers([field]);
+                    const info2 = markerInfoById.get(String(id));
+                    if (info2 && info2.marker) showStadiumInfo(info2.marker, info2.data);
+                }
+            });
+
+            list.appendChild(card);
+        });
+
+        if (updateMap) updateMapMarkers(fields);
+    }
+
+    async function fetchStadiums(keyword) {
+        const url = keyword
+            ? `/api/stadiums/search?keyword=${encodeURIComponent(keyword)}`
+            : `/api/stadiums`;
+
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error("API 호출 실패");
+            return await res.json();
+        } catch (e) {
+            console.error("데이터 로드 중 오류:", e);
+            return [];
+        }
+    }
+
+    async function performSearch() {
+        const keyword = document.getElementById("search-keyword").value.trim();
+        const stadiums = await fetchStadiums(keyword);
+
+        renderFieldList(stadiums, true);
+
+        if (stadiums.length === 0 && kakaoMap) {
+            updateMapMarkers([]);
+            kakaoMap.setCenter(new kakao.maps.LatLng(37.5665, 126.9780));
+            kakaoMap.setLevel(5);
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FUTSAL MATCH - 커뮤니티</title>
+
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/header :: siteHeader}"></div>
+
+<main class="community-main">
+    <div class="community-board-container">
+        <div class="board-controls">
+            <div class="board-tabs" id="community-tabs">
+                <button data-category="전체" class="active">전체목록</button>
+                <button data-category="공지">공지사항</button>
+                <button data-category="자유게시판">자유게시판</button>
+            </div>
+            <a href="/community/write" class="write-button" id="write-post-btn">
+                <i class="fas fa-pencil-alt"></i> 글쓰기
+            </a>
+        </div>
+
+        <div class="search-area">
+            <select id="search-type">
+                <option value="title">제목</option>
+                <option value="content">내용</option>
+                <option value="writer">작성자</option>
+            </select>
+            <input type="text" id="search-keyword" placeholder="검색어를 입력하세요">
+            <button id="search-exec-btn"><i class="fas fa-search"></i> 검색</button>
+            <!--새로 추가 -->
+            <select id="page-size" style="margin-left: 8px;">
+                <option value="10" selected>10개</option>
+                <option value="30">30개</option>
+                <option value="60">60개</option>
+            </select>
+        </div>
+
+        <table class="post-table">
+            <thead>
+            <tr>
+                <th style="width: 8%;">번호</th>
+                <th style="width: 10%;">카테고리</th>
+                <th style="width: 45%;">제목</th>
+                <th style="width: 10%;"><i class="fas fa-comment-dots" title="댓글 수"></i></th>
+                <th style="width: 12%;">작성자</th>
+                <th style="width: 15%;">날짜</th>
+                <th style="width: 7%;"><i class="fas fa-eye"></i></th>
+            </tr>
+            </thead>
+            <tbody id="post-list-body">
+            </tbody>
+        </table>
+
+        <div class="pagination" id="community-pagination"></div>
+    </div>
+</main>
+
+<script>
+    const postListBody = document.getElementById('post-list-body');
+    const tabsContainer = document.getElementById('community-tabs');
+    const writeButton = document.getElementById('write-post-btn');
+    const searchExecBtn = document.getElementById('search-exec-btn');
+    const paginationContainer = document.getElementById('community-pagination');
+    const pageSizeSelect = document.getElementById('page-size');   // 추가
+
+    const CATEGORY_ALL = '전체';
+    let currentPage = 1;
+    let currentCategory = CATEGORY_ALL;
+    let currentSearchType = 'title';
+    let currentKeyword = '';
+    let currentPageSize = 10;
+
+    // ⭐ 백엔드에서 목록 + totalCount 가져오기
+    async function fetchPosts(category, page = 1, searchType = 'title', keyword = '') {
+        let url =
+            `/api/community/posts` +
+            `?category=${encodeURIComponent(category)}` +
+            `&page=${page}` +
+            `&size=${currentPageSize}` +
+            `&searchType=${searchType}`;
+
+        if (keyword) {
+            url += `&keyword=${encodeURIComponent(keyword)}`;
+        }
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('게시글 목록을 불러오지 못했습니다.');
+
+        return res.json();   // { posts: [...], totalCount: n }
+    }
+
+    // 페이지네이션 렌더링
+    function renderPagination(totalPosts, currentPage) {
+        const totalPages = Math.ceil(totalPosts / currentPageSize);
+        paginationContainer.innerHTML = '';
+
+        if (totalPages <= 1) return;
+
+        const pagesPerGroup = 10;
+        const currentGroup = Math.ceil(currentPage / pagesPerGroup);
+        const startPage = (currentGroup - 1) * pagesPerGroup + 1;
+        const endPage = Math.min(startPage + pagesPerGroup - 1, totalPages);
+
+        const prevGroupPage = currentPage > 1 ? currentPage - 1 : 1;
+        const prevDisabled = currentPage === 1;
+        paginationContainer.innerHTML += `<a href="#" data-page="${prevGroupPage}" class="${prevDisabled ? 'disabled' : ''}">&lt;</a>`;
+
+        for (let i = startPage; i <= endPage; i++) {
+            paginationContainer.innerHTML += `<a href="#" data-page="${i}" class="${i === currentPage ? 'active' : ''}">${i}</a>`;
+        }
+
+        const nextGroupPage = currentPage < totalPages ? currentPage + 1 : totalPages;
+        const nextDisabled = currentPage === totalPages;
+        paginationContainer.innerHTML += `<a href="#" data-page="${nextGroupPage}" class="${nextDisabled ? 'disabled' : ''}">&gt;</a>`;
+
+        paginationContainer.querySelectorAll('a').forEach(link => {
+            if (!link.classList.contains('disabled')) {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const newPage = parseInt(e.target.dataset.page);
+                    if (newPage > 0 && newPage <= totalPages) {
+                        renderPostList(
+                            currentCategory,
+                            currentKeyword,
+                            currentSearchType,
+                            newPage
+                        );
+                    }
+                });
+            }
+        });
+    }
+
+    // 게시글 리스트 렌더링
+    async function renderPostList(category, searchKeyword = '', searchType = 'title', page = 1) {
+        try {
+            currentCategory = category;
+            currentSearchType = searchType;
+            currentKeyword = searchKeyword;
+            currentPage = page;
+
+            const data = await fetchPosts(category, page, searchType, searchKeyword);
+            const posts = data.posts || [];
+            const totalPosts = data.totalCount || 0;
+
+            postListBody.innerHTML = '';
+
+            if (totalPosts === 0) {
+                postListBody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; color: #999; padding: 50px;">
+                        게시글이 없습니다.
+                    </td>
+                </tr>
+            `;
+                renderPagination(0, 1);
+                return;
+            }
+
+            // 현재 페이지의 첫 번호
+            const startIndex = (page - 1) * currentPageSize;
+
+            posts.forEach((post, index) => {
+                const row = document.createElement('tr');
+                row.dataset.postId = post.postId;
+
+                const sequentialId = startIndex + index + 1;
+                const categoryDisplay = post.category === '공지' ? '공지' : '자유';
+
+                row.innerHTML = `
+                <td>${sequentialId}</td>
+                <td class="col-category">${categoryDisplay}</td>
+                <td class="col-title" onclick="location.href='/community/detail/${post.postId}'">
+                    ${post.title}
+                </td>
+                <td>${post.commentCount ?? 0}</td>
+                <td>${post.writerNickname}</td>
+                <td>${post.createdAt ?? ''}</td>
+                <td>${post.viewCount ?? 0}</td>
+            `;
+                postListBody.appendChild(row);
+            });
+
+            renderPagination(totalPosts, page);
+        } catch (err) {
+            console.error(err);
+            postListBody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align: center; color: #e74c3c; padding: 50px;">
+                    게시글을 불러오는 중 오류가 발생했습니다.
+                </td>
+            </tr>
+        `;
+        }
+    }
+
+    // 검색 버튼
+    if (searchExecBtn) {
+        searchExecBtn.addEventListener('click', () => {
+            const activeTab = document.querySelector('.board-tabs button.active');
+            const category = activeTab ? activeTab.dataset.category : CATEGORY_ALL;
+            const keyword = document.getElementById('search-keyword').value;
+            const type = document.getElementById('search-type').value;
+
+            renderPostList(category, keyword, type, 1);
+        });
+    }
+
+    // 초기화
+    document.addEventListener('DOMContentLoaded', () => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    // pageSizeSelect 기본값을 currentPageSize와 동기화
+    if (pageSizeSelect) {
+        currentPageSize = parseInt(pageSizeSelect.value, 10) || 10;
+
+        pageSizeSelect.addEventListener('change', () => {
+            currentPageSize = parseInt(pageSizeSelect.value, 10) || 10;
+            // 페이지 개수 바꾸면 1페이지부터 다시 로딩
+            renderPostList(currentCategory, currentKeyword, currentSearchType, 1);
+        });
+    }
+
+    // 커뮤니티 탭/리스트 초기화
+    const tabs = tabsContainer.querySelectorAll('button');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById('search-keyword').value = '';
+            renderPostList(tab.dataset.category, '', 'title', 1);
+        });
+    });
+
+    // 첫 로딩 전체 탭
+    renderPostList(CATEGORY_ALL);
+
+    // 제목 클릭 시 상세 이동
+    document.querySelectorAll('.post-table').forEach(table => {
+        table.addEventListener('click', function (e) {
+            const titleCell = e.target.closest('.col-title');
+            if (titleCell) {
+                const postId = String(titleCell.closest('tr').dataset.postId);
+                location.href = `/community/detail/${postId}`;
+            }
+        });
+    });
+
+    // 로그인 상태라면 알림/일정 정보 불러와서 헤더 배지 갱신
+    if (accessToken) {
+        (async () => {
+            if (!localStorage.getItem('userId')) {
+                try {
+                    const res = await fetch('/api/users/me', {
+                        headers: { 'Authorization': 'Bearer ' + accessToken }
+                    });
+                    if (res.ok) {
+                        const user = await res.json();
+                        localStorage.setItem('userId', user.userId);
+                        localStorage.setItem('username', user.nickname);
+                    }
+                } catch (e) {
+                    console.error('사용자 정보 조회 실패:', e);
+                }
+            }
+
+            if (window.checkPendingReviews) await window.checkPendingReviews();
+            if (window.checkUpcomingSchedules) await window.checkUpcomingSchedules();
+            if (window.updateGlobalBadge) window.updateGlobalBadge();
+        })();
+    }
+    });
+</script>
+
+</body>
+</html>

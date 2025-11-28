@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MULTI FC - 알림 목록</title>
+
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        .notification-list { list-style: none; padding: 0; margin: 0; }
+        .notification-item {
+            display: grid;
+            grid-template-columns: 40px 1fr auto;
+            gap: 15px;
+            align-items: center; padding: 20px 15px;
+            border-bottom: 1px solid #eee; text-decoration: none;
+            color: #333; transition: background-color 0.3s;
+            position: relative;
+        }
+        .notification-item:hover { background-color: #f9f9f9; }
+        .notification-item.unread {
+            background-color: #fff8e1;
+            border-left: 5px solid #ffc107;
+            padding-left: 10px;
+        }
+        .notification-item.clickable { cursor: pointer; }
+        .notification-item.clickable:hover { background-color: #f0f0f0; }
+        .notification-item i { font-size: 20px; text-align: center; }
+        .notification-item .icon-review { color: #faad14; }
+        .notification-item .icon-schedule { color: #6c5ce7; }
+        .notification-item .icon-friend { color: #2ecc71; }
+        .notification-item .icon-chat { color: #f39c12; }
+        .notification-content small {
+            display: block;
+            margin-top: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6c5ce7;
+        }
+
+        /* ⭐ 페이지네이션 스타일 재추가 ⭐ */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            padding: 20px 0;
+            border-top: 1px solid #eee;
+            margin-top: 10px;
+        }
+        .pagination-btn {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            color: #555;
+            padding: 8px 15px;
+            margin: 0 4px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+        .pagination-btn.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+            cursor: default;
+        }
+        /* ⭐ 탭 스타일 ⭐ */
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #777;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: color 0.2s, border-bottom-color 0.2s;
+        }
+        .tab-btn:hover {
+            color: #444;
+        }
+        .tab-btn.active {
+            color: #6c5ce7;
+            border-bottom: 2px solid #6c5ce7;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+<div th:replace="~{fragments/header :: siteHeader}"></div>
+
+<main class="login-page-main">
+    <div class="main-wrapper">
+        <div class="login-section" style="padding-right: 70px;">
+            <div class="login-container">
+                <h1 class="title-login">알림 목록</h1>
+
+                <div class="tab-buttons">
+                    <button class="tab-btn active" data-tab-type="schedule">일정 및 후기</button>
+                    <button class="tab-btn" data-tab-type="chat">채팅 및 댓글</button>
+                    <button class="tab-btn" data-tab-type="friend">친구</button>
+                </div>
+
+                <div id="schedule-notifications-tab" class="tab-content active">
+                    <div class="notification-list" id="notification-list-container-schedule"></div>
+                    <div class="pagination-container" id="pagination-container-schedule"></div>
+                </div>
+
+                <div id="chat-notifications-tab" class="tab-content">
+                    <div class="notification-list" id="notification-list-container-chat"></div>
+                    <div class="pagination-container" id="pagination-container-chat"></div>
+                </div>
+
+                <div id="friend-notifications-tab" class="tab-content">
+                    <div class="notification-list" id="notification-list-container-friend"></div>
+                    <div class="pagination-container" id="pagination-container-friend"></div>
+                </div>
+
+            </div>
+        </div>
+        <div class="background-image-section"></div>
+    </div>
+</main>
+
+<script>
+    // ⭐ 페이지네이션 관련 전역 변수 ⭐
+    let currentPage = 1;
+    const itemsPerPage = 5; // 한 페이지당 5개 알림
+    let allNotificationsCache = []; // 전체 알림을 저장할 캐시
+    let currentTabType = 'schedule'; // 기본 탭을 'schedule'로 변경
+
+    // 날짜 포맷
+    function formatNotificationTime(createdAt){
+        if (!createdAt) return '방금 전';
+        const notifDate = new Date(createdAt);
+        const now = new Date();
+        const diffMs = now - notifDate;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if(diffMins < 1) return '방금 전';
+        if(diffMins < 60) return `${diffMins}분 전`;
+        if (diffHours < 24) return `${diffHours}시간 전`;
+        if (diffDays < 7) return `${diffDays}일 전`;
+
+        return notifDate.toLocaleDateString('ko-KR');
+    }
+
+    // ⭐⭐⭐ [후기 알림 동적 삽입] ⭐⭐⭐
+    async function prependReviewNotification(notifications) {
+        const currentUserId = localStorage.getItem('userId');
+        const accessToken = localStorage.getItem('accessToken');
+        if (!currentUserId || !accessToken) return notifications;
+
+        try {
+            const response = await fetch(`/api/reviews/pending-stadiums?userId=${currentUserId}`);
+            if(response.status === 401) return notifications;
+            if (!response.ok) throw new Error('후기 대상 조회 실패');
+
+            const pendingStadiumIds = await response.json();
+
+            if (pendingStadiumIds && pendingStadiumIds.length > 0) {
+                const count = pendingStadiumIds.length;
+                const targetStadiumId = pendingStadiumIds[0];
+
+                const fakeReviewNotification = {
+                    notificationId: 0,
+                    userId: Number(currentUserId),
+                    type: '후기',
+                    referenceId: targetStadiumId,
+                    content: `작성하지 않은 경기 후기가 ${count}건 있습니다.`,
+                    isRead: false,
+                    createdAt: new Date().toISOString()
+                };
+
+                const filtered = notifications.filter(notif => notif.type !== '후기');
+                filtered.unshift(fakeReviewNotification);
+                return filtered;
+            }
+        } catch (error) {
+            console.error("후기 대상 동적 삽입 중 오류:", error);
+        }
+
+        return notifications;
+    }
+
+    // ⭐⭐⭐ [일정 알림 동적 삽입] 함수 ⭐⭐⭐
+    function prependScheduleNotification(notifications) {
+        const schedules = window.upcomingSchedules || [];
+
+        if (schedules.length === 0) {
+            return notifications;
+        }
+
+        const hasReadSchedules = localStorage.getItem('hasReadSchedules') === 'true';
+
+        schedules.forEach((schedule) => {
+            const scheduleDateTime = `${schedule.date} ${schedule.time}`;
+            const content = `${schedule.title || '경기 일정'} (${scheduleDateTime})`;
+
+            if (notifications.some(n => n.notificationId === `schedule_${schedule.id}`)) {
+                return;
+            }
+
+            const fakeScheduleNotification = {
+                notificationId: `schedule_${schedule.id}`,
+                userId: localStorage.getItem('userId'),
+                type: '경기일정',
+                referenceId: schedule.matchId || schedule.id,
+                content: content,
+                isRead: hasReadSchedules,
+                createdAt: new Date().toISOString(),
+                isSchedule: true
+            };
+
+            notifications.unshift(fakeScheduleNotification);
+        });
+
+        // ⭐⭐ 후기 알림을 최상단으로 올리는 정렬 로직 (0은 후기 알림 ID) ⭐⭐
+        notifications.sort((a, b) => {
+            // ID가 0인 후기 알림이 가장 위에 오도록
+            if (a.notificationId === 0) return -1;
+            if (b.notificationId === 0) return 1;
+            // 나머지 알림은 원래 순서 유지
+            return 0;
+        });
+
+        return notifications;
+    }
+
+    // ⭐⭐⭐ 페이지네이션 렌더링 함수 ⭐⭐⭐
+    function renderPagination(totalItems, currentPage, tabType) {
+        const paginationContainer = document.getElementById(`pagination-container-${tabType}`);
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        paginationContainer.innerHTML = '';
+
+        if (totalPages <= 1) return;
+
+        // 이전 페이지 버튼
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'pagination-btn';
+        prevBtn.textContent = '이전';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => {
+            if (currentPage > 1) {
+                switchTab(tabType, currentPage - 1);
+            }
+        };
+        paginationContainer.appendChild(prevBtn);
+
+        // 페이지 번호 버튼 (최대 5개 표시)
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, currentPage + 2);
+
+        if (endPage - startPage < 4) {
+            if (startPage === 1) {
+                endPage = Math.min(totalPages, 5);
+            } else if (endPage === totalPages) {
+                startPage = Math.max(1, totalPages - 4);
+            }
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            const pageBtn = document.createElement('button');
+            pageBtn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
+            pageBtn.textContent = i;
+            pageBtn.onclick = () => {
+                switchTab(tabType, i);
+            };
+            paginationContainer.appendChild(pageBtn);
+        }
+
+        // 다음 페이지 버튼
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'pagination-btn';
+        nextBtn.textContent = '다음';
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.onclick = () => {
+            if (currentPage < totalPages) {
+                switchTab(tabType, currentPage + 1);
+            }
+        };
+        paginationContainer.appendChild(nextBtn);
+    }
+    // ⭐⭐⭐ 페이지네이션 렌더링 함수 끝 ⭐⭐⭐
+
+    // ⭐⭐⭐ 알림 목록 렌더링 함수 (유형별 분리) ⭐⭐⭐
+    function renderNotificationsByTab(notifications, tabType, page = 1) {
+        const container = document.getElementById(`notification-list-container-${tabType}`);
+        const paginationContainer = document.getElementById(`pagination-container-${tabType}`);
+
+        container.innerHTML = '';
+        paginationContainer.innerHTML = ''; // 페이지네이션 컨테이너 초기화
+
+        let filteredNotifications = [];
+
+        // ⭐ 알림 유형별 필터링 로직 ⭐
+        if (tabType === 'schedule') {
+            filteredNotifications = notifications.filter(n => {
+                const type = n.type;
+                return type === '후기' || type === '매치' || type === '경기일정';
+            });
+        } else if (tabType === 'chat') {
+            filteredNotifications = notifications.filter(n => {
+                const type = n.type;
+                return type === '채팅' || type === '댓글' || type === '대댓글';
+            });
+        } else if (tabType === 'friend') {
+            filteredNotifications = notifications.filter(n => {
+                const type = n.type;
+                return type === '친구신청' || type === '친구요청';
+            });
+        }
+
+        if (filteredNotifications.length === 0) {
+            container.innerHTML =
+                '<p style="text-align: center; color: #999; padding: 50px;">해당 카테고리의 알림이 없습니다.</p>';
+            return;
+        }
+
+        let displayNotifications = filteredNotifications;
+        let totalItems = filteredNotifications.length;
+
+        // 페이지네이션 적용
+        const startIndex = (page - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        displayNotifications = filteredNotifications.slice(startIndex, endIndex);
+
+        renderPagination(totalItems, page, tabType); // 탭 타입 전달
+
+
+        displayNotifications.forEach(notif => {
+            const item = document.createElement('div');
+            const unreadClass = (notif.isRead || notif.type === '경기일정') ? '' : 'unread';
+            let iconHtml = '';
+            let actionHtml = '';
+            let isClickable = true;
+            let isSchedule = notif.type === '경기일정';
+
+            let displayContent = notif.content;
+            let scheduleTimeDisplay = '';
+
+            // ⭐ 가독성 개선 로직: 일정 알림일 경우 내용에서 날짜/시간 분리 ⭐
+            if (isSchedule) {
+                const timeMatch = notif.content.match(/\((\d{4}-\d{2}-\d{2}\s\d{2}:\d{2})\)$/);
+                if (timeMatch && timeMatch.length > 1) {
+                    scheduleTimeDisplay = timeMatch[1];
+                    displayContent = notif.content.replace(timeMatch[0], '').trim();
+                }
+            }
+
+
+            if(notif.type === '채팅'){
+                iconHtml = '<i class="fas fa-comments icon-chat"></i>';
+                item.onclick = () => {
+                    if(isClickable) {
+                        markAsRead(notif.notificationId, notif.type, page);
+                        location.href = `/chat?roomId=${notif.referenceId}`;
+                    }
+                };
+            } else if (notif.type === '친구신청' || notif.type === '친구요청') {
+                iconHtml = '<i class="fas fa-user-friends icon-friend"></i>';
+
+                item.onclick = () => {
+                    if (isClickable) {
+                        markAsRead(notif.notificationId, notif.type, page);
+                        window.location.href = '/mypage?tab=friends&subtab=add';
+                    }
+                };
+                actionHtml = '';
+                isClickable = true;
+                item.style.cursor = 'pointer';
+
+            } else if (notif.type === '매치' || isSchedule) {
+                iconHtml = '<i class="fas fa-calendar-alt icon-schedule"></i>';
+                item.onclick = () => {
+                    if (isClickable) {
+                        if (!isSchedule) {
+                            markAsRead(notif.notificationId, notif.type, page);
+                        } else {
+                            localStorage.setItem('hasReadSchedules', 'true');
+                            if (window.updateGlobalBadge) window.updateGlobalBadge();
+                        }
+                        const targetId = notif.matchId || notif.referenceId;
+                        if (targetId) {
+                            location.href = `/schedule/detail/${targetId}`;
+                        } else {
+                            location.href = `/schedule?stadium`;
+                        }
+                    }
+                };
+
+            } else if (notif.type === '후기') {
+                iconHtml = '<i class="fas fa-star icon-review"></i>';
+                item.onclick = () => {
+                    if (isClickable) {
+                        markAsRead(notif.notificationId, notif.type, page);
+                        location.href = `/reviews/write?stadiumId=${notif.referenceId}`;
+                    }
+                };
+
+            } else if (notif.type === '댓글' || notif.type === '대댓글') {
+                iconHtml = '<i class="fas fa-comment-dots icon-chat"></i>';
+                item.onclick = () => {
+                    if (isClickable) {
+                        markAsRead(notif.notificationId, notif.type, page);
+                        location.href = `/community/detail/${notif.referenceId}`;
+                    }
+                };
+
+            } else {
+                iconHtml = '<i class="fas fa-bell"></i>';
+                item.onclick = () => {
+                    if (isClickable) markAsRead(notif.notificationId, notif.type, page);
+                };
+            }
+
+            const finalUnreadClass = unreadClass;
+
+            item.className = `notification-item ${finalUnreadClass} ${isClickable ? 'clickable' : ''}`;
+            item.dataset.notificationId = notif.notificationId;
+
+            const timeText = notif.type === '후기' || isSchedule
+                ? (isSchedule ? '다가오는 일정' : '지금 바로')
+                : formatNotificationTime(notif.createdAt);
+
+            // 내용과 시간을 분리하여 출력
+            item.innerHTML = `
+                ${iconHtml}
+                <div class="notification-content">
+                    <p>
+                        <strong>${displayContent}</strong>
+                        ${scheduleTimeDisplay ? `<small>(${scheduleTimeDisplay})</small>` : ''}
+                    </p>
+                    <span class="time">${timeText}</span>
+                </div>
+                ${actionHtml}
+            `;
+
+            container.appendChild(item);
+        });
+    }
+
+    // ⭐⭐⭐ 탭 전환 함수 ⭐⭐⭐
+    function switchTab(tabType, page = 1) {
+        currentTabType = tabType;
+        currentPage = page;
+
+        // 탭 버튼 활성화
+        document.querySelectorAll('.tab-btn').forEach(btn =>
+            btn.classList.toggle('active', btn.dataset.tabType === tabType)
+        );
+
+        // 컨텐츠 표시
+        document.querySelectorAll('.tab-content').forEach(content =>
+            content.classList.remove('active')
+        );
+        document.getElementById(`${tabType}-notifications-tab`).classList.add('active');
+
+        // 로딩 메시지 표시
+        document.getElementById(`notification-list-container-${tabType}`).innerHTML =
+            '<div style="text-align: center; padding: 50px; color: #999;">알림을 불러오는 중...</div>';
+
+        // 알림 렌더링 호출
+        renderNotificationsByTab(allNotificationsCache, tabType, page);
+    }
+
+    // ⭐⭐⭐ 메인 알림 로드 함수 (전체 알림 캐시) ⭐⭐⭐
+    async function loadNotifications(page = 1){
+        const accessToken = localStorage.getItem('accessToken');
+
+        // 모든 탭 컨테이너에 로딩 메시지 표시
+        document.querySelectorAll('.notification-list').forEach(cont => {
+            cont.innerHTML = '<div style="text-align: center; padding: 50px; color: #999;">알림을 불러오는 중...</div>';
+        });
+
+        try {
+            const response = await fetch('/api/notifications/unread', {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+
+            if(response.status === 401) {
+                alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+                localStorage.removeItem('accessToken');
+                window.location.href = '/login';
+                return;
+            }
+            if(!response.ok) throw new Error('알림 목록 조회 실패');
+
+            let notifications = await response.json();
+
+            // 후기 알림 삽입
+            notifications = await prependReviewNotification(notifications);
+
+            // 일정 알림 삽입
+            notifications = prependScheduleNotification(notifications);
+
+            // ⭐ 캐시에 전체 알림 저장 ⭐
+            allNotificationsCache = notifications;
+
+            // 알림이 하나도 없을 경우 처리
+            if(!allNotificationsCache || allNotificationsCache.length === 0){
+                document.querySelectorAll('.notification-list').forEach(cont => {
+                    cont.innerHTML = '<p style="text-align: center; color: #999; padding: 50px;">새로운 알림이 없습니다.</p>';
+                });
+
+                localStorage.setItem('hasReadReviews', 'true');
+                localStorage.setItem('hasReadSchedules', 'true');
+                if (window.updateGlobalBadge) window.updateGlobalBadge();
+                return;
+            }
+
+            // ⭐ 현재 활성화된 탭의 알림 렌더링 호출 ⭐
+            switchTab(currentTabType, page);
+
+            // ✅ 목록 뜨면 읽음 처리 플래그 설정
+            localStorage.setItem('hasReadReviews', 'true');
+            if (window.updateGlobalBadge) window.updateGlobalBadge();
+
+        } catch (error) {
+            console.error('알림 목록 로드 실패:', error);
+            document.querySelectorAll('.notification-list').forEach(cont => {
+                cont.innerHTML = '<p style="text-align: center; color: #e74c3c; padding: 50px;">알림을 불러올 수 없습니다.</p>';
+            });
+        }
+    }
+
+    async function markAsRead(notificationId, type, page){
+        if (notificationId === 0 || String(notificationId).startsWith('schedule_')) {
+            await loadNotifications(page);
+            return;
+        }
+
+        const accessToken = localStorage.getItem('accessToken');
+
+        try {
+            const response = await fetch(`/api/notifications/${notificationId}/read`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+
+            if(!response.ok) console.log('알림 읽음 처리 실패');
+
+            if (type === '후기') localStorage.setItem('hasReadReviews', 'true');
+
+            // ⭐ 목록 다시 로드 및 현재 탭으로 전환 ⭐
+            await loadNotifications(page);
+            switchTab(currentTabType, page);
+
+            // 읽음 처리 후 배지 상태 재갱신
+            try {
+                if (typeof window.checkPendingReviews === 'function') { await window.checkPendingReviews(); }
+                if (typeof window.checkUpcomingSchedules === 'function') { await window.checkUpcomingSchedules(); }
+                if (typeof window.updateGlobalBadge === 'function') { window.updateGlobalBadge(); }
+            } catch (e) { console.error('배지 업데이트 중 오류:', e); }
+
+        } catch (error) { console.error('알림 읽음 처리 오류 :', error); }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const accessToken = localStorage.getItem('accessToken');
+        if(!accessToken) {
+            alert("로그인이 필요한 페이지입니다. 로그인 페이지로 이동합니다.");
+            window.location.href = '/login';
+            return;
+        }
+
+        // ✅ 공통 헤더 배지 로직 갱신 호출
+        try {
+            if (typeof window.checkPendingReviews === 'function') { await window.checkPendingReviews(); }
+            if (typeof window.checkUpcomingSchedules === 'function') { await window.checkUpcomingSchedules(); }
+            if (typeof window.updateGlobalBadge === 'function') { window.updateGlobalBadge(); }
+        } catch (e) { console.error('배지 업데이트 중 오류:', e); }
+
+        // ⭐ 초기 알림 로드 및 렌더링 ⭐
+        await loadNotifications(1);
+
+        // 탭 버튼 이벤트 리스너 연결
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                switchTab(button.dataset.tabType, 1); // 탭 전환 시 1페이지로 이동
+            });
+        });
+    });
+</script>
+</body>
+</html>

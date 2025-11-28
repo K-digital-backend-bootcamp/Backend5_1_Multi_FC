@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.multi.backend5_1_multi_fc.schedule.mapper.ScheduleMapper">
+
+    <!-- username -> user_id 얻기 -->
+    <select id="findUserIdByUsername" parameterType="string" resultType="long">
+        SELECT user_id
+        FROM User
+        WHERE username = #{username}
+            LIMIT 1
+    </select>
+
+    <!-- 캘린더/위젯용 결과 매핑 -->
+    <resultMap id="DayItemMap" type="com.multi.backend5_1_multi_fc.schedule.dto.ScheduleDto$DayItem">
+        <id     property="scheduleId"   column="schedule_id"/>
+        <result property="title"        column="title"/>
+        <result property="scheduleType" column="schedule_type"/>
+        <result property="scheduleDate" column="schedule_date"/>
+        <result property="scheduleTime" column="schedule_time"/>
+        <!-- 추가 -->
+        <result property="content"      column="content"/>
+        <result property="matchId"      column="match_room_id"/>
+    </resultMap>
+
+    <!-- 개인 일정 추가  -->
+    <insert id="insertPersonal" parameterType="map">
+        INSERT INTO Schedule (user_id, title, content, schedule_type, schedule_date, schedule_time)
+        VALUES (#{userId}, #{req.title}, #{req.content}, '개인 일정', #{req.scheduleDate}, #{req.scheduleTime})
+    </insert>
+
+    <!-- 개인 일정 수정 (본인 + 개인 일정만) -->
+    <update id="updatePersonal" parameterType="map">
+        UPDATE Schedule
+        SET title = #{req.title},
+            content = #{req.content},
+            schedule_date = #{req.scheduleDate},
+            schedule_time = #{req.scheduleTime}
+        WHERE schedule_id = #{scheduleId}
+          AND user_id = #{userId}
+          AND schedule_type = '개인 일정'
+    </update>
+
+    <!-- 개인 일정 삭제 -->
+    <delete id="deletePersonal" parameterType="map">
+        DELETE FROM Schedule
+        WHERE schedule_id = #{scheduleId}
+          AND user_id = #{userId}
+          AND schedule_type = '개인 일정'
+    </delete>
+
+    <!-- 특정 기간 전체 일정 (캘린더 월 단위) -->
+    <select id="findAllBetween" parameterType="map" resultMap="DayItemMap">
+        SELECT schedule_id, title, schedule_type, schedule_date, schedule_time, content, match_room_id
+        FROM Schedule
+        WHERE user_id = #{userId}
+          AND schedule_date BETWEEN #{startDate} AND #{endDate}
+        ORDER BY schedule_date ASC, schedule_time ASC, schedule_id ASC
+    </select>
+
+
+    <!-- 달력 한칸에 날짜별 가장 빠른 2개 -->
+    <select id="findTop2ByDate" parameterType="map" resultMap="DayItemMap">
+        SELECT schedule_id, title, schedule_type, schedule_date, schedule_time, content, match_room_id
+        FROM Schedule
+        WHERE user_id = #{userId}
+          AND schedule_date = #{date}
+        ORDER BY schedule_time ASC, schedule_id ASC
+            LIMIT 2
+    </select>
+
+    <!-- 날짜 전체 목록 -->
+    <select id="findAllByDate" parameterType="map" resultMap="DayItemMap">
+        SELECT schedule_id, title, schedule_type, schedule_date, schedule_time, content, match_room_id
+        FROM Schedule
+        WHERE user_id = #{userId}
+          AND schedule_date = #{date}
+        ORDER BY schedule_time ASC, schedule_id ASC
+    </select>
+
+    <!-- 메인 오늘 현재시각 이후 + 내일부터는 하루 전체 중 빠른 순으로 5개 -->
+    <select id="findUpcoming7d" parameterType="map" resultMap="DayItemMap">
+        SELECT
+            s.schedule_id,
+            s.title,
+            s.schedule_type,
+            s.schedule_date,
+            s.schedule_time,
+            s.content,
+            s.match_room_id          -- 🔹 그냥 컬럼 그대로
+        FROM Schedule s
+        WHERE s.user_id = #{userId}
+          AND (
+            (s.schedule_date = #{today} AND (s.schedule_time IS NULL OR s.schedule_time >= #{nowTime}))
+                OR (s.schedule_date BETWEEN #{tomorrow} AND #{sixDaysLater})
+            )
+        ORDER BY s.schedule_date ASC, s.schedule_time ASC, s.schedule_id ASC
+            LIMIT 5
+    </select>
+
+    <!-- 경기 자동 연동 (승인 + 모집완료/경기완료, 중복 방지) -->
+    <insert id="upsertApprovedMatches" parameterType="map">
+        -- 1) 승인된 참가자 일정
+        INSERT INTO Schedule (user_id, title, schedule_type, schedule_date, schedule_time, match_room_id)
+        SELECT
+            mp.user_id, st.name, '경기', mr.match_date, mr.match_time, mr.room_id
+        FROM Match_Participant mp
+                 JOIN Match_Room mr   ON mr.room_id    = mp.room_id
+                 LEFT JOIN Stadium st ON st.stadium_id = mr.stadium_id
+        WHERE mp.user_id = #{userId}
+          AND mp.status  = '확정'
+          AND mr.status = 'CLOSED'
+          AND mr.match_date >= CURDATE()
+          AND NOT EXISTS (
+            SELECT 1
+            FROM Schedule s
+            WHERE s.user_id       = mp.user_id
+              AND s.schedule_type = '경기'
+              AND s.match_room_id = mr.room_id
+        )
+
+        UNION
+
+        -- 2) 매칭방 호스트 일정
+        SELECT
+            mr.host_id AS user_id, st.name, '경기', mr.match_date, mr.match_time, mr.room_id
+        FROM Match_Room mr
+                 LEFT JOIN Stadium st ON st.stadium_id = mr.stadium_id
+        WHERE mr.host_id = #{userId}
+          AND mr.status = 'CLOSED'
+          AND mr.match_date >= CURDATE()
+          AND NOT EXISTS (
+            SELECT 1
+            FROM Schedule s
+            WHERE s.user_id       = mr.host_id
+              AND s.schedule_type = '경기'
+              AND s.match_room_id = mr.room_id
+        );
+    </insert>
+
+
+</mapper>

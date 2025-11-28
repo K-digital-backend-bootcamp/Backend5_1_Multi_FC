@@ -1,0 +1,28 @@
+package com.multi.backend5_1_multi_fc.match.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class MatchRoomDto {
+    private Long roomId;
+    private Long stadiumId;
+    private Long hostId;
+    private String matchDate;
+    private String matchTime; // 시작 시간
+    private String endTime;   // ✨ 종료 시간 추가
+
+    private Integer maxPlayers;
+    private String level;
+    private String status;
+
+    // ⭐️ [추가] 프론트엔드 표시를 위한 필드
+    private String stadiumName;
+    private String hostNickname;
+    private Integer currentPlayers;
+}

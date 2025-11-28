@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi FC - 로그인</title>
+    <link rel="stylesheet" th:href="@{/css/style.css?v=201}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+<div th:replace="~{fragments/header :: siteHeader}"></div>
+
+<main class="login-page-main">
+    <div class="main-wrapper">
+        <div class="login-section">
+            <div class="login-container">
+                <h1 class="title-login">Login</h1>
+                <p id="error-message" class="error-message" style="display:none;">
+                    Error message here.
+                </p>
+                <form id="login-form">
+                    <div class="input-group">
+                        <label for="username">User name</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="text" id="username" name="username" placeholder="아이디를 입력하세요" required>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="password">Password</label>
+                        <div class="password-wrapper input-with-icon">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="password" name="password" placeholder="********" required>
+                            <i class="fas fa-eye-slash toggle-password"></i>
+                        </div>
+                    </div>
+                    <div class="forgot-remember">
+                        <a href="/forgot-password" class="forgot-password">Forgot?</a>
+                        <div class="remember-me">
+                            <input type="checkbox" id="remember-me">
+                            <label for="remember-me">Remember me</label>
+                        </div>
+                    </div>
+                    <button type="submit" class="login-button">Login</button>
+                    <div class="signup-link">
+                        Don't have an account? <a href="/register">Sign up</a>
+                    </div>
+                </form>
+
+                <p style="text-align: center; font-size: 14px; color: #555; font-weight: 500; margin-top: 30px; margin-bottom: -20px;">
+                    Social Login
+                </p>
+
+                <div class="social-login">
+                    <a href="/oauth2/authorization/google" class="social-btn google">
+                        <i class="fab fa-google"></i>
+                    </a>
+                    <a href="/oauth2/authorization/kakao" class="social-btn kakao" style="background-color: #FEE500; color: #191919;">
+                        <i class="fas fa-comment"></i>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</main>
+
+<div id="login-success-modal" class="login-modal-overlay">
+    <div class="login-modal-content">
+        <h2>로그인 성공</h2>
+        <p>환영합니다! ⚽<br>메인 페이지로 이동합니다.</p>
+        <button id="modal-confirm-btn" class="login-button" style="margin-top: 10px;">확인</button>
+    </div>
+</div>
+
+<script>
+    // ✅ 로그인 페이지 전용: 저장된 아이디/토큰 처리만
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. 저장된 아이디(username)가 있는지 확인
+        const savedUsername = localStorage.getItem('saved_username');
+        const usernameInput = document.getElementById('username');
+        const rememberMeCheckbox = document.getElementById('remember-me');
+
+        if (savedUsername && usernameInput && rememberMeCheckbox) {
+            usernameInput.value = savedUsername;
+            rememberMeCheckbox.checked = true;
+        }
+
+        const accessToken = localStorage.getItem('accessToken');
+        if (accessToken) {
+            // 이미 로그인했으면 메인으로 이동
+            window.location.href = '/';
+        }
+    });
+
+    // 비밀번호 토글 로직
+    document.querySelectorAll('.toggle-password').forEach(icon => {
+        icon.addEventListener('click', function() {
+            const passwordInput = this.parentElement.querySelector('input[type="password"], input[type="text"]');
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.classList.toggle('fa-eye');
+            this.classList.toggle('fa-eye-slash');
+        });
+    });
+
+    // 로그인 폼 제출
+    const loginForm = document.getElementById('login-form');
+    const errorMsg = document.getElementById('error-message');
+    const successModal = document.getElementById('login-success-modal');
+
+    loginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        errorMsg.style.display = 'none';
+
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
+
+        if (!username || !password) {
+            errorMsg.textContent = '❌ 아이디와 비밀번호를 모두 입력해주세요.';
+            errorMsg.style.display = 'block';
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/users/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password }),
+            });
+
+            if (response.ok) {
+                const data = await response.json(); // { "accessToken": "...", "user": {...} }
+
+                if (data.accessToken) {
+                    // Remember me
+                    const rememberMeCheckbox = document.getElementById('remember-me');
+                    if (rememberMeCheckbox.checked) {
+                        localStorage.setItem('saved_username', username);
+                    } else {
+                        localStorage.removeItem('saved_username');
+                    }
+
+                    // 토큰 & 유저 정보 저장
+                    localStorage.setItem('accessToken', data.accessToken);
+                    if (data.user) {
+                        localStorage.setItem('userId', data.user.userId);
+                        localStorage.setItem('userNickname', data.user.nickname);
+                    }
+                    // 기존 username 키에는 닉네임 저장 (헤더에서 씀)
+                    if (data.user && data.user.nickname) {
+                        localStorage.setItem('username', data.user.nickname);
+                    }
+
+                    // 성공 모달 표시
+                    successModal.style.display = 'flex';
+                    document.getElementById('modal-confirm-btn').onclick = function() {
+                        successModal.style.display = 'none';
+                        window.location.href = '/';
+                    };
+                } else {
+                    throw new Error('로그인에 성공했으나 토큰을 받지 못했습니다.');
+                }
+            } else {
+                let errorMessage = '❌ 아이디 또는 비밀번호가 올바르지 않습니다.';
+                try {
+                    const errorText = await response.text();
+                    if (errorText) {
+                        errorMessage = `❌ ${errorText}`;
+                    }
+                } catch (e) {
+                    console.error("에러 메시지 파싱 실패:", e);
+                }
+                errorMsg.textContent = errorMessage;
+                errorMsg.style.display = 'block';
+            }
+        } catch (error) {
+            console.error("로그인 요청 에러:", error);
+            errorMsg.textContent = '❌ 로그인 요청 중 오류가 발생했습니다. (서버 연결 확인)';
+            errorMsg.style.display = 'block';
+        }
+    });
+</script>
+
+</body>
+</html>
