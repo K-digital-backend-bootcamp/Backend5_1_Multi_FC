@@ -41,11 +41,19 @@
                            style="font-size:12px; color:#777; margin-top:6px;"></p>
                     </div>
 
-                    <div class="input-group" style="margin-top: 20px;">
-                        <label for="review-rating">평점 (1~5)</label>
-                        <input type="number" id="review-rating" name="rating" min="1" max="5" required
-                               placeholder="구장 평점을 1점에서 5점까지 입력해주세요."
-                               style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; background: #f7f7f7;">
+                    <div class="input-group rating-group" style="margin-top: 20px;">
+                        <label>평점</label>
+
+                        <div id="star-rating" class="star-rating">
+                            <i class="fa fa-star star" data-value="5"></i>
+                            <i class="fa fa-star star" data-value="4"></i>
+                            <i class="fa fa-star star" data-value="3"></i>
+                            <i class="fa fa-star star" data-value="2"></i>
+                            <i class="fa fa-star star" data-value="1"></i>
+                        </div>
+
+                        <!-- 실제 서버로 넘길 값 -->
+                        <input type="hidden" id="review-rating" name="rating" required>
                     </div>
 
                     <div class="input-group" style="margin-top: 30px;">
@@ -106,6 +114,32 @@
             if (typeof updateGlobalBadge === 'function') {
                 try { updateGlobalBadge(); } catch (e) { console.error(e); }
             }
+        }
+
+
+        function initStarRatingForWrite() {
+            const stars = document.querySelectorAll("#star-rating .star");
+            const ratingInput = document.getElementById("review-rating");
+
+            if (!stars.length || !ratingInput) {
+                console.warn("⭐ 별 평점 요소를 찾을 수 없습니다.");
+                return;
+            }
+
+            stars.forEach(star => {
+                star.addEventListener("click", () => {
+                    const value = parseInt(star.dataset.value, 10);
+
+                    // hidden input에 값 저장 (서버로 보낼 값)
+                    ratingInput.value = value;
+
+                    // 클릭된 값 이하의 별들만 selected 유지
+                    stars.forEach(s => {
+                        const v = parseInt(s.dataset.value, 10);
+                        s.classList.toggle("selected", v <= value);
+                    });
+                });
+            });
         }
 
         // =========================
@@ -210,7 +244,7 @@
             const reviewData = {
                 stadiumId: Number(currentStadiumId),
                 userId: Number(currentUserId),
-                rating: Number(rating),
+                rating: Number(rating),   // ⭐ 별 클릭 값
                 content: content
             };
 
@@ -250,6 +284,7 @@
                 errorMsg.style.display = 'block';
             }
         });
+        initStarRatingForWrite();
     });
 </script>
 

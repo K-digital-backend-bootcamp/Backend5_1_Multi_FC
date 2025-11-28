@@ -1,4 +1,3 @@
-<!-- fragments/header.html -->
 <div th:fragment="siteHeader">
     <header class="quick-menu">
         <div class="logo"><a href="/">Multi FC</a></div>
@@ -46,6 +45,8 @@
         // === 전역 알림 상태 (여러 페이지에서 공유) ===
         window.hasReviewNotif = window.hasReviewNotif || false;
         window.hasScheduleNotif = window.hasScheduleNotif || false;
+        // ⭐ 추가: 일반 알림 (채팅, 친구 요청 등) 상태 플래그
+        window.hasGeneralNotif = window.hasGeneralNotif || false;
         window.pendingReviewStadiumIds = window.pendingReviewStadiumIds || [];
         window.upcomingSchedules = window.upcomingSchedules || [];
 
@@ -72,7 +73,10 @@
                 const showScheduleBadge =
                     window.hasScheduleNotif && !hasReadSchedules;
 
-                badge.style.display = (showReviewBadge || showScheduleBadge) ? 'block' : 'none';
+                const showGeneralBadge = window.hasGeneralNotif;
+
+                // ⭐⭐⭐ 수정: 세 가지 알림 중 하나라도 true면 표시 ⭐⭐⭐
+                badge.style.display = (showReviewBadge || showScheduleBadge || showGeneralBadge) ? 'block' : 'none';
             };
 
             window.checkPendingReviews = async function () {
@@ -85,6 +89,10 @@
                         const ids = await response.json();
                         window.pendingReviewStadiumIds = ids;
                         window.hasReviewNotif = ids && ids.length > 0;
+
+                        if (ids.length === 0) {
+                            localStorage.removeItem('hasReadReviews');
+                        }
                     }
                 } catch (error) {
                     console.error("후기 알림 요청 중 오류:", error);
@@ -112,9 +120,44 @@
                             title: item.title
                         }));
                         window.hasScheduleNotif = window.upcomingSchedules.length > 0;
+
+                        if (window.upcomingSchedules.length === 0) {
+                            localStorage.removeItem('hasReadSchedules');
+                        }
                     }
                 } catch (error) {
                     console.error("일정 요청 중 오류:", error);
+                }
+            };
+
+            // ⭐⭐⭐ 추가: 일반 알림 (채팅/친구 요청) 확인 함수 ⭐⭐⭐
+            window.checkGeneralNotifications = async function () {
+                const accessToken = localStorage.getItem('accessToken');
+                if (!accessToken) return;
+
+                try {
+                    // 서버에 미확인 알림의 총 개수를 요청하는 API 호출 (경로 가정: /api/notifications/general/unread-count)
+                    const response = await fetch(`/api/notifications/general/unread-count`, {
+                        headers: { 'Authorization': 'Bearer ' + accessToken }
+                    });
+
+                    if (response.ok) {
+                        const unreadCount = await response.json();
+
+                        let count = 0;
+                        if (typeof unreadCount === 'object' && unreadCount !== null) {
+                            count = unreadCount.count || 0;
+                        } else if (typeof unreadCount === 'number') {
+                            count = unreadCount;
+                        }
+
+                        window.hasGeneralNotif = (count > 0);
+                    } else {
+                        window.hasGeneralNotif = false;
+                    }
+                } catch (error) {
+                    console.error("일반 알림 요청 중 오류:", error);
+                    window.hasGeneralNotif = false;
                 }
             };
 
@@ -162,6 +205,16 @@
                 if (navLogoutLink && navLogoutLink.parentElement) {
                     navLogoutLink.parentElement.style.display = 'list-item';
                 }
+
+                // ⭐ 모든 알림 상태 확인 호출 (General Notif 포함) ⭐
+                Promise.all([
+                    window.checkPendingReviews(),
+                    window.checkUpcomingSchedules(),
+                    window.checkGeneralNotifications()
+                ]).then(() => {
+                    if (window.updateGlobalBadge) window.updateGlobalBadge();
+                });
+
             } else {
                 if (profileIcon) profileIcon.style.display = 'none';
                 if (userMenuName) userMenuName.textContent = '게스트';
@@ -199,11 +252,21 @@
                 });
             }
 
-            // ✅ 알림 목록 클릭은 "페이지 이동"만. 읽음 플래그는 notifications 페이지에서 처리
+            // ⭐⭐⭐ 수정: 알림 목록 클릭 시 모든 플래그 강제 true 설정 및 배지 갱신 ⭐⭐⭐
             if (navNotificationsLink) {
                 navNotificationsLink.addEventListener('click', () => {
-                    // 여기서 hasReadReviews / hasReadSchedules 절대 저장 X
-                    // 실제 읽음 처리 로직은 알림 목록에서 개별 읽음/모두 읽음으로 처리
+                    // 모든 읽음 플래그를 true로 강제 설정
+                    localStorage.setItem('hasReadReviews', 'true');
+                    localStorage.setItem('hasReadSchedules', 'true');
+
+                    // 일반 알림 플래그 초기화 (General Notif은 '읽음' 개념이 아닌 '존재 여부'이므로,
+                    // 알림 페이지에서 DB를 조회해 0으로 만들 것을 가정하고 플래그를 false로 설정)
+                    window.hasGeneralNotif = false;
+
+                    // 배지 즉시 갱신
+                    if (window.updateGlobalBadge) window.updateGlobalBadge();
+
+                    // 참고: window.location.href 이동은 브라우저가 기본적으로 처리합니다.
                 });
             }
         });
