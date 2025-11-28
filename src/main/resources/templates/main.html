@@ -20,7 +20,8 @@
 <main class="main-content">
 
     <section class="hero-section">
-
+        <!-- 새로 추가 -->
+        <div id="hero-center-card" class="hero-center-card">
         <div id="no-schedule-view-hero" style="display:none; position:relative; z-index:50;">
             <p class="no-schedule-message" style="color:white; font-size:1.5rem; text-shadow: 0 0 5px black;">
                 로그인하고 7일 이내의<br>나의 일정을 확인하세요! ⚽
@@ -58,6 +59,8 @@
         <h2 class="hero-sub-message">실시간 풋살 매칭, 지금 시작하세요!</h2>
 
         <a href="/fields" class="cta-button" style="z-index:50; position:relative;">매치 찾아보기</a>
+        </div>
+        <!-- 여기까지 hero-center-card -->
     </section>
 
     <section class="value-section">
@@ -319,6 +322,9 @@
         const scheduleSection = document.getElementById('upcoming-schedule-section');
         const reviewSection = document.getElementById('review-notification-section');
 
+        // 새로 추가
+        const heroCenterCard = document.getElementById('hero-center-card');
+
         if (accessToken) {
             if (noScheduleViewHero) noScheduleViewHero.style.display = 'none';
             if (memberContentArea) memberContentArea.style.display = 'block';
@@ -350,6 +356,8 @@
                 `;
                 reviewSection.style.display = 'flex';
             }
+            // 로그인 시에는 카드에 logged-in 클래스 추가 → 배경 제거
+            if (heroCenterCard) heroCenterCard.classList.add('logged-in');
         } else {
             // 비로그인
             if (noScheduleViewHero) noScheduleViewHero.style.display = 'block';
@@ -357,6 +365,8 @@
             if (scheduleSection) scheduleSection.style.display = 'none';
             if (reviewSection) reviewSection.style.display = 'none';
             if (globalCtaRegister) globalCtaRegister.style.display = 'block';
+            // 비로그인일 때는 기본 스타일(반투명 박스) 그대로 사용
+            if (heroCenterCard) heroCenterCard.classList.remove('logged-in');
         }
     });
 </script>

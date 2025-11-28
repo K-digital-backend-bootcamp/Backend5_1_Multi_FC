@@ -844,9 +844,9 @@
                 const li = document.createElement('li');
                 li.dataset.friendId = f.friendId;
                 li.innerHTML = `
-          <strong>${f.nickname}</strong> (${f.username})
+          <strong>${f.nickname}</strong>
           <div class="action-buttons">
-            <button class="btn-chat" onclick="event.stopPropagation(); alert('${f.nickname}님과 채팅(추후연동)');">채팅</button>
+            <!-- <button class="btn-chat" onclick="event.stopPropagation(); alert('${f.nickname}님과 채팅(추후연동)');">채팅</button> -->
             <button class="btn-delete" onclick="event.stopPropagation(); deleteFriend(${f.userId}, '${f.nickname}');">삭제</button>
           </div>
         `;
