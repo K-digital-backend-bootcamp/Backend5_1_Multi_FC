@@ -20,47 +20,45 @@
 <main class="main-content">
 
     <section class="hero-section">
-        <!-- 새로 추가 -->
         <div id="hero-center-card" class="hero-center-card">
-        <div id="no-schedule-view-hero" style="display:none; position:relative; z-index:50;">
-            <p class="no-schedule-message" style="color:white; font-size:1.5rem; text-shadow: 0 0 5px black;">
-                로그인하고 7일 이내의<br>나의 일정을 확인하세요! ⚽
-            </p>
-            <div style="text-align: center; margin-top: 20px;">
-                <a href="/login" class="login-prompt-button" style="background: #e74c3c;">로그인</a>
-                <a href="/register" class="login-prompt-button" style="background: #2c3e50;">회원가입</a>
-            </div>
-        </div>
-
-        <div id="member-content-area" style="position:relative; z-index:50;">
-            <div id="review-notification-section"></div>
-
-            <div id="upcoming-schedule-section">
-                <h2 class="schedule-title">📅 7일 이내의 일정</h2>
-
-                <div class="schedule-slider-container" style="display:none;">
-                    <div class="slider-controls-wrapper">
-                        <button id="schedule-prev" class="slider-arrow prev" style="display: none;">&lt;</button>
-
-                        <div class="schedule-slider-viewport">
-                            <div id="schedule-list-items"></div>
-                        </div>
-
-                        <button id="schedule-next" class="slider-arrow next" style="display: none;">&gt;</button>
-                    </div>
-                    <div class="slider-pagination" id="schedule-pagination"></div>
+            <div id="no-schedule-view-hero" style="display:none; position:relative; z-index:50;">
+                <p class="no-schedule-message" style="color:white; font-size:1.5rem; text-shadow: 0 0 5px black;">
+                    로그인하고 7일 이내의<br>나의 일정을 확인하세요! ⚽
+                </p>
+                <div style="text-align: center; margin-top: 20px;">
+                    <a href="/login" class="login-prompt-button" style="background: #e74c3c;">로그인</a>
+                    <a href="/register" class="login-prompt-button" style="background: #2c3e50;">회원가입</a>
                 </div>
-
-                <div id="no-schedule-view" style="display:none;"></div>
             </div>
-        </div>
 
-        <h1 class="hero-message">Multi FC</h1>
-        <h2 class="hero-sub-message">실시간 풋살 매칭, 지금 시작하세요!</h2>
+            <div id="member-content-area" style="position:relative; z-index:50;">
+                <div id="review-notification-section"></div>
 
-        <a href="/fields" class="cta-button" style="z-index:50; position:relative;">매치 찾아보기</a>
+                <div id="upcoming-schedule-section">
+                    <h2 class="schedule-title">📅 7일 이내의 일정</h2>
+
+                    <div class="schedule-slider-container" style="display:none;">
+                        <div class="slider-controls-wrapper">
+                            <button id="schedule-prev" class="slider-arrow prev" style="display: none;">&lt;</button>
+
+                            <div class="schedule-slider-viewport">
+                                <div id="schedule-list-items"></div>
+                            </div>
+
+                            <button id="schedule-next" class="slider-arrow next" style="display: none;">&gt;</button>
+                        </div>
+                        <div class="slider-pagination" id="schedule-pagination"></div>
+                    </div>
+
+                    <div id="no-schedule-view" style="display:none;"></div>
+                </div>
+            </div>
+
+            <h1 class="hero-message">Multi FC</h1>
+            <h2 class="hero-sub-message">실시간 풋살 매칭, 지금 시작하세요!</h2>
+
+            <a href="/fields" class="cta-button" style="z-index:50; position:relative;">매치 찾아보기</a>
         </div>
-        <!-- 여기까지 hero-center-card -->
     </section>
 
     <section class="value-section">
@@ -354,8 +352,13 @@
                     <a href="/reviews/write?stadiumId=${stadiumId}" class="review-notification-link">후기 작성하기</a>
                     <button class="close-review-btn" onclick="closeReviewNotification()">&times;</button>
                 `;
+                // ⭐ 데이터가 있을 때만 flex로 표시
                 reviewSection.style.display = 'flex';
+            } else if (reviewSection) {
+                // ⭐ 수정 추가: 후기 알림이 없을 때 확실히 숨김 처리
+                reviewSection.style.display = 'none';
             }
+
             // 로그인 시에는 카드에 logged-in 클래스 추가 → 배경 제거
             if (heroCenterCard) heroCenterCard.classList.add('logged-in');
         } else {
