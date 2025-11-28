@@ -45,12 +45,23 @@ public class CommunityController {
 
     // ===== 게시글 =====
 
-    // 목록 (비로그인 가능)
+    // 목록 + 페이징 (비로그인 가능)
     @GetMapping("/posts")
-    public ResponseEntity<List<CommunityDto.PostListResponse>> getPosts(
-            @RequestParam("category") String category
+    public ResponseEntity<CommunityDto.PostPageResponse> getPosts(
+            @RequestParam(value = "category", required = false, defaultValue = "전체")
+            String category,
+            @RequestParam(value = "page", required = false, defaultValue = "1")
+            int page,
+            @RequestParam(value = "size", required = false, defaultValue = "10")
+            int size,
+            @RequestParam(value = "searchType", required = false, defaultValue = "title")
+            String searchType,
+            @RequestParam(value = "keyword", required = false)
+            String keyword
     ) {
-        return ResponseEntity.ok(communityService.getPostsByCategory(category));
+        CommunityDto.PostPageResponse resp =
+                communityService.getPostPage(category, page, size, searchType, keyword);
+        return ResponseEntity.ok(resp);
     }
 
     // 상세 (비로그인 가능)

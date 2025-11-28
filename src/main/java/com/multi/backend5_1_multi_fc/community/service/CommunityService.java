@@ -209,4 +209,29 @@ public class CommunityService {
             throw new CommunityException("작성자만 댓글을 삭제할 수 있습니다.");
         }
     }
+
+    //페이지 조회
+    public CommunityDto.PostPageResponse getPostPage(
+            String category,
+            int page,
+            int size,
+            String searchType,
+            String keyword
+    ) {
+        if (page < 1) page = 1;
+        if (size < 1) size = 10;
+
+        int offset = (page - 1) * size;
+
+        List<CommunityDto.PostListResponse> posts =
+                communityDao.findPostPageByCategory(category, offset, size, searchType, keyword);
+
+        long totalCount =
+                communityDao.countPostByCategory(category, searchType, keyword);
+
+        CommunityDto.PostPageResponse resp = new CommunityDto.PostPageResponse();
+        resp.setPosts(posts);
+        resp.setTotalCount(totalCount);
+        return resp;
+    }
 }

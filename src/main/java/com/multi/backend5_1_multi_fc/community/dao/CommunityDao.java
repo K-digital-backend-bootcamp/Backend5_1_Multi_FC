@@ -100,4 +100,16 @@ public class CommunityDao {
     public Long findLastInsertedCommentId() {
         return commentMapper.findLastInsertedCommentId();
     }
+
+    // 페이징
+    public List<CommunityDto.PostListResponse> findPostPageByCategory(
+            String category, int offset, int limit,
+            String searchType, String keyword
+    ) {
+        return communityMapper.findPostPageByCategory(category, offset, limit, searchType, keyword);
+    }
+
+    public long countPostByCategory(String category, String searchType, String keyword) {
+        return communityMapper.countPostByCategory(category, searchType, keyword);
+    }
 }
