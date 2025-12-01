@@ -318,11 +318,43 @@
       채팅
     </td>
   </tr>
+    <tr>
+    <!-- 5행: 이미지 -->
+    <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
+      <img width="643" height="789" alt="image (2)" src="https://github.com/user-attachments/assets/bcec25cf-7165-47cd-9177-92d31cba9a2b" />
+    </td>
+    <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
+      <img width="1352" height="708" alt="image (3)" src="https://github.com/user-attachments/assets/0cf1ab9e-8c34-4ec8-9341-317df71dfeda" />
+    </td>
+    <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
+      <img width="593" height="661" alt="image (4)" src="https://github.com/user-attachments/assets/851bd569-2564-486d-a213-405b2d3f5d01" />
+    </td>
+  </tr>
+  <tr>
+    <!-- 6행: 텍스트 -->
+    <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
+      캘린더
+    </td>
+    <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
+      커뮤니티
+    </td>
+    <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
+      경기 후기 작성
+    </td>
+  </tr>
 </table>
 
 ---
+# 🧱 5. 세부 아키텍쳐
 
-# 🖥️ 5. 기타 문서 부산물
+<img width="3682" height="1641" alt="image" src="https://github.com/user-attachments/assets/8b6f0edb-b25f-4441-90fc-70f827a8a29a" />
+
+
+
+
+---
+
+# 🖥️ 6. 기타 문서 부산물
 
 <br>
 
