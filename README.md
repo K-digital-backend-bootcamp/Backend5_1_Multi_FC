@@ -74,6 +74,7 @@
 
 웹 환경만으로도 빠르고 유연하게 팀 매칭과 실시간 협업이 가능하여,
 풋살을 즐기고 싶은 누구나 부담 없이 새로운 팀을 구성하고 활동할 수 있는 서비스를 지향합니다.
+
 ---
 
 # 🛠 2 .Tech Stack
@@ -272,49 +273,49 @@
   <tr>
     <!-- 1행: 이미지 -->
     <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
-      이미지1
+      <img width="592" height="1077" alt="image" src="https://github.com/user-attachments/assets/1b479497-7d0d-423d-935e-3771c10ad976" />
     </td>
     <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
-      이미지2
+      <img width="992" height="699" alt="image" src="https://github.com/user-attachments/assets/49ddbfc2-7e76-430e-9c13-3e5bf456dc5e" />
     </td>
     <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
-      이미지3
+      <img width="1306" height="840" alt="image" src="https://github.com/user-attachments/assets/417e19a2-f1d3-4aef-a42a-d86c93ec649f" />
     </td>
   </tr>
   <tr>
     <!-- 2행: 텍스트 -->
     <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
-      텍스트1
+      회원가입
     </td>
     <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
-      텍스트2
+      경기일정검색
     </td>
     <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
-      텍스트3
+      구장 검색
     </td>
   </tr>
   <tr>
     <!-- 3행: 이미지 -->
     <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
-      이미지4
+      <img width="1263" height="842" alt="image" src="https://github.com/user-attachments/assets/17434754-32af-4483-8e74-df14e1dd9a1a" />
     </td>
     <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
-      이미지5
+      <img width="1047" height="794" alt="image" src="https://github.com/user-attachments/assets/5411e45f-7451-4f46-a006-2582d7e586a2" />
     </td>
     <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
-      이미지6
+      <img width="1538" height="721" alt="image" src="https://github.com/user-attachments/assets/0df756b1-181c-4cea-b4e5-ecf20a7efdd5" />
     </td>
   </tr>
   <tr>
     <!-- 4행: 텍스트 -->
     <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
-      텍스트4
+      경기 매칭
     </td>
     <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
-      텍스트5
+      알림
     </td>
     <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
-      텍스트6
+      채팅
     </td>
   </tr>
 </table>
