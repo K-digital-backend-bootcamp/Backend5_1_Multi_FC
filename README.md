@@ -10,70 +10,56 @@
 
 ## 🎨 Frontend Team
 
-<div style="display: flex; gap: 16px;">
-
-  <div style="flex: 1; padding: 16px; border: 1px solid #ddd; border-radius: 12px; text-align: center;">
-    <h3>👤 권성민</h3>
-    <p>
+<table>
+  <tr>
+    <td align="center" width="300">
+      <h3>👤 권성민</h3>
       와이어프레임 작성<br>
       화면 구현
-    </p>
-  </div>
-
-  <div style="flex: 1; padding: 16px; border: 1px solid #ddd; border-radius: 12px; text-align: center;">
-    <h3>🛠 윤승근 (팀장)</h3>
-    <p>
+    </td>
+    <td align="center" width="300">
+      <h3>🛠 윤승근 (팀장)</h3>
       와이어프레임 작성<br>
       스토리보드 작성<br>
       화면 구현<br>
       Frontend 총괄
-    </p>
-  </div>
-
-</div>
+    </td>
+  </tr>
+</table>
 
 ---
 
 ## 🛠 Backend Team
 
-<div style="display: flex; gap: 16px; flex-wrap: wrap;">
-
-  <div style="flex: 1; min-width: 220px; padding: 16px; border: 1px solid #ddd; border-radius: 12px; text-align: center;">
-    <h3>👤 문진우</h3>
-    <p>
+<table>
+  <tr>
+    <td align="center" width="300">
+      <h3>👤 문진우</h3>
       DB 담당<br>
       배포 담당<br>
       로그인 기능 구현
-    </p>
-  </div>
-
-  <div style="flex: 1; min-width: 220px; padding: 16px; border: 1px solid #ddd; border-radius: 12px; text-align: center;">
-    <h3>👑 박태란 (PM)</h3>
-    <p>
+    </td>
+    <td align="center" width="300">
+      <h3>👑 박태란 (PM)</h3>
       마이페이지·일정·친구 기능<br>
       커뮤니티 기능<br>
       서류 관리
-    </p>
-  </div>
-
-  <div style="flex: 1; min-width: 220px; padding: 16px; border: 1px solid #ddd; border-radius: 12px; text-align: center;">
-    <h3>🛠 최준호 (팀장)</h3>
-    <p>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="300">
+      <h3>🛠 최준호 (팀장)</h3>
       Git 관리<br>
       채팅 기능 구현<br>
       알림 기능 구현
-    </p>
-  </div>
-
-  <div style="flex: 1; min-width: 220px; padding: 16px; border: 1px solid #ddd; border-radius: 12px; text-align: center;">
-    <h3>👤 홍예린</h3>
-    <p>
+    </td>
+    <td align="center" width="300">
+      <h3>👤 홍예린</h3>
       구장 기능<br>
       매칭 기능
-    </p>
-  </div>
-
-</div>
+    </td>
+  </tr>
+</table>
 
 ## 📚 프로젝트 소개
 
