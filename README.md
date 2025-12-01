@@ -1,29 +1,341 @@
-# Notification 수정 공간
-
-
-# Backend5_1_Multi_FC
-백엔드 5회차 프로젝트 MULTI_FC
-
-- 본 프로젝트는 실시간 WebSocket 기능을 기반으로 풋살을 즐기는 사용자들이 손쉽게 팀을 구성하고 소통할 수 있는 웹 플랫폼을 개발하는 것을 목표로 합니다.
+# ⚽ MULTI_FC: 실시간 풋살 팀 매칭 & 소통 플랫폼
+> **"풋살 유저들이 실시간으로 팀을 만들고, 소통하고, 경기를 더욱 즐길 수 있는 WebSocket 기반 팀 매칭 플랫폼"**
 
 <img width="1901" height="908" alt="KakaoTalk_20251107_131324524" src="https://github.com/user-attachments/assets/8bf12272-329b-4487-b0ee-93fa57cd92c3" />
 
-## ⚽ Multi_FC 프로젝트 문서 구조
+# 📚 1. 프로젝트 개요
+
+---
+## 👥 팀원 구성 및 소개
+
+## 🎨 Frontend Team
+
+<div style="display: flex; gap: 16px;">
+
+  <div style="flex: 1; padding: 16px; border: 1px solid #ddd; border-radius: 12px; text-align: center;">
+    <h3>👤 권성민</h3>
+    <p>
+      와이어프레임 작성<br>
+      화면 구현
+    </p>
+  </div>
+
+  <div style="flex: 1; padding: 16px; border: 1px solid #ddd; border-radius: 12px; text-align: center;">
+    <h3>🛠 윤승근 (팀장)</h3>
+    <p>
+      와이어프레임 작성<br>
+      스토리보드 작성<br>
+      화면 구현<br>
+      Frontend 총괄
+    </p>
+  </div>
+
+</div>
+
+---
+
+## 🛠 Backend Team
+
+<div style="display: flex; gap: 16px; flex-wrap: wrap;">
+
+  <div style="flex: 1; min-width: 220px; padding: 16px; border: 1px solid #ddd; border-radius: 12px; text-align: center;">
+    <h3>👤 문진우</h3>
+    <p>
+      DB 담당<br>
+      배포 담당<br>
+      로그인 기능 구현
+    </p>
+  </div>
+
+  <div style="flex: 1; min-width: 220px; padding: 16px; border: 1px solid #ddd; border-radius: 12px; text-align: center;">
+    <h3>👑 박태란 (PM)</h3>
+    <p>
+      마이페이지·일정·친구 기능<br>
+      커뮤니티 기능<br>
+      서류 관리
+    </p>
+  </div>
+
+  <div style="flex: 1; min-width: 220px; padding: 16px; border: 1px solid #ddd; border-radius: 12px; text-align: center;">
+    <h3>🛠 최준호 (팀장)</h3>
+    <p>
+      Git 관리<br>
+      채팅 기능 구현<br>
+      알림 기능 구현
+    </p>
+  </div>
+
+  <div style="flex: 1; min-width: 220px; padding: 16px; border: 1px solid #ddd; border-radius: 12px; text-align: center;">
+    <h3>👤 홍예린</h3>
+    <p>
+      구장 기능<br>
+      매칭 기능
+    </p>
+  </div>
+
+</div>
+
+## 📚 프로젝트 소개
+
+본 프로젝트는 풋살 팀 매칭과 실시간 소통 기능을 제공하는 웹 기반 서비스로,
+입문자도 쉽게 사용할 수 있도록 직관적인 UI와 빠른 상호작용 경험을 목표로 개발되었습니다.
+
+🧑‍🤝‍🧑 입문자도 쉽게 팀을 구성하고 소통할 수 있는 웹 플랫폼 제공
+
+⚡ WebSocket 기반의 실시간 채팅과 즉각적인 상호작용 지원
+
+⚽ 팀 빌딩부터 경기 관리까지 누구나 쉽게 참여하는 풋살 모임 환경 구현
+
+웹 환경만으로도 빠르고 유연하게 팀 매칭과 실시간 협업이 가능하여,
+풋살을 즐기고 싶은 누구나 부담 없이 새로운 팀을 구성하고 활동할 수 있는 서비스를 지향합니다.
+---
+
+# 🛠 2 .Tech Stack
+
+### 🧩 Backend
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
+![Spring Security](https://img.shields.io/badge/Spring%20Security-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white)
+![Spring AMQP](https://img.shields.io/badge/Spring%20AMQP-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
+![Spring Web](https://img.shields.io/badge/Spring%20Web-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
+![Spring WebSocket](https://img.shields.io/badge/WebSocket-FF6F00?style=for-the-badge&logo=websocket&logoColor=white)
+![MyBatis](https://img.shields.io/badge/MyBatis-1F4B86?style=for-the-badge)
+
+### 🗄 Database
+![MySQL](https://img.shields.io/badge/MySQL-005C84?style=for-the-badge&logo=mysql&logoColor=white)
+![JDBC](https://img.shields.io/badge/JDBC-003B57?style=for-the-badge)
+
+### ☁ AWS / Infra
+![AWS S3](https://img.shields.io/badge/AWS%20S3-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white)
+![AWS SDK](https://img.shields.io/badge/AWS%20SDK-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white)
+![Spring Session JDBC](https://img.shields.io/badge/Spring%20Session-6DB33F?style=for-the-badge)
+
+### 🔐 Authentication / Authorization
+![OAuth2](https://img.shields.io/badge/OAuth2-3F8EFC?style=for-the-badge&logo=oauth&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
+
+### 📧 Mail
+![Spring Mail](https://img.shields.io/badge/Spring%20Mail-6DB33F?style=for-the-badge&logo=gmail&logoColor=white)
+
+### 🛠 Dev Tools
+![Lombok](https://img.shields.io/badge/Lombok-A80000?style=for-the-badge)
+![DevTools](https://img.shields.io/badge/DevTools-6DB33F?style=for-the-badge)
+
+### 🧪 Test
+![JUnit](https://img.shields.io/badge/JUnit5-25A162?style=for-the-badge&logo=junit5&logoColor=white)
+![Spring Test](https://img.shields.io/badge/Spring%20Test-6DB33F?style=for-the-badge)
+
+---
+
+# 🏗 3. 전체 프로젝트 구조
 
 본 저장소는 **백엔드 5기 1조 (Multi_FC 팀)**의 최종 프로젝트 기획 및 수행 관련 모든 산출물을 관리합니다.  
 각 폴더는 프로젝트 단계별 문서와 자료를 체계적으로 구분하여 관리합니다.
-### 📂 폴더 구조
+
 <pre>
-┌── 1. 기획안
-├── 2. WBS
-├── 3. 수행일지
-├── 4. 포트폴리오
-└── 5. 기타자료
+# 📁 Project Structure
+├── .gradle/
+├── .idea/
+├── 1. 기획안/
+├── 2. WBS/
+├── 3. 수행일지/
+├── 4. 포트폴리오/
+├── 5. 기타자료/
+├── build/
+├── gradle/
+├── out/
+├── src/
+│   ├── main/
+│   │   ├── generated/
+│   │   ├── java/
+│   │   │   └── com.multi.backend5_1_multi_fc/
+│   │   │       ├── chat/
+│   │   │       │   ├── config/
+│   │   │       │   ├── controller/
+│   │   │       │   ├── dao/
+│   │   │       │   ├── dto/
+│   │   │       │   ├── exception/
+│   │   │       │   └── service/
+│   │   │       ├── community/
+│   │   │       │   ├── config/
+│   │   │       │   ├── controller/
+│   │   │       │   ├── dao/
+│   │   │       │   ├── dto/
+│   │   │       │   ├── exception/
+│   │   │       │   ├── mapper/
+│   │   │       │   ├── repository/
+│   │   │       │   └── service/
+│   │   │       ├── friend/
+│   │   │       │   ├── config/
+│   │   │       │   ├── controller/
+│   │   │       │   ├── dao/
+│   │   │       │   ├── dto/
+│   │   │       │   ├── exception/
+│   │   │       │   ├── mapper/
+│   │   │       │   ├── repository/
+│   │   │       │   └── service/
+│   │   │       ├── match/
+│   │   │       │   ├── controller/
+│   │   │       │   ├── domain/
+│   │   │       │   ├── dto/
+│   │   │       │   ├── mapper/
+│   │   │       │   └── service/
+│   │   │       ├── mypage/
+│   │   │       │   ├── config/
+│   │   │       │   ├── controller/
+│   │   │       │   ├── dao/
+│   │   │       │   ├── dto/
+│   │   │       │   ├── exception/
+│   │   │       │   ├── mapper/
+│   │   │       │   ├── repository/
+│   │   │       │   └── service/
+│   │   │       ├── notification/
+│   │   │       │   ├── config/
+│   │   │       │   ├── controller/
+│   │   │       │   ├── dao/
+│   │   │       │   ├── dto/
+│   │   │       │   ├── exception/
+│   │   │       │   └── service/
+│   │   │       ├── review/
+│   │   │       │   ├── config/
+│   │   │       │   ├── controller/
+│   │   │       │   ├── dao/
+│   │   │       │   ├── dto/
+│   │   │       │   ├── exception/
+│   │   │       │   ├── mapper/
+│   │   │       │   ├── repository/
+│   │   │       │   └── service/
+│   │   │       ├── schedule/
+│   │   │       │   ├── config/
+│   │   │       │   ├── controller/
+│   │   │       │   ├── dao/
+│   │   │       │   ├── dto/
+│   │   │       │   ├── exception/
+│   │   │       │   ├── mapper/
+│   │   │       │   ├── repository/
+│   │   │       │   └── service/
+│   │   │       ├── security/
+│   │   │       ├── stats/
+│   │   │       │   ├── controller/
+│   │   │       │   ├── dto/
+│   │   │       │   ├── mapper/
+│   │   │       │   └── service/
+│   │   │       ├── user/
+│   │   │       │   ├── config/
+│   │   │       │   ├── controller/
+│   │   │       │   ├── dao/
+│   │   │       │   ├── dto/
+│   │   │       │   ├── exception/
+│   │   │       │   ├── mapper/
+│   │   │       │   ├── repository/
+│   │   │       │   └── service/
+│   │   │       └── util/
+│   │   │
+│   │   ├── resources/
+│   │   │   ├── mapper/
+│   │   │   │   ├── Chat/
+│   │   │   │   ├── comment/
+│   │   │   │   ├── community/
+│   │   │   │   ├── friend/
+│   │   │   │   ├── match/
+│   │   │   │   ├── MyPage/
+│   │   │   │   ├── Notification/
+│   │   │   │   ├── review/
+│   │   │   │   ├── Schedule/
+│   │   │   │   ├── stats/
+│   │   │   │   └── user/
+│   │   │   ├── static.css
+│   │   │   └── templates/
+│   │   │       ├── fragments/
+│   │   │       ├── chat.html
+│   │   │       ├── community.html
+│   │   │       ├── community-detail.html
+│   │   │       ├── community-write.html
+│   │   │       ├── fields.html
+│   │   │       ├── forgot-password.html
+│   │   │       ├── index.html
+│   │   │       ├── login.html
+│   │   │       ├── main.html
+│   │   │       ├── mypage.html
+│   │   │       ├── notifications.html
+│   │   │       ├── profile-edit.html
+│   │   │       ├── register.html
+│   │   │       ├── schedule.html
+│   │   │       ├── schedule-detail.html
+│   │   │       ├── stadium-detail.html
+│   │   │       ├── write-review.html
+│   │   │       ├── application.properties
+│   │   │       └── application-test.yml
+│   │   │
+│   └── test/
+│
+├── .gitattributes
+├── .gitignore
+├── build.gradle
+├── gradlew
+├── gradlew.bat
+├── settings.gradle
+└── HELP.md / README.md
+
 </pre>
 
 <br>
 
+# 🖥️ 4. 서비스 구조
+
+<table>
+  <tr>
+    <!-- 1행: 이미지 -->
+    <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
+      이미지1
+    </td>
+    <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
+      이미지2
+    </td>
+    <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
+      이미지3
+    </td>
+  </tr>
+  <tr>
+    <!-- 2행: 텍스트 -->
+    <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
+      텍스트1
+    </td>
+    <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
+      텍스트2
+    </td>
+    <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
+      텍스트3
+    </td>
+  </tr>
+  <tr>
+    <!-- 3행: 이미지 -->
+    <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
+      이미지4
+    </td>
+    <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
+      이미지5
+    </td>
+    <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
+      이미지6
+    </td>
+  </tr>
+  <tr>
+    <!-- 4행: 텍스트 -->
+    <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
+      텍스트4
+    </td>
+    <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
+      텍스트5
+    </td>
+    <td style="border: 1px solid #ddd; padding: 12px; text-align: center;">
+      텍스트6
+    </td>
+  </tr>
+</table>
+
 ---
+
+# 🖥️ 5. 기타 문서 부산물
 
 <br>
 
@@ -141,28 +453,26 @@
 <br>
 
 ### 🧾 README업데이트 이력
-| 날짜 | 내용 |
-|------|------|
-| 2025-11-07 | README 폴더별 설명 추가 |
+| 날짜         | 내용                |
+|------------|-------------------|
+| 2025-11-07 | README 폴더별 설명 추가  |
 | 2025-11-14 | README 폴더 별 문서 추가 |
 | 2025-11-21 | README 폴더 별 문서 추가 |
+| 2025-12-01 | 전반적인 README 수정    |
 
-<br>
 
 ---
-
-<br>
-
-### 🔗 참고 링크
-- **Notion:** [프로젝트 페이지 바로가기](https://www.notion.so/5-29928b27a55980b6a7aadc441435643a?source=copy_link)  
-- **WBS (Google Sheet):** [WBS 문서 바로가기](https://docs.google.com/spreadsheets/d/1cRFd2DkShxloEU3VMLhi_MP1DNWKarHi9XD7HMkkhs0/edit?usp=sharing)
-
-<br>
-
+## 📌 Project Documents
+- **Notion :** [프로젝트 노션 링크](https://lavish-mountain-fb1.notion.site/5-29928b27a55980b6a7aadc441435643a?source=copy_link)
+- **Figma :** [프로젝트 피그마 링크](https://www.figma.com/design/ZDxAkFU68lw6XNMbJ2IXd1/%EC%99%80%EC%9D%B4%EC%96%B4-%ED%94%84%EB%A0%88%EC%9E%84-%ED%92%8B%EC%82%B4-%EB%A7%A4%EC%B9%AD-%ED%94%8C%EB%9E%AB%ED%8F%BC-?node-id=925-5606&t=7WUnWvtsV5y4CGLP-1)
+- **WBS :** [프로젝트 WBS 링크](https://docs.google.com/spreadsheets/d/1cRFd2DkShxloEU3VMLhi_MP1DNWKarHi9XD7HMkkhs0/edit?gid=0#gid=0)
+- **API 명세서 :** [프로젝트 API 명세서 링크](https://docs.google.com/spreadsheets/d/190Jr9U2F7D3XFCxy80yWhyxJV5giijIa9jE41K-z2tk/edit?pli=1&gid=0#gid=0)
+- **요구사항 정의서 :** [프로젝트 요구사항 정의서 링크](https://docs.google.com/spreadsheets/d/1jaYp6MRVAeEZxCs5cthx2k_iw-A1neyiFymZRUxhH-g/edit?pli=1&gid=0#gid=0)
+- **ERD :** [프로젝트 ERD 링크](https://www.erdcloud.com/d/AusNzHY3EWJhexjDd)
 ---
 
 <br>
 
 📍 **작성자:** 1조 Multi_FC 팀 (백엔드 5기)  
-📆 **마지막 수정일:** 2025-11-21
+📆 **마지막 수정일:** 2025-12-01
 
