@@ -186,7 +186,10 @@
 
     // ⭐⭐⭐ 추가: 참여자 ID와 닉네임을 매핑하는 맵 ⭐⭐⭐
     let currentRoomParticipantsMap = {}; // Key: userId, Value: nickname
-    let nicknameCache = {}; // Key: userId, Value: nickname (온디맨드 캐시)
+    let nicknameCache = {};             // Key: userId, Value: nickname (온디맨드 캐시)
+
+    // ⭐⭐⭐ 추가: 날짜 구분선용 키 (YYYY-MM-DD) ⭐⭐⭐
+    let lastMessageDateKey = null;
 
     const chatContainer = document.getElementById('chat-messages-container');
     const inputArea = document.getElementById('message-input');
@@ -281,6 +284,45 @@
             });
     }
 
+    // ⭐⭐⭐ 날짜 관련 유틸 함수들 ⭐⭐⭐
+    function getDateKey(date) {
+        // YYYY-MM-DD
+        return date.toISOString().substring(0, 10);
+    }
+
+    function getDateLabel(date) {
+        const today = new Date();
+        const todayKey = getDateKey(today);
+
+        const yesterday = new Date();
+        yesterday.setDate(today.getDate() - 1);
+        const yesterdayKey = getDateKey(yesterday);
+
+        const targetKey = getDateKey(date);
+
+        if (targetKey === todayKey) return '오늘';
+        if (targetKey === yesterdayKey) return '어제';
+
+        return date.toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            weekday: 'short'
+        }); // 예: 2025.12.01 (월)
+    }
+
+    function insertDateDivider(messageDate) {
+        const key = getDateKey(messageDate);
+        if (key === lastMessageDateKey) return; // 같은 날짜면 추가 X
+
+        lastMessageDateKey = key;
+
+        const divider = document.createElement('div');
+        divider.className = 'chat-date-divider';
+        divider.innerHTML = `<span>${getDateLabel(messageDate)}</span>`;
+        chatContainer.appendChild(divider);
+    }
+
     // ⭐⭐⭐ 추가: 채팅방 참여자 ID-닉네임 맵을 로드하는 함수 ⭐⭐⭐
     async function loadParticipantMap(roomId) {
         currentRoomParticipantsMap = {}; // 맵 초기화
@@ -348,7 +390,6 @@
         connectionStatus.style.backgroundColor = isError ? '#ffe3e3' : '#e6ffed';
         connectionStatus.style.color = isError ? '#c0392b' : '#28a745';
 
-        // ⭐⭐⭐ 수정: 성공 메시지 표시 시간을 1초로 단축 (1000ms) ⭐⭐⭐
         const delay = isError ? 5000 : 1000;
 
         setTimeout(() => {
@@ -424,17 +465,17 @@
     }
 
     async function handleReceivedMessage(receivedMessage) {
-
-        // 💡 수정: ID가 유효한지 확인하고, 닉네임 보장 함수 호출
         const senderId = receivedMessage.sender || receivedMessage.senderId;
         let senderNickname = await getNicknameOnTheFly(senderId, receivedMessage.senderNickname);
+
+        const sentAt = receivedMessage.sentAt ? new Date(receivedMessage.sentAt) : new Date();
 
         if (receivedMessage.roomId === currentRoomId) {
             displayMessage({
                 sender: senderId,
                 senderNickname: senderNickname,
                 content: receivedMessage.content,
-                timestamp: formatTimestamp(receivedMessage.sentAt || new Date()),
+                sentAt: sentAt
             });
         } else {
             updateUnreadCount(receivedMessage.roomId);
@@ -508,15 +549,15 @@
         try {
             const message = JSON.parse(payload.body);
 
-            // 💡 수정: ID가 유효한지 확인하고, 닉네임 보장 함수 호출
             const senderId = message.sender || message.senderId;
             let senderNickname = await getNicknameOnTheFly(senderId, message.senderNickname);
+            const sentAt = message.sentAt ? new Date(message.sentAt) : new Date();
 
             displayMessage({
                 sender: senderId,
                 senderNickname: senderNickname,
                 content: message.content,
-                timestamp: formatTimestamp(message.sentAt || new Date())
+                sentAt: sentAt
             });
         } catch (e) {
             console.log('메세지 파싱 오류:', e);
@@ -556,7 +597,13 @@
         }
     }
 
+    // ⭐⭐ 날짜 구분선 + 메시지 렌더링 ⭐⭐
     function displayMessage(message) {
+        const messageDate = message.sentAt ? new Date(message.sentAt) : new Date();
+
+        // 날짜 구분선 먼저 삽입
+        insertDateDivider(messageDate);
+
         const isMine = message.sender === myUserId;
         const wrapper = document.createElement('div');
         wrapper.className = 'message-wrapper ' + (isMine ? 'mine' : 'other');
@@ -577,7 +624,7 @@
 
         const time = document.createElement('div');
         time.className = 'message-time';
-        time.textContent = message.timestamp;
+        time.textContent = formatTimestamp(messageDate);
 
         if (isMine) {
             bubbleRow.appendChild(time);
@@ -709,12 +756,16 @@
             const messages = await response.json();
             chatContainer.innerHTML = '';
 
+            // 날짜 구분선 리셋
+            lastMessageDateKey = null;
+
             messages.forEach(msg => {
+                const sentAt = msg.sentAt ? new Date(msg.sentAt) : new Date();
                 displayMessage({
                     sender: msg.senderId,
                     senderNickname: msg.senderNickname,
                     content: msg.content,
-                    timestamp: formatTimestamp(msg.sentAt)
+                    sentAt: sentAt
                 });
             });
             chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -744,16 +795,14 @@
 
             alert('✅ 채팅방을 나갔습니다.');
 
-            // 1. 현재 화면 정리
             if (currentRoomId === roomId) {
                 currentRoomId = null;
                 document.getElementById('current-chat-room').style.display = 'none';
                 document.getElementById('chat-welcome-message').style.display = 'flex';
                 document.getElementById('leave-room-btn').style.display = 'none';
-                openInlineProfileDetail(false); // 프로필 창 닫기
+                openInlineProfileDetail(false);
             }
 
-            // 2. 채팅방 목록 갱신
             loadRoomList(currentChatType);
 
         } catch (e) {
@@ -761,7 +810,6 @@
             alert('❌ 채팅방을 나가는 중 오류가 발생했습니다: ' + e.message);
         }
     }
-
 
     async function selectRoom(room) {
         document.querySelector('.room-item.active')?.classList.remove('active');
@@ -796,7 +844,6 @@
         currentChatRoomEl.style.display = 'flex';
         currentChatRoomEl.style.flexDirection = 'column';
 
-        // ⭐⭐⭐ 수정: 참여자 맵을 먼저 로드하여 실시간 닉네임 표시 문제를 해결 ⭐⭐⭐
         await loadParticipantMap(room.roomId);
 
         await loadRoomHistory(room.roomId);
@@ -838,7 +885,6 @@
 
             participantListContainer.innerHTML = '';
 
-            // ⭐⭐⭐ 수정: 참여자 맵을 다시 업데이트하여 최신 정보를 반영 ⭐⭐⭐
             currentRoomParticipantsMap = {};
             participants.forEach(p => {
                 currentRoomParticipantsMap[p.userId] = p.nickname;
@@ -890,7 +936,6 @@
         }
     }
 
-    // ✅ 프로필 상세 열기/닫기 (이미지 경로 처리 로직 유지)
     async function openInlineProfileDetail(userId, displayName) {
         const isOpen = inlineProfileDetail.classList.contains('open');
         const openedUserId = inlineProfileDetail.dataset.userId;
@@ -903,7 +948,6 @@
         }
 
         try {
-            // 1. 기본 이미지로 먼저 초기화
             const defaultImg = '/images/default-profile.png';
             const imgEl = document.getElementById('profile-img-detail');
             imgEl.src = defaultImg;
@@ -917,33 +961,27 @@
 
             inlineProfileDetail.dataset.userId = userId;
 
-            // 2. 프로필 이미지 경로 결정 (profileImage 필드를 우선 확인)
-            let pic = profile.profileImage || profile.profilePic; // profileImage 필드를 우선 확인 (profile-edit.html 참고)
+            let pic = profile.profileImage || profile.profilePic;
 
             if (!pic || String(pic).trim() === '') {
                 pic = defaultImg;
             } else {
                 pic = String(pic).trim();
 
-                // 3. 서버가 '/uploads/파일명'을 주지 않고 '파일명'만 줄 경우를 대비해 경로를 강제로 붙임
                 if (!pic.startsWith('http') && !pic.startsWith('/') && !pic.startsWith('uploads/')) {
                     pic = '/uploads/' + pic;
                 } else if (pic.startsWith('uploads/')) {
-                    // 'uploads/파일명' 형태로 내려올 경우, 맨 앞에 '/'를 붙여 절대 경로로 만듬
                     pic = '/' + pic;
                 }
             }
 
-            // 5. 이미지 src 설정
             imgEl.src = pic;
 
-            // 6. 로딩 실패 핸들러
             imgEl.onerror = () => {
                 imgEl.onerror = null;
                 imgEl.src = defaultImg;
             };
 
-            // 7. 나머지 프로필 정보 업데이트
             document.getElementById('profile-nickname-detail').textContent = profile.nickname;
             document.getElementById('profile-location-detail').textContent = profile.address || '미등록';
             document.getElementById('profile-position-detail').textContent = profile.position || '미등록';
@@ -955,7 +993,6 @@
             alert('프로필 정보를 불러올 수 없습니다.');
         }
     }
-
 
     async function fetchUserIdByNickname(nickname) {
         const response = await fetch(`/api/users/search?nickname=${encodeURIComponent(nickname)}`, {
@@ -996,7 +1033,6 @@
             maxParticipantsGroup.style.display = 'none';
             chatFormInfo.textContent = '상대방 닉네임이 필수입니다.';
             newChatRecipientInput.placeholder = '1:1 채팅할 상대방의 닉네임을 입력하세요';
-
         } else if (type === 'group') {
             recipientInputGroup.style.display = 'block';
             maxParticipantsGroup.style.display = 'block';
@@ -1201,7 +1237,6 @@
 
         const openParticipantBtn = document.getElementById('open-participant-btn');
 
-        // ✅ 참가자 사이드바 바깥 클릭 시 닫기 (기존 유지)
         document.addEventListener('click', (e) => {
             if (!participantSidebar.classList.contains('open')) return;
 
@@ -1209,28 +1244,23 @@
             const clickOnOpenButton = openParticipantBtn && openParticipantBtn.contains(e.target);
             const clickInsideProfile = inlineProfileDetail && inlineProfileDetail.contains(e.target);
 
-            // ✅ 프로필창 안에서 클릭한 건 "바깥 클릭"으로 취급하지 않음
             if (clickInsideSidebar || clickOnOpenButton || clickInsideProfile) return;
 
             openParticipantList(false);
         });
 
-        // ✅ 프로필 창 클릭 시 아래 영역으로 이벤트 전파 방지
         inlineProfileDetail?.addEventListener('click', (e) => {
             e.stopPropagation();
         });
 
-// ✅ 프로필 X 버튼 클릭도 전파 막기
         document.getElementById('close-inline-profile')?.addEventListener('click', (e) => {
             e.stopPropagation();
         });
 
-        // ✅ (추가) 프로필 영역 내부 클릭은 바깥클릭으로 처리 안 되게 막기
         inlineProfileDetail.addEventListener('mousedown', (e) => e.stopPropagation());
         document.getElementById('close-inline-profile')
             ?.addEventListener('mousedown', (e) => e.stopPropagation());
 
-        // ✅ (수정) 인라인 프로필 바깥 클릭 시 "프로필만" 닫기
         document.addEventListener('mousedown', (e) => {
             if (!inlineProfileDetail.classList.contains('open')) return;
 
@@ -1242,7 +1272,6 @@
             }
         });
 
-        // ✅ (추가) ESC로 프로필/모달/사이드바 닫기
         document.addEventListener('keydown', (e) => {
             if (e.key !== 'Escape') return;
 
@@ -1280,31 +1309,26 @@
             }
         });
 
-        // ⭐⭐⭐ 친구 요청 로직 최종 수정: 마이페이지 로직과 동일하게 변경 ⭐⭐⭐
         profileFriendBtn?.addEventListener('click', async function () {
             const targetUserId = inlineProfileDetail.dataset.userId;
             if (!targetUserId) return alert('사용자 정보를 불러올 수 없습니다.');
 
             try {
-                // 💡 수정: 엔드포인트를 마이페이지와 동일한 /api/friends/requests로 변경하고,
-                // Content-Type 헤더와 JSON Body를 추가합니다.
                 const response = await fetch(`/api/friends/requests`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json', // JSON Body를 보내기 위해 Content-Type 명시
+                        'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ targetUserId: targetUserId }) // 마이페이지처럼 Body에 targetUserId 포함
+                    body: JSON.stringify({ targetUserId: targetUserId })
                 });
 
                 let data = {};
                 try {
                     data = await response.json();
-                } catch (e) {
-                }
+                } catch (e) {}
 
                 if (!response.ok) {
-                    // 서버에서 받은 메시지가 있으면 출력하고, 없으면 기본 에러 메시지 출력
                     throw new Error(data.message || '친구요청에 실패했습니다.');
                 }
 
