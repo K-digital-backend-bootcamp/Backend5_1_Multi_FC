@@ -4323,6 +4323,7 @@ input[type="email"]:read-only {
 }
 .modal-content,
 .stadium-modal-content{
+    position: relative;   /* ✅ 이 줄 추가 */
     background: #fff;
     border-radius: 15px;
     padding: 25px 25px 20px;
@@ -4887,8 +4888,6 @@ input[type="email"]:read-only {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
 }
-
-
 .rating-group {
     display: flex;
     flex-direction: column;
@@ -4925,4 +4924,279 @@ input[type="email"]:read-only {
 }
 .review-star-rating .star.filled {
     color: #FFD700;
+}
+/* ===================================================
+   ✅ 모바일 최종 오버라이드 (768px 이하)
+   - 기존 고정폭/2열/큰 UI를 모바일에 맞게 강제 보정
+   - CSS 파일 맨 마지막에 붙이기
+=================================================== */
+@media (max-width: 768px) {
+
+    /* 0) 가로 스크롤/튐 방지 */
+    html, body {
+        width: 100%;
+        overflow-x: hidden;
+    }
+    * {
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    img, video, iframe, canvas {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* 1) 헤더/프로필 과대 문제 */
+    .quick-menu {
+        height: 58px;
+        padding: 6px 10px;
+    }
+    .quick-menu .logo a {
+        font-size: 18px;
+    }
+    .quick-menu .header-icons {
+        gap: 8px;
+        padding-right: 8px;
+    }
+    .profile-image {
+        width: 56px;
+        height: 56px;
+    }
+    .profile-icon,
+    .quick-menu .header-icons button {
+        font-size: 20px;
+    }
+
+    /* 2) 햄버거/유저 메뉴가 화면 밖으로 튀는 문제 */
+    .main-nav,
+    .user-menu,
+    .main-menu,
+    .mypage-user-menu {
+        right: 8px !important;
+        width: 92vw !important;
+        min-width: 0 !important;
+    }
+
+    /* 3) 로그인/회원가입 2열 → 1열 */
+    .login-page-main {
+        padding: 12px 0;
+    }
+    .main-wrapper {
+        width: 94%;
+        min-height: 0;
+        flex-direction: column;
+        border-radius: 14px;
+    }
+    .login-section,
+    .main-section {
+        padding: 26px 18px;
+        overflow-y: visible;
+    }
+    .title-login {
+        font-size: 26px;
+    }
+    .login-button,
+    .schedule-button {
+        font-size: 18px;
+        padding: 14px 16px;
+        border-radius: 22px;
+    }
+
+    /* 4) Hero 문구 과대 */
+    .hero-center-card {
+        width: 92%;
+        padding: 20px 14px;
+        border-radius: 16px;
+    }
+    .hero-message {
+        font-size: 34px;
+        line-height: 1.15;
+    }
+    .hero-sub-message {
+        font-size: 16px;
+    }
+    .cta-button {
+        font-size: 18px;
+        padding: 12px 20px;
+    }
+
+    /* 5) 일정 슬라이더: 500px 고정폭 제거 */
+    .schedule-slider-container {
+        padding: 0 10px;
+        max-width: 100%;
+    }
+    .schedule-slider-viewport {
+        max-width: 100%;
+    }
+    .schedule-item {
+        width: 88vw !important;
+        max-width: 88vw !important;
+        margin: 0 6px;
+        padding: 18px 14px;
+    }
+    .slider-arrow {
+        width: 34px;
+        height: 34px;
+        font-size: 18px;
+        top: 45%;
+    }
+
+    /* 6) value/features 그리드 1열 고정 */
+    .value-grid,
+    .features-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px;
+    }
+
+    /* 7) 검색/리스트 페이지 공통 패딩 축소 */
+    .search-main,
+    .schedule-search-main,
+    .community-main,
+    .field-search-main,
+    .stadium-main,
+    .review-page-main {
+        padding: 82px 12px 28px 12px;
+    }
+
+    /* 8) 날짜 필터/인풋 min-width 때문에 줄깨짐 -> 100% */
+    .date-range {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    .date-field {
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+    .filter-section input[type="text"],
+    .filter-section select,
+    .filter-section button {
+        width: 100%;
+    }
+
+    /* 9) 매치 카드 그리드: 너무 넓게 잡히는거 방지 */
+    .match-list-container {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* 10) 경기장 상세 2열(grid 1fr 400px) → 세로 스택 */
+    .stadium-container {
+        grid-template-columns: 1fr !important;
+        padding: 18px;
+        gap: 18px;
+    }
+    .detail-left-column,
+    .review-right-column {
+        grid-column: 1 / -1 !important;
+        grid-row: auto !important;
+        max-height: none !important;
+    }
+    .action-button-group {
+        grid-column: 1 / -1 !important;
+        flex-direction: column;
+    }
+    .action-button-group a,
+    .action-button-group button {
+        width: 100%;
+    }
+
+    /* 11) 필드 검색(map + list 2열) → 세로 */
+    .field-search-main .search-content {
+        flex-direction: column;
+    }
+    .field-search-main .map-area {
+        width: 100%;
+        height: 320px;
+    }
+    .field-search-main .field-list-area {
+        width: 100%;
+        max-height: none;
+    }
+
+    /* 12) 커뮤니티 테이블 가로 넘침 카드화/스크롤 */
+    .post-table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    /* 13) 채팅: 사이드바 300px 고정폭 → 상단 스택 */
+    .chat-main {
+        flex-direction: column;
+    }
+    .chat-sidebar {
+        width: 100% !important;
+        height: auto !important;
+        border-right: none;
+        border-bottom: 1px solid #eee;
+    }
+    .chat-content-area {
+        width: 100% !important;
+    }
+    #participant-sidebar {
+        width: 100% !important;
+        right: 0 !important;
+    }
+    .inline-profile-detail {
+        right: 0 !important;
+        width: 92vw !important;
+    }
+
+    /* 14) 마이페이지 캘린더 + 우측 디테일 패널 세로 */
+    .calendar-layout-wrapper {
+        flex-direction: column;
+    }
+    #fixed-schedule-detail {
+        width: 100% !important;
+    }
+
+    /* 15) 모달이 화면 밖 넘치는거 방지 */
+    .modal,
+    .modal-content,
+    .stadium-modal-content,
+    .friend-add-modal {
+        width: 94vw !important;
+        max-width: 94vw !important;
+        padding: 18px !important;
+    }
+}
+html, body {
+    height: 100%;
+    margin: 0;
+}
+body {
+    display: flex;
+    flex-direction: column;
+}
+#chat-main-wrapper.chat-main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+/* 입력창은 아래에고정 */
+.chat-input-area {
+    flex-shrink: 0;
+}
+
+.chat-date-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 12px 0;
+    font-size: 12px;
+    color: #777;
+}
+
+.chat-date-divider::before,
+.chat-date-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e0e0e0;
+    margin: 0 8px;
+}
+
+.chat-date-divider span {
+    white-space: nowrap;
 }
