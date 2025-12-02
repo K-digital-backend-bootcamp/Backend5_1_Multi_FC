@@ -153,10 +153,13 @@
     const noScheduleView = document.getElementById('no-schedule-view');
 
     function moveSlider() {
-        if (sliderTrack && sliderTrack.querySelector('.schedule-item')) {
-            const itemWidth = sliderTrack.querySelector('.schedule-item').offsetWidth + 20;
-            sliderTrack.style.transform = `translateX(-${currentIndex * itemWidth}px)`;
-        }
+        if (!sliderTrack) return;
+
+        const viewport = document.querySelector('.schedule-slider-viewport');
+        if (!viewport) return;
+
+        const viewportWidth = viewport.clientWidth; // ✅ 지금 화면에서 "한 장" 폭
+        sliderTrack.style.transform = `translateX(-${currentIndex * viewportWidth}px)`;
     }
 
     function updatePaginationDots() {
@@ -217,19 +220,6 @@
         if (reviewSection) reviewSection.style.display = 'none';
     }
 
-    // ⭐ HH:mm 포맷으로 잘라주는 유틸 함수
-    function formatTimeToHHMM(timeStr) {
-        if (!timeStr) return '';
-        // "HH:mm:ss" 또는 "HH:mm" 모두 대응
-        const parts = timeStr.split(':');
-        if (parts.length >= 2) {
-            const hh = parts[0].padStart(2, '0');
-            const mm = parts[1].padStart(2, '0');
-            return `${hh}:${mm}`;
-        }
-        return timeStr; // 예상치 못한 형식이면 그냥 원본 리턴
-    }
-
     function renderUpcomingSchedules() {
         const schedules = window.upcomingSchedules || [];
 
@@ -251,7 +241,6 @@
             item.className = 'schedule-item';
 
             const isMatch = schedule.type === '경기';
-            const timeText = schedule.time ? formatTimeToHHMM(schedule.time) : '';
 
             if (isMatch) {
                 const targetMatchId = schedule.matchId;
@@ -261,7 +250,7 @@
                         <strong>${schedule.title || ''}</strong>
                         <div class="item-location">
                             <i class="fas fa-clock"></i>
-                            ${schedule.date || ''} ${timeText ? `(${timeText})` : ''}
+                            ${schedule.date || ''} ${schedule.time ? `(${schedule.time})` : ''}
                         </div>
                     </div>
                     <a href="/schedule/detail/${targetMatchId}" class="schedule-item-link">상세보기</a>
@@ -273,7 +262,7 @@
                         <strong>${schedule.title || '(제목 없는 일정)'}</strong>
                         <div class="item-location">
                             <i class="fas fa-calendar-alt"></i>
-                            ${schedule.date || ''} ${timeText ? `(${timeText})` : ''}
+                            ${schedule.date || ''} ${schedule.time ? `(${schedule.time})` : ''}
                         </div>
                     </div>
                     <a href="/mypage?tab=calendar&date=${schedule.date}&scheduleId=${schedule.id}" class="schedule-item-link">
@@ -334,6 +323,7 @@
         const scheduleSection = document.getElementById('upcoming-schedule-section');
         const reviewSection = document.getElementById('review-notification-section');
 
+        // 새로 추가
         const heroCenterCard = document.getElementById('hero-center-card');
 
         if (accessToken) {
@@ -344,12 +334,15 @@
             const userMenuUsername = document.getElementById('user-menu-username');
             if (userMenuUsername) userMenuUsername.textContent = loggedInUsername;
 
+            // ✅ 헤더 전역 함수 호출 → 전역 데이터 채움
             if (window.checkPendingReviews) await window.checkPendingReviews();
             if (window.checkUpcomingSchedules) await window.checkUpcomingSchedules();
             if (window.updateGlobalBadge) window.updateGlobalBadge();
 
+            // ✅ 전역 upcomingSchedules 기반 렌더
             renderUpcomingSchedules();
 
+            // 후기 알림 노출
             const ids = window.pendingReviewStadiumIds || [];
             if (reviewSection && ids.length > 0) {
                 const stadiumId = ids[0];
@@ -362,18 +355,23 @@
                     <a href="/reviews/write?stadiumId=${stadiumId}" class="review-notification-link">후기 작성하기</a>
                     <button class="close-review-btn" onclick="closeReviewNotification()">&times;</button>
                 `;
+                // ⭐ 데이터가 있을 때만 flex로 표시
                 reviewSection.style.display = 'flex';
             } else if (reviewSection) {
+                // ⭐ 수정 추가: 후기 알림이 없을 때 확실히 숨김 처리
                 reviewSection.style.display = 'none';
             }
 
+            // 로그인 시에는 카드에 logged-in 클래스 추가 → 배경 제거
             if (heroCenterCard) heroCenterCard.classList.add('logged-in');
         } else {
+            // 비로그인
             if (noScheduleViewHero) noScheduleViewHero.style.display = 'block';
             if (memberContentArea) memberContentArea.style.display = 'none';
             if (scheduleSection) scheduleSection.style.display = 'none';
             if (reviewSection) reviewSection.style.display = 'none';
             if (globalCtaRegister) globalCtaRegister.style.display = 'block';
+            // 비로그인일 때는 기본 스타일(반투명 박스) 그대로 사용
             if (heroCenterCard) heroCenterCard.classList.remove('logged-in');
         }
     });

@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MULTI FC - 구장 검색</title>
 
-    <!-- ✅ 전역 스타일 -->
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
-    <!-- 카카오맵 -->
     <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=4caaf2cb0e09303d4dd13d3fb5ff15e9&libraries=services"></script>
 
 </head>
@@ -93,7 +91,7 @@
     });
 
     /* -------------------------------
-     *   🔥 이하 구장 검색 전용 코드
+     * 🔥 이하 구장 검색 전용 코드
      * ------------------------------- */
 
     let kakaoMap = null;
@@ -109,13 +107,14 @@
         });
     }
 
+    // ⚠️ 수정된 함수: width:230px 인라인 스타일 제거 및 CSS 제어용 클래스 추가
     function showStadiumInfo(marker, stadium) {
         if (!kakaoMap || !marker || !stadium) return;
 
         if (kakaoInfoWindow) kakaoInfoWindow.close();
 
         const content = `
-            <div style="box-sizing:border-box;padding:10px;width:230px;white-space:normal;word-break:break-all;">
+            <div class="kakao-custom-info" style="box-sizing:border-box;padding:10px;white-space:normal;word-break:break-all;">
                 <div style="font-weight:600;margin-bottom:6px;font-size:14px;">${stadium.name}</div>
                 <div style="font-size:12px;color:#555;margin-bottom:10px;">${stadium.address}</div>
                 <button
